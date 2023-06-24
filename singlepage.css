@@ -54,7 +54,7 @@ header ul li:hover, .nav-a:hover{
 header{
     display: flex;
     justify-content: space-between;
-    position: sticky;
+    position: fixed;
     width: 100%;
     align-items: center;
 }
