@@ -1337,3 +1337,6 @@ margin-bottom:10%;
 }
 
 
+.jumpstartProjectPic{
+    object-fit: cover;
+}
