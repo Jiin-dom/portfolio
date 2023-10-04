@@ -407,9 +407,7 @@ section.scrolled .abtmecont .abt1{
     margin-left: 12%;
     transition: 0.2s ease-in-out;
 }
-.whatidoname{
 
-}
 .whatidodiv{
     width: 800px;
     
@@ -1101,11 +1099,7 @@ footer{
     margin-bottom: 10%;
     height: 100%
 }
-.mepic{
-    /* width: 350px;
-    height: 430px; */
-   
-}
+
 .whatidohead{
     margin: 0;
     color: #b7ab98;
