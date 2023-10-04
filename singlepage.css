@@ -134,10 +134,43 @@ main{
 .middlename{
     margin-left: 16%;
 }
-.lastname{
+/* .lastname{
     color: #6554AF;
-    /* margin-left: ; */
+
 }
+#E966A0
+#9775DC
+#76D8F9
+
+.lastname{
+
+} */
+.lastname {
+
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    background-image: linear-gradient(45deg, #6554AF,#E966A0,#9775DC, #76D8F9, #E966A0,#6554AF, #76D8F9);
+    background-size: 400% 400%;
+    animation: animate 8s ease infinite;
+  }
+  @keyframes animate {
+    0% {
+      background-position: 0 0;
+    }
+    25% {
+      background-position: 100% 0;
+    }
+    50% {
+      background-position: 100% 100%;
+    }
+    75% {
+      background-position: 0 100%;
+    }
+    100% {
+      background-position: 0 0;
+    }
+  }
 
 /*  */
 
