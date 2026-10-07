@@ -1,7 +1,8 @@
 /**
  * Six-letter Jeff land-shark for "Jeanne" (no repeats).
- * SHARK-poster technique + Jeff: big head, wide grin, chonk, stubby legs, short tail.
- * Coordinates are local px offsets around the flock origin (snout faces +x).
+ * Packed like a typographic SHARK poster — silhouette first, letters second.
+ * Jeff: huge head, wide grin, chonk torso, stubby land-legs, short tail.
+ * Local px offsets around flock origin; snout faces +x (right).
  */
 
 export type LetterPose = {
@@ -19,84 +20,87 @@ export type LetterPose = {
 
 export const JEANNE_CHARS = ["J", "e", "a", "n", "n", "e"] as const;
 
-/** Local-pixel Jeff pose — designed at ~display size 5–6rem. */
+/**
+ * Heavy overlap — designed for ~clamp(3.25rem, 7vw, 5.5rem) glyphs.
+ * Centers are intentionally close so warped letters fuse into one body.
+ */
 export const JEFF_POSE: LetterPose[] = [
-  // J — oversized head + grin on the right (chase direction)
+  // J — big head + grin (rightmost)
   {
     char: "J",
-    x: 110,
-    y: -8,
-    rot: -0.22,
-    scaleX: 1.45,
-    scaleY: 1.7,
-    skewX: -7,
+    x: 58,
+    y: -6,
+    rot: -0.28,
+    scaleX: 1.55,
+    scaleY: 1.85,
+    skewX: -8,
     wdth: 100,
     wght: 800,
     z: 6,
   },
-  // e — cheek / lower jaw tucked into the head
+  // e — jaw / cheek fused into the head
   {
     char: "e",
-    x: 42,
-    y: 10,
-    rot: 0.14,
-    scaleX: 1.2,
-    scaleY: 1.15,
-    skewX: 6,
+    x: 18,
+    y: 14,
+    rot: 0.18,
+    scaleX: 1.25,
+    scaleY: 1.2,
+    skewX: 8,
     wdth: 100,
-    wght: 750,
+    wght: 760,
     z: 5,
   },
-  // a — dorsal fin up + thick mid torso
+  // a — dorsal fin peak + chonk mid-body overlapping e
   {
     char: "a",
-    x: -20,
-    y: -48,
-    rot: -0.05,
-    scaleX: 1.3,
-    scaleY: 1.45,
-    skewX: -2,
+    x: -18,
+    y: -36,
+    rot: -0.08,
+    scaleX: 1.35,
+    scaleY: 1.55,
+    skewX: -4,
     wdth: 100,
-    wght: 780,
+    wght: 800,
     z: 4,
   },
-  // n — front stubby land-leg
+  // n — front stubby land-leg under belly
   {
     char: "n",
-    x: -10,
-    y: 52,
-    rot: 0.1,
-    scaleX: 1.05,
-    scaleY: 1.08,
-    skewX: 3,
-    wdth: 92,
-    wght: 700,
+    x: -12,
+    y: 38,
+    rot: 0.12,
+    scaleX: 1.1,
+    scaleY: 1.15,
+    skewX: 4,
+    wdth: 95,
+    wght: 720,
     z: 3,
   },
-  // n — rear stubby land-leg
+  // n — rear stubby land-leg overlapping front
   {
     char: "n",
-    x: -70,
-    y: 46,
-    rot: -0.08,
-    scaleX: 1.0,
-    scaleY: 1.05,
-    skewX: -4,
-    wdth: 90,
-    wght: 700,
+    x: -48,
+    y: 32,
+    rot: -0.1,
+    scaleX: 1.05,
+    scaleY: 1.1,
+    skewX: -5,
+    wdth: 92,
+    wght: 720,
     z: 2,
   },
-  // e — stubby tail on the left
+  // e — stubby tail tucked into haunch
   {
     char: "e",
-    x: -125,
-    y: -4,
-    rot: 0.4,
-    scaleX: 1.2,
-    scaleY: 0.7,
-    skewX: 12,
-    wdth: 88,
-    wght: 720,
+    x: -78,
+    y: -2,
+    rot: 0.48,
+    scaleX: 1.25,
+    scaleY: 0.65,
+    skewX: 14,
+    wdth: 90,
+    wght: 740,
     z: 1,
   },
 ];
