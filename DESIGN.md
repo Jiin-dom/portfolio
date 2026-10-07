@@ -59,7 +59,7 @@ Animate only: `transform`, `opacity`, `clip-path`, `font-variation-settings`.
 
 Signature systems:
 
-1. **Jeanne → Jeff land shark** — scroll pin warps the six letters of “Jeanne” (no repeats) into a chonky Jeff-style silhouette (big head, grin, dorsal, stubby legs, tail), then the flock waddles toward the cursor
+1. **Jeanne → Jeff land shark** — scroll pin fades a filled Jeff SVG silhouette first (big round head, grin cutout, swept dorsal, stubby legs, short tail), then seats the six letters of “Jeanne” (no repeats) as void punch-outs; flock waddles toward the cursor. Shape before letters — no mid-morph letter pile.
 2. **Scroll-choreographed chapters** — GSAP RevealLine masks + Education weight/width scrub
 3. **Title → preview reveal** — hover/focus clipped wipe of project screenshots
 4. **WebGL letterfield** — R3F spatial years on Experience with static fallback

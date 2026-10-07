@@ -2,19 +2,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&display=swap" rel="stylesheet"/>
 <style>
 body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0c0e12;font-family:"Bricolage Grotesque",sans-serif}
-.wrap{position:relative;width:min(78vw,640px)}
+.wrap{position:relative;width:min(90vw,780px)}
 svg{width:100%;height:auto;display:block;overflow:visible}
 .seat{position:absolute;transform:translate(-50%,-50%);font-weight:800;color:#0c0e12;line-height:1;letter-spacing:-0.06em}
 .label{position:fixed;left:24px;bottom:24px;color:#a8a29a;font-family:ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
 </style></head><body>
-<div class="wrap" id="wrap"><svg viewBox="0 0 400 220"><path fill="#ece7df" d="M 90 110 C 52 76 14 90 20 114 C 14 138 56 146 90 120 L 112 132 L 104 174 L 128 174 L 134 136 L 172 142 L 166 178 L 192 178 L 196 144 L 236 152 C 250 172 278 186 312 178 C 348 168 378 140 380 108 C 382 78 360 52 324 44 C 292 38 266 48 250 68 C 262 78 278 86 292 84 C 278 96 258 100 242 92 L 206 74 L 172 22 L 148 74 L 118 82 L 90 110 Z"/></svg></div>
-<p class="label">Jeff silhouette + Jeanne seats</p>
+<div class="wrap" id="wrap"><svg viewBox="0 0 560 320"><path fill="#ece7df" fill-rule="evenodd" d="M 156 152 L 178 152 L 164 36 L 226 150 L 248 138 C 266 72 334 36 404 48 C 478 62 526 122 518 182 C 510 244 448 286 372 280 C 322 276 282 250 262 218 L 278 206 L 284 262 L 242 262 L 238 202 L 200 196 L 206 256 L 164 256 L 160 190 L 148 178 C 118 162 78 154 40 170 C 78 192 120 196 152 186 L 156 152 Z M 338 180 C 378 156 440 152 492 174 C 468 214 416 234 362 226 C 340 222 324 198 338 180 Z"/></svg></div>
+<p class="label">Jeff silhouette — shape first</p>
 <script>
-const SEATS=[{"char": "J", "x": 316, "y": 108, "rot": -10, "scale": 1.6}, {"char": "e", "x": 250, "y": 120, "rot": 6, "scale": 1.05}, {"char": "a", "x": 170, "y": 56, "rot": -8, "scale": 1.12}, {"char": "n", "x": 178, "y": 152, "rot": 2, "scale": 0.95}, {"char": "n", "x": 120, "y": 146, "rot": -4, "scale": 0.9}, {"char": "e", "x": 54, "y": 114, "rot": 52, "scale": 0.92}];
+const SEATS=[{"char":"J","x":400,"y":134,"rot":-6,"scale":1.4},{"char":"e","x":308,"y":154,"rot":6,"scale":0.85},{"char":"a","x":184,"y":116,"rot":-10,"scale":0.78},{"char":"n","x":260,"y":232,"rot":0,"scale":0.68},{"char":"n","x":184,"y":226,"rot":-2,"scale":0.66},{"char":"e","x":88,"y":172,"rot":36,"scale":0.74}];
 const wrap=document.getElementById("wrap");
 function place(){
   wrap.querySelectorAll(".seat").forEach(n=>n.remove());
-  const s=wrap.clientWidth/400;
+  const s=wrap.clientWidth/560;
   SEATS.forEach(seat=>{
     const el=document.createElement("span");
     el.className="seat"; el.textContent=seat.char;

@@ -6,6 +6,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { site } from "@/lib/content";
 import {
+  JEFF_FILL_RULE,
   JEFF_LETTER_SEATS,
   JEFF_PATH,
   JEFF_VIEWBOX,
@@ -96,8 +97,8 @@ function JeanneSharkStage() {
 
       const stageRect = () => stage.getBoundingClientRect();
 
-      /** Pixel size of the Jeff SVG on screen */
-      const sharkScale = () => Math.min(stageRect().width * 0.55, 520) / JEFF_VIEWBOX.w;
+      /** Pixel size of the Jeff SVG on screen — large enough to read at a glance */
+      const sharkScale = () => Math.min(stageRect().width * 0.72, 640) / JEFF_VIEWBOX.w;
 
       const layoutHome = () => {
         const anchors = measure.querySelectorAll<HTMLElement>("[data-measure-char]");
@@ -112,11 +113,10 @@ function JeanneSharkStage() {
             size: getComputedStyle(anchor).fontSize,
           };
         });
-        const first = homeCache.current[0]!;
-        const last = homeCache.current[5]!;
+        // Park Jeff mid-viewport — silhouette must read as one composition
         restPos.current = {
-          x: (first.x + last.x) / 2,
-          y: (first.y + last.y) / 2 + 24,
+          x: sr.width * 0.5,
+          y: sr.height * 0.46,
         };
         if (flockPos.current.x === 0 && flockPos.current.y === 0) {
           flockPos.current.x = restPos.current.x;
@@ -124,30 +124,42 @@ function JeanneSharkStage() {
         }
       };
 
+      // animate / emil: ease-out for entrance, ease-in-out for on-screen morph
+      const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+      const easeInOut = (t: number) =>
+        t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
       const applyProgress = (p: number) => {
         layoutHome();
-        const morph = Math.min(1, Math.max(0, p / 0.28));
-        const eased = morph * morph * (3 - 2 * morph);
-        morphRef.current = eased;
-        swimMixRef.current = Math.min(1, Math.max(0, (p - 0.22) / 0.5));
+        // Shape first: body locks fully before any letter motion
+        const bodyT = Math.min(1, Math.max(0, p / 0.14));
+        const bodyEase = easeOut(bodyT);
+        const letterT = Math.min(1, Math.max(0, (p - 0.2) / 0.22));
+        const letterEase = easeInOut(letterT);
+        morphRef.current = letterEase;
+        swimMixRef.current = Math.min(1, Math.max(0, (p - 0.38) / 0.4));
 
-        measure.style.opacity = String(Math.max(0, 1 - eased * 1.6));
-        measure.style.visibility = eased > 0.9 ? "hidden" : "visible";
+        measure.style.opacity = String(Math.max(0, 1 - bodyEase * 1.5));
+        measure.style.visibility = bodyEase > 0.92 ? "hidden" : "visible";
+        const sub = measure.parentElement?.querySelector<HTMLElement>("[data-measure-sub]");
+        if (sub) {
+          sub.style.opacity = String(Math.max(0, 1 - bodyEase * 1.5));
+          sub.style.visibility = bodyEase > 0.92 ? "hidden" : "visible";
+        }
 
-        // Silhouette fades in — this is what makes it read as a shark
-        body.style.opacity = String(Math.min(1, Math.max(0, (eased - 0.15) / 0.55)));
+        // Silhouette fades in first — shark must read before letters arrive
+        body.style.opacity = String(bodyEase);
 
         const s = sharkScale();
         const svgW = JEFF_VIEWBOX.w * s;
         const svgH = JEFF_VIEWBOX.h * s;
 
-        // Position SVG so its center sits at flock origin
         flockEl.style.width = `${svgW}px`;
         flockEl.style.height = `${svgH}px`;
         flockEl.style.marginLeft = `${-svgW / 2}px`;
         flockEl.style.marginTop = `${-svgH / 2}px`;
 
-        if (eased < 0.95) {
+        if (letterEase < 0.95) {
           flockPos.current.x += (restPos.current.x - flockPos.current.x) * 0.25;
           flockPos.current.y += (restPos.current.y - flockPos.current.y) * 0.25;
         }
@@ -156,39 +168,32 @@ function JeanneSharkStage() {
           const home = homeCache.current[i]!;
           const seat = JEFF_LETTER_SEATS[i]!;
 
-          // Seat in flock-local px (SVG viewBox → local, origin top-left of flock box)
           const seatX = seat.x * s;
           const seatY = seat.y * s;
 
-          // Home relative to flock top-left
           const homeLocalX = home.x - flockPos.current.x + svgW / 2;
           const homeLocalY = home.y - flockPos.current.y + svgH / 2;
 
-          // Swirl mid-transition
-          const angle = (i / 6) * Math.PI * 2 + eased * Math.PI;
-          const swirlR = (1 - eased) * 80;
-          const swirlX = svgW / 2 + Math.cos(angle) * swirlR;
-          const swirlY = svgH / 2 + Math.sin(angle) * swirlR * 0.55;
+          // Hold at home until body is solid, then glide into seats
+          const x = homeLocalX * (1 - letterEase) + seatX * letterEase;
+          const y = homeLocalY * (1 - letterEase) + seatY * letterEase;
 
-          const x =
-            homeLocalX * (1 - eased) +
-            swirlX * eased * (1 - eased) * 1.6 +
-            seatX * eased;
-          const y =
-            homeLocalY * (1 - eased) +
-            swirlY * eased * (1 - eased) * 1.6 +
-            seatY * eased;
+          const rot = ((seat.rot * Math.PI) / 180) * letterEase;
+          const scale = 1 + (seat.scale - 1) * letterEase;
 
-          const rot = (seat.rot * Math.PI) / 180 * eased;
-          const scale = 1 + (seat.scale - 1) * eased;
-
-          el.style.fontSize = eased > 0.4 ? `${Math.max(28, 42 * s * seat.scale)}px` : home.size;
-          // Punch letters out of the bone silhouette (readable Jeff body)
-          el.style.color = eased > 0.45 ? "var(--void)" : "var(--bone)";
-          el.style.opacity = "1";
+          el.style.fontSize =
+            letterEase > 0.35 ? `${Math.max(26, 40 * s * seat.scale)}px` : home.size;
+          // Void punch-outs only on solid bone body
+          el.style.color = letterEase > 0.25 ? "var(--void)" : "var(--bone)";
+          // Invisible while silhouette claims the frame; fade in as seats fill
+          el.style.opacity = String(
+            bodyEase < 0.95
+              ? Math.max(0, 1 - bodyEase) * Math.max(0, 1 - letterEase)
+              : letterEase,
+          );
           el.style.zIndex = String(10 + i);
           el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%) rotate(${rot}rad) scale(${scale})`;
-          el.style.fontVariationSettings = `"opsz" 96, "wdth" ${90 + 10 * eased}, "wght" ${600 + 200 * eased}`;
+          el.style.fontVariationSettings = `"opsz" 96, "wdth" ${90 + 10 * letterEase}, "wght" ${600 + 200 * letterEase}`;
           el.style.webkitTextStroke = "0px transparent";
         });
 
@@ -294,7 +299,11 @@ function JeanneSharkStage() {
                 </span>
               ))}
             </div>
-            <p className="title-type relative z-10 mt-2 m-0 text-bone-soft" aria-hidden="true">
+            <p
+              data-measure-sub
+              className="title-type relative z-10 mt-2 m-0 text-bone-soft"
+              aria-hidden="true"
+            >
               Dominique Paloma
             </p>
           </div>
@@ -314,6 +323,7 @@ function JeanneSharkStage() {
                   ref={bodyRef}
                   d={JEFF_PATH}
                   fill="var(--bone)"
+                  fillRule={JEFF_FILL_RULE}
                   opacity={0}
                 />
               </svg>
