@@ -11,10 +11,6 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const HERO_NAME = "Jeanne";
 
-function subscribeClientReady() {
-  return () => {};
-}
-
 function StaticOpening() {
   return (
     <div className="section-pad flex min-h-[100dvh] flex-col justify-end pb-16 pt-28 md:pb-24 md:pt-32">
@@ -44,7 +40,11 @@ function StaticOpening() {
 }
 
 export function JeanneSharkHero() {
-  const ready = useSyncExternalStore(subscribeClientReady, () => true, () => false);
+  const ready = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const reducedMotion = useSyncExternalStore(
     (cb) => {
       const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -55,10 +55,7 @@ export function JeanneSharkHero() {
     () => false,
   );
 
-  if (!ready || reducedMotion) {
-    return <StaticOpening />;
-  }
-
+  if (!ready || reducedMotion) return <StaticOpening />;
   return <JeanneSharkStage />;
 }
 
@@ -70,10 +67,14 @@ function JeanneSharkStage() {
   const flockRef = useRef<HTMLDivElement>(null);
   const letterRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const pointer = useRef({ x: 0, y: 0, active: false });
-  const flock = useRef({ x: 0, y: 0, rot: 0, bounce: 0 });
+  const flockPos = useRef({ x: 0, y: 0, rot: 0, bounce: 0 });
+  const restPos = useRef({ x: 0, y: 0 });
+  const morphRef = useRef(0);
   const swimMixRef = useRef(0);
   const raf = useRef(0);
-  const letterBases = useRef<string[]>(Array(6).fill(""));
+  const homeCache = useRef<{ x: number; y: number; size: string }[]>(
+    Array.from({ length: 6 }, () => ({ x: 0, y: 0, size: "4rem" })),
+  );
 
   useGSAP(
     () => {
@@ -88,28 +89,6 @@ function JeanneSharkStage() {
 
       const stageRect = () => stage.getBoundingClientRect();
 
-      type Home = {
-        x: number;
-        y: number;
-        rot: number;
-        scaleX: number;
-        scaleY: number;
-        skewX: number;
-        wdth: number;
-        wght: number;
-      };
-
-      const homes: Home[] = letters.map(() => ({
-        x: 0,
-        y: 0,
-        rot: 0,
-        scaleX: 1,
-        scaleY: 1,
-        skewX: 0,
-        wdth: 90,
-        wght: 600,
-      }));
-
       const layoutHome = () => {
         const anchors = measure.querySelectorAll<HTMLElement>("[data-measure-char]");
         const sr = stageRect();
@@ -117,74 +96,97 @@ function JeanneSharkStage() {
           const anchor = anchors[i];
           if (!anchor) return;
           const r = anchor.getBoundingClientRect();
-          homes[i] = {
+          homeCache.current[i] = {
             x: r.left + r.width / 2 - sr.left,
             y: r.top + r.height / 2 - sr.top,
-            rot: 0,
-            scaleX: 1,
-            scaleY: 1,
-            skewX: 0,
-            wdth: 90,
-            wght: 600,
+            size: getComputedStyle(anchor).fontSize,
           };
-          el.style.fontSize = getComputedStyle(anchor).fontSize;
+          el.style.fontSize = homeCache.current[i]!.size;
         });
+        // Rest flock center = midpoint of the name
+        const first = homeCache.current[0]!;
+        const last = homeCache.current[5]!;
+        restPos.current = {
+          x: (first.x + last.x) / 2,
+          y: (first.y + last.y) / 2,
+        };
+        if (flockPos.current.x === 0 && flockPos.current.y === 0) {
+          flockPos.current.x = restPos.current.x;
+          flockPos.current.y = restPos.current.y;
+        }
+      };
+
+      const setLetterLocal = (
+        el: HTMLSpanElement,
+        lx: number,
+        ly: number,
+        rot: number,
+        scaleX: number,
+        scaleY: number,
+        skewX: number,
+        wdth: number,
+        wght: number,
+      ) => {
+        el.style.transform = `translate(${lx}px, ${ly}px) translate(-50%, -50%) rotate(${rot}rad) skewX(${skewX}deg) scale(${scaleX}, ${scaleY})`;
+        el.style.fontVariationSettings = `"opsz" 96, "wdth" ${wdth.toFixed(0)}, "wght" ${wght.toFixed(0)}`;
       };
 
       const applyProgress = (p: number) => {
         layoutHome();
-        const sr = stageRect();
-        const cx = sr.width * 0.58;
-        const cy = sr.height * 0.38;
-        // Compact formation so the chonk silhouette stays on-screen
-        const spanX = Math.min(sr.width * 0.28, 300);
-        const spanY = Math.min(sr.height * 0.2, 170);
-
-        // Morph finishes early; remainder of pin is swim / chase
-        const morph = Math.min(1, Math.max(0, p / 0.32));
+        const morph = Math.min(1, Math.max(0, p / 0.3));
         const eased = morph * morph * (3 - 2 * morph);
-        swimMixRef.current = Math.min(1, Math.max(0, (p - 0.28) / 0.5));
+        morphRef.current = eased;
+        swimMixRef.current = Math.min(1, Math.max(0, (p - 0.25) / 0.45));
 
-        measure.style.opacity = String(Math.max(0, 1 - eased * 1.4));
-        measure.style.visibility = eased > 0.95 ? "hidden" : "visible";
+        measure.style.opacity = String(Math.max(0, 1 - eased * 1.5));
+        measure.style.visibility = eased > 0.92 ? "hidden" : "visible";
+
+        // While morphing, flock stays at name rest; after, chase takes over
+        if (eased < 0.98) {
+          flockPos.current.x += (restPos.current.x - flockPos.current.x) * 0.2;
+          flockPos.current.y += (restPos.current.y - flockPos.current.y) * 0.2;
+        }
+
+        const sharkSize = "clamp(3.25rem, 7vw, 5.5rem)";
 
         letters.forEach((el, i) => {
-          const home = homes[i]!;
+          const home = homeCache.current[i]!;
           const pose = JEFF_POSE[i]!;
 
-          const angle = (i / 6) * Math.PI * 2 + eased * Math.PI;
-          const swirlR = (1 - eased) * Math.min(spanX, spanY) * 0.4;
-          const swirlX = cx + Math.cos(angle) * swirlR;
-          const swirlY = cy + Math.sin(angle) * swirlR * 0.65;
+          el.style.fontSize = eased > 0.45 ? sharkSize : home.size;
 
-          const tx = cx + pose.x * spanX;
-          const ty = cy - pose.y * spanY;
+          // Home is relative to flock origin (so flock translate places the word)
+          const homeLocalX = home.x - flockPos.current.x;
+          const homeLocalY = home.y - flockPos.current.y;
 
-          const x =
-            home.x +
-            (swirlX - home.x) * Math.min(1, eased * 1.15) * 0.45 +
-            (tx - home.x) * eased;
-          const y =
-            home.y +
-            (swirlY - home.y) * Math.min(1, eased * 1.15) * 0.45 +
-            (ty - home.y) * eased;
+          // Mid swirl in flock-local space
+          const angle = (i / 6) * Math.PI * 2 + eased * 1.5;
+          const swirlR = (1 - eased) * 70;
+          const swirlX = Math.cos(angle) * swirlR;
+          const swirlY = Math.sin(angle) * swirlR * 0.6;
 
-          const rot = home.rot + (pose.rot - home.rot) * eased;
-          const scaleX = home.scaleX + (pose.scaleX - home.scaleX) * eased;
-          const scaleY = home.scaleY + (pose.scaleY - home.scaleY) * eased;
-          const skewX = home.skewX + (pose.skewX - home.skewX) * eased;
-          const wdth = home.wdth + (pose.wdth - home.wdth) * eased;
-          const wght = home.wght + (pose.wght - home.wght) * eased;
+          const lx =
+            homeLocalX * (1 - eased) +
+            swirlX * eased * (1 - eased) * 2 +
+            pose.x * eased;
+          const ly =
+            homeLocalY * (1 - eased) +
+            swirlY * eased * (1 - eased) * 2 +
+            pose.y * eased;
+
+          const rot = pose.rot * eased;
+          const scaleX = 1 + (pose.scaleX - 1) * eased;
+          const scaleY = 1 + (pose.scaleY - 1) * eased;
+          const skewX = pose.skewX * eased;
+          const wdth = 90 + (pose.wdth - 90) * eased;
+          const wght = 600 + (pose.wght - 600) * eased;
 
           el.style.zIndex = String(pose.z);
-          el.style.opacity = "1";
           el.style.color = i === 0 || i === 2 ? "var(--ember)" : "var(--bone)";
-
-          const base = `translate(${x}px, ${y}px) translate(-50%, -50%) rotate(${rot}rad) skewX(${skewX}deg) scale(${scaleX}, ${scaleY})`;
-          letterBases.current[i] = base;
-          el.style.transform = base;
-          el.style.fontVariationSettings = `"opsz" 96, "wdth" ${wdth.toFixed(0)}, "wght" ${wght.toFixed(0)}`;
+          setLetterLocal(el, lx, ly, rot, scaleX, scaleY, skewX, wdth, wght);
         });
+
+        flockEl.style.transform = `translate3d(${flockPos.current.x}px, ${flockPos.current.y}px, 0)`;
       };
 
       const st = ScrollTrigger.create({
@@ -192,7 +194,7 @@ function JeanneSharkStage() {
         start: "top top",
         end: "+=140%",
         pin: true,
-        scrub: 0.55,
+        scrub: 0.5,
         anticipatePin: 1,
         onUpdate: (self) => applyProgress(self.progress),
       });
@@ -206,50 +208,64 @@ function JeanneSharkStage() {
       const tick = () => {
         const mix = swimMixRef.current;
         const sr = stageRect();
+        const pad = 140;
+        const minX = pad;
+        const maxX = sr.width - pad;
+        const minY = pad;
+        const maxY = sr.height - pad;
 
         if (mix > 0.05 && pointer.current.active) {
-          const targetX = pointer.current.x - sr.width * 0.5;
-          const targetY = pointer.current.y - sr.height * 0.4;
-          flock.current.x += (targetX - flock.current.x) * 0.075;
-          flock.current.y += (targetY - flock.current.y) * 0.075;
-          const facing = Math.atan2(
-            targetY - flock.current.y,
-            targetX - flock.current.x,
-          );
-          flock.current.rot += (facing * 0.12 - flock.current.rot) * 0.09;
+          const tx = Math.min(maxX, Math.max(minX, pointer.current.x));
+          const ty = Math.min(maxY, Math.max(minY, pointer.current.y));
+          flockPos.current.x += (tx - flockPos.current.x) * 0.08;
+          flockPos.current.y += (ty - flockPos.current.y) * 0.08;
+
+          const dx = tx - flockPos.current.x;
+          const dy = ty - flockPos.current.y;
+          const facing = Math.atan2(dy, dx);
+          flockPos.current.rot += (facing * 0.18 - flockPos.current.rot) * 0.1;
+
+          const speed = Math.hypot(dx, dy);
+          const bounceTarget = Math.sin(performance.now() * 0.015) * Math.min(14, speed * 0.08);
+          flockPos.current.bounce += (bounceTarget - flockPos.current.bounce) * 0.2;
+        } else if (mix <= 0.05) {
+          flockPos.current.x += (restPos.current.x - flockPos.current.x) * 0.1;
+          flockPos.current.y += (restPos.current.y - flockPos.current.y) * 0.1;
+          flockPos.current.rot *= 0.85;
+          flockPos.current.bounce *= 0.85;
         } else {
-          flock.current.x *= 0.9;
-          flock.current.y *= 0.9;
-          flock.current.rot *= 0.88;
+          flockPos.current.rot *= 0.9;
+          flockPos.current.bounce *= 0.85;
         }
 
-        const speed = Math.hypot(
-          pointer.current.x - sr.width * 0.5 - flock.current.x,
-          pointer.current.y - sr.height * 0.4 - flock.current.y,
-        );
-        const bounceTarget =
-          mix > 0.1 && pointer.current.active
-            ? Math.sin(performance.now() * 0.014) * Math.min(12, speed * 0.045)
-            : 0;
-        flock.current.bounce += (bounceTarget - flock.current.bounce) * 0.18;
+        flockEl.style.transform = `translate3d(${flockPos.current.x}px, ${flockPos.current.y + flockPos.current.bounce * mix}px, 0) rotate(${flockPos.current.rot * mix}rad)`;
 
-        flockEl.style.transform = `translate3d(${flock.current.x * mix}px, ${flock.current.y * mix + flock.current.bounce}px, 0) rotate(${flock.current.rot * mix}rad)`;
-
-        // Tail sway + opposite-phase stubby legs (Jeff waddle)
-        const t = performance.now();
-        letters.forEach((el, i) => {
-          const base = letterBases.current[i];
-          if (!base) return;
-          let extra = "";
-          if (i === 5 && mix > 0.15) {
-            const w = Math.sin(t * 0.011) * 0.18 * mix;
-            extra = ` rotate(${w}rad)`;
-          } else if ((i === 3 || i === 4) && mix > 0.15) {
-            const phase = Math.sin(t * 0.014 + (i === 3 ? 0 : Math.PI));
-            extra = ` translateY(${phase * 6 * mix}px)`;
-          }
-          el.style.transform = base + extra;
-        });
+        // Waddle legs + wag tail on top of settled pose
+        if (morphRef.current > 0.85 && mix > 0.1) {
+          const t = performance.now();
+          letters.forEach((el, i) => {
+            const pose = JEFF_POSE[i]!;
+            let lx = pose.x;
+            let ly = pose.y;
+            let rot = pose.rot;
+            if (i === 5) {
+              rot += Math.sin(t * 0.012) * 0.2 * mix;
+            } else if (i === 3 || i === 4) {
+              ly += Math.sin(t * 0.015 + (i === 3 ? 0 : Math.PI)) * 7 * mix;
+            }
+            setLetterLocal(
+              el,
+              lx,
+              ly,
+              rot,
+              pose.scaleX,
+              pose.scaleY,
+              pose.skewX,
+              pose.wdth,
+              pose.wght,
+            );
+          });
+        }
 
         raf.current = requestAnimationFrame(tick);
       };
@@ -261,19 +277,17 @@ function JeanneSharkStage() {
         pointer.current.y = e.clientY - sr.top;
         pointer.current.active = true;
       };
-      const onLeave = () => {
-        pointer.current.active = false;
-      };
 
       window.addEventListener("pointermove", onMove, { passive: true });
-      window.addEventListener("blur", onLeave);
+      window.addEventListener("blur", () => {
+        pointer.current.active = false;
+      });
 
       return () => {
         cancelAnimationFrame(raf.current);
         ro.disconnect();
         st.kill();
         window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("blur", onLeave);
       };
     },
     { scope: rootRef },
@@ -308,7 +322,8 @@ function JeanneSharkStage() {
           </div>
 
           <div ref={stageRef} className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-            <div ref={flockRef} className="absolute inset-0 will-change-transform">
+            {/* Flock origin at 0,0 — letters use local offsets; flock translates to follow cursor */}
+            <div ref={flockRef} className="absolute left-0 top-0 will-change-transform">
               {JEANNE_CHARS.map((char, i) => (
                 <span
                   key={`${char}-${i}`}

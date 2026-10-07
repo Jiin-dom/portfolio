@@ -1,7 +1,7 @@
 /**
- * Six-letter Jeff-the-Land-Shark silhouette for "Jeanne".
- * Typographic SHARK-poster technique + Jeff proportions:
- * oversized head, wide grin, chonk torso, stubby land-legs, short tail.
+ * Six-letter Jeff land-shark for "Jeanne" (no repeats).
+ * SHARK-poster technique + Jeff: big head, wide grin, chonk, stubby legs, short tail.
+ * Coordinates are local px offsets around the flock origin (snout faces +x).
  */
 
 export type LetterPose = {
@@ -19,68 +19,65 @@ export type LetterPose = {
 
 export const JEANNE_CHARS = ["J", "e", "a", "n", "n", "e"] as const;
 
-/**
- * Tight pack — snout on the right. Overlap like the SHARK poster so the
- * silhouette reads before individual glyphs.
- */
+/** Local-pixel Jeff pose — designed at ~display size 5–6rem. */
 export const JEFF_POSE: LetterPose[] = [
-  // J — head + grin (bottom curve = smile)
+  // J — oversized head + grin on the right (chase direction)
   {
     char: "J",
-    x: 0.48,
-    y: 0.04,
-    rot: -0.2,
-    scaleX: 1.35,
-    scaleY: 1.55,
-    skewX: -6,
+    x: 110,
+    y: -8,
+    rot: -0.22,
+    scaleX: 1.45,
+    scaleY: 1.7,
+    skewX: -7,
     wdth: 100,
     wght: 800,
     z: 6,
   },
-  // e — cheek / jaw mass tucked under the head
+  // e — cheek / lower jaw tucked into the head
   {
     char: "e",
-    x: 0.18,
-    y: -0.08,
-    rot: 0.12,
+    x: 42,
+    y: 10,
+    rot: 0.14,
     scaleX: 1.2,
     scaleY: 1.15,
-    skewX: 5,
+    skewX: 6,
     wdth: 100,
     wght: 750,
     z: 5,
   },
-  // a — dorsal fin (peak) + chonk midsection, overlapping e and n
+  // a — dorsal fin up + thick mid torso
   {
     char: "a",
-    x: -0.08,
-    y: 0.22,
-    rot: -0.06,
-    scaleX: 1.25,
-    scaleY: 1.4,
+    x: -20,
+    y: -48,
+    rot: -0.05,
+    scaleX: 1.3,
+    scaleY: 1.45,
     skewX: -2,
     wdth: 100,
     wght: 780,
     z: 4,
   },
-  // n — front stubby paw under the belly
+  // n — front stubby land-leg
   {
     char: "n",
-    x: -0.05,
-    y: -0.32,
-    rot: 0.12,
+    x: -10,
+    y: 52,
+    rot: 0.1,
     scaleX: 1.05,
-    scaleY: 1.1,
+    scaleY: 1.08,
     skewX: 3,
     wdth: 92,
     wght: 700,
     z: 3,
   },
-  // n — rear stubby paw + haunch
+  // n — rear stubby land-leg
   {
     char: "n",
-    x: -0.32,
-    y: -0.26,
+    x: -70,
+    y: 46,
     rot: -0.08,
     scaleX: 1.0,
     scaleY: 1.05,
@@ -89,15 +86,15 @@ export const JEFF_POSE: LetterPose[] = [
     wght: 700,
     z: 2,
   },
-  // e — stubby tail tucked left
+  // e — stubby tail on the left
   {
     char: "e",
-    x: -0.55,
-    y: 0.02,
-    rot: 0.38,
-    scaleX: 1.15,
-    scaleY: 0.72,
-    skewX: 10,
+    x: -125,
+    y: -4,
+    rot: 0.4,
+    scaleX: 1.2,
+    scaleY: 0.7,
+    skewX: 12,
     wdth: 88,
     wght: 720,
     z: 1,
