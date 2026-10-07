@@ -32,14 +32,16 @@ Experience
 
 ## Typography
 
-- **Display / UI:** Bricolage Grotesque
-- **Mono labels:** JetBrains Mono (chapter labels, metadata, side tab)
+- **Display / UI:** Bricolage Grotesque (variable; wordmark at 800 weight, 86% width, opsz 96)
+- **Accent:** Instrument Serif italic (secondary name line, emphasis words, canvas captions)
+- **Mono labels:** DM Mono (index rows, hints, metadata)
+- Specimen-poster hero: full-bleed condensed wordmark, italic serif overlap, ruler tick rule, mono index row
 
 ## Layout
 
 - Chapters: Intro → Features → Product → Contact (Oryzo map)
 - Fixed chapter nav with dotted active underline
-- Intro: full-bleed desk + mat + circular portrait “product”, credit glass, side tab, PiP play, scroll hint
+- Intro: 3D studio desk (React Three Fiber) on a procedural oak table with window-frame shadows. Cream wordmark, kicker, lede and frosted glass card sit over the scene (Oryzo layout). Real objects only: cutting mat (heavy: slides and carries what sits on it), cork coaster, iPad lock screen, Nothing Phone face-down, Apple Pencil, fountain pen, rangefinder, mouse, utility knife, steel ruler, paper clips, polaroids, business card, sticky note. Objects lift, tilt with velocity, stack on drop, rotate with hold + scroll or double-click. Tidy / Scatter controls.
 - Features: sticky desk scene + scrolling glass panels
 - Product: circular media, JD / JD Pro / JD Pro Max project tiers, full work list
 - Contact: punchline + email + channels
