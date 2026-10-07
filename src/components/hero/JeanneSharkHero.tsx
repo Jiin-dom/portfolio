@@ -134,14 +134,16 @@ function JeanneSharkStage() {
       const applyProgress = (p: number) => {
         layoutHome();
         const sr = stageRect();
-        const cx = sr.width * 0.5;
-        const cy = sr.height * 0.4;
-        const spanX = Math.min(sr.width * 0.4, 460);
-        const spanY = Math.min(sr.height * 0.28, 240);
+        const cx = sr.width * 0.58;
+        const cy = sr.height * 0.38;
+        // Compact formation so the chonk silhouette stays on-screen
+        const spanX = Math.min(sr.width * 0.28, 300);
+        const spanY = Math.min(sr.height * 0.2, 170);
 
-        const morph = Math.min(1, Math.max(0, p / 0.55));
+        // Morph finishes early; remainder of pin is swim / chase
+        const morph = Math.min(1, Math.max(0, p / 0.32));
         const eased = morph * morph * (3 - 2 * morph);
-        swimMixRef.current = Math.min(1, Math.max(0, (p - 0.38) / 0.62));
+        swimMixRef.current = Math.min(1, Math.max(0, (p - 0.28) / 0.5));
 
         measure.style.opacity = String(Math.max(0, 1 - eased * 1.4));
         measure.style.visibility = eased > 0.95 ? "hidden" : "visible";
