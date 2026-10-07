@@ -41,4 +41,7 @@ export const JEFF_LETTER_POSE: readonly LetterPose[] = [
 
 export const JEFF_CHARS = ["J", "e", "a", "n", "n", "e"] as const;
 
+/** three.js FontLoader typeface for extruded TextGeometry letters */
+export const TEXT3D_FONT_URL = "/fonts/helvetiker_bold.typeface.json";
+
 export const BRICOLAGE_FONT_URL = "/fonts/BricolageGrotesque.ttf";
