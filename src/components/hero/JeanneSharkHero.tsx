@@ -1,39 +1,18 @@
 "use client";
 
-import { useMemo, useRef, useSyncExternalStore } from "react";
+import { useRef, useSyncExternalStore } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { site } from "@/lib/content";
-import { charForSlot, SHARK_BODY } from "@/lib/jeanneSharkShape";
+import { JEANNE_CHARS, JEFF_POSE } from "@/lib/jeanneSharkShape";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const HERO_NAME = "Jeanne";
-const LETTER_COUNT = SHARK_BODY.length;
-
-type LetterEl = HTMLSpanElement;
 
 function subscribeClientReady() {
   return () => {};
-}
-
-function getClientReady() {
-  return true;
-}
-
-function getServerReady() {
-  return false;
-}
-
-function subscribeReducedMotion(onStoreChange: () => void) {
-  const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-  mq.addEventListener("change", onStoreChange);
-  return () => mq.removeEventListener("change", onStoreChange);
-}
-
-function getReducedMotion() {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 function StaticOpening() {
@@ -65,14 +44,17 @@ function StaticOpening() {
 }
 
 export function JeanneSharkHero() {
-  const ready = useSyncExternalStore(subscribeClientReady, getClientReady, getServerReady);
+  const ready = useSyncExternalStore(subscribeClientReady, () => true, () => false);
   const reducedMotion = useSyncExternalStore(
-    subscribeReducedMotion,
-    getReducedMotion,
+    (cb) => {
+      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+      mq.addEventListener("change", cb);
+      return () => mq.removeEventListener("change", cb);
+    },
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     () => false,
   );
 
-  // SSR + hydration always render StaticOpening; interactive stage mounts after.
   if (!ready || reducedMotion) {
     return <StaticOpening />;
   }
@@ -85,159 +67,186 @@ function JeanneSharkStage() {
   const pinRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
-  const letterRefs = useRef<(LetterEl | null)[]>([]);
+  const flockRef = useRef<HTMLDivElement>(null);
+  const letterRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const pointer = useRef({ x: 0, y: 0, active: false });
-  const swim = useRef({ x: 0, y: 0, rot: 0 });
-  const raf = useRef(0);
+  const flock = useRef({ x: 0, y: 0, rot: 0, bounce: 0 });
   const swimMixRef = useRef(0);
-
-  const slots = useMemo(
-    () =>
-      Array.from({ length: LETTER_COUNT }, (_, i) => ({
-        char: charForSlot(i),
-      })),
-    [],
-  );
+  const raf = useRef(0);
+  const letterBases = useRef<string[]>(Array(6).fill(""));
 
   useGSAP(
     () => {
       const pin = pinRef.current;
       const stage = stageRef.current;
       const measure = measureRef.current;
-      if (!pin || !stage || !measure) return;
+      const flockEl = flockRef.current;
+      if (!pin || !stage || !measure || !flockEl) return;
 
-      const letters = letterRefs.current.filter(Boolean) as LetterEl[];
-      if (letters.length !== LETTER_COUNT) return;
+      const letters = letterRefs.current.filter(Boolean) as HTMLSpanElement[];
+      if (letters.length !== 6) return;
 
       const stageRect = () => stage.getBoundingClientRect();
 
-      const layoutHome = () => {
-        const anchors = measure.querySelectorAll<HTMLElement>("[data-measure-char]");
-        letters.forEach((el, i) => {
-          const anchor =
-            i < HERO_NAME.length
-              ? anchors[i]
-              : (anchors[2] ?? anchors[0]);
-          if (!anchor) return;
-          const r = anchor.getBoundingClientRect();
-          const sr = stageRect();
-          el.dataset.baseX = String(r.left + r.width / 2 - sr.left);
-          el.dataset.baseY = String(r.top + r.height / 2 - sr.top);
-          el.dataset.baseRot = "0";
-          el.dataset.baseScale = i < HERO_NAME.length ? "1" : "0.35";
-        });
+      type Home = {
+        x: number;
+        y: number;
+        rot: number;
+        scaleX: number;
+        scaleY: number;
+        skewX: number;
+        wdth: number;
+        wght: number;
       };
 
-      const setTransform = (
-        el: LetterEl,
-        x: number,
-        y: number,
-        rot: number,
-        scale: number,
-      ) => {
-        const base = `translate(${x}px, ${y}px) translate(-50%, -50%) rotate(${rot}rad) scale(${scale})`;
-        el.dataset.baseTransform = base;
-        const mix = swimMixRef.current;
-        const tailBoost = Number(el.dataset.tailBoost || 0);
-        const wiggle =
-          Math.sin(performance.now() * 0.004 + Number(el.dataset.wigglePhase || 0)) *
-          0.05 *
-          mix *
-          tailBoost;
-        el.style.transform = `${base} translate(${swim.current.x * mix}px, ${swim.current.y * mix}px) rotate(${swim.current.rot * mix + wiggle}rad)`;
+      const homes: Home[] = letters.map(() => ({
+        x: 0,
+        y: 0,
+        rot: 0,
+        scaleX: 1,
+        scaleY: 1,
+        skewX: 0,
+        wdth: 90,
+        wght: 600,
+      }));
+
+      const layoutHome = () => {
+        const anchors = measure.querySelectorAll<HTMLElement>("[data-measure-char]");
+        const sr = stageRect();
+        letters.forEach((el, i) => {
+          const anchor = anchors[i];
+          if (!anchor) return;
+          const r = anchor.getBoundingClientRect();
+          homes[i] = {
+            x: r.left + r.width / 2 - sr.left,
+            y: r.top + r.height / 2 - sr.top,
+            rot: 0,
+            scaleX: 1,
+            scaleY: 1,
+            skewX: 0,
+            wdth: 90,
+            wght: 600,
+          };
+          el.style.fontSize = getComputedStyle(anchor).fontSize;
+        });
       };
 
       const applyProgress = (p: number) => {
         layoutHome();
         const sr = stageRect();
-        const cx = sr.width * 0.54;
-        const cy = sr.height * 0.38;
-        const spanX = Math.min(sr.width * 0.44, 540);
-        const spanY = Math.min(sr.height * 0.3, 300);
+        const cx = sr.width * 0.5;
+        const cy = sr.height * 0.4;
+        const spanX = Math.min(sr.width * 0.4, 460);
+        const spanY = Math.min(sr.height * 0.28, 240);
 
-        const morph = Math.min(1, Math.max(0, p / 0.58));
-        swimMixRef.current = Math.min(1, Math.max(0, (p - 0.42) / 0.58));
+        const morph = Math.min(1, Math.max(0, p / 0.55));
+        const eased = morph * morph * (3 - 2 * morph);
+        swimMixRef.current = Math.min(1, Math.max(0, (p - 0.38) / 0.62));
+
+        measure.style.opacity = String(Math.max(0, 1 - eased * 1.4));
+        measure.style.visibility = eased > 0.95 ? "hidden" : "visible";
 
         letters.forEach((el, i) => {
-          const homeX = Number(el.dataset.baseX || 0);
-          const homeY = Number(el.dataset.baseY || 0);
-          const homeRot = Number(el.dataset.baseRot || 0);
-          const homeScale = Number(el.dataset.baseScale || 1);
+          const home = homes[i]!;
+          const pose = JEFF_POSE[i]!;
 
-          const target = SHARK_BODY[i]!;
-          const tx = cx + target.x * spanX;
-          const ty = cy - target.y * spanY;
+          const angle = (i / 6) * Math.PI * 2 + eased * Math.PI;
+          const swirlR = (1 - eased) * Math.min(spanX, spanY) * 0.4;
+          const swirlX = cx + Math.cos(angle) * swirlR;
+          const swirlY = cy + Math.sin(angle) * swirlR * 0.65;
 
-          const eased = morph * morph * (3 - 2 * morph);
-          const angle = (i / letters.length) * Math.PI * 2;
-          const swirlX = cx + Math.cos(angle + eased * 2) * spanX * 0.14 * (1 - eased);
-          const swirlY = cy + Math.sin(angle + eased * 2) * spanY * 0.14 * (1 - eased);
+          const tx = cx + pose.x * spanX;
+          const ty = cy - pose.y * spanY;
 
-          let x = homeX + (swirlX - homeX) * eased * 0.45;
-          let y = homeY + (swirlY - homeY) * eased * 0.45;
-          x += (tx - x) * eased;
-          y += (ty - y) * eased;
+          const x =
+            home.x +
+            (swirlX - home.x) * Math.min(1, eased * 1.15) * 0.45 +
+            (tx - home.x) * eased;
+          const y =
+            home.y +
+            (swirlY - home.y) * Math.min(1, eased * 1.15) * 0.45 +
+            (ty - home.y) * eased;
 
-          const rot = homeRot + (target.rot - homeRot) * eased;
-          const scale = homeScale + (target.scale - homeScale) * eased;
+          const rot = home.rot + (pose.rot - home.rot) * eased;
+          const scaleX = home.scaleX + (pose.scaleX - home.scaleX) * eased;
+          const scaleY = home.scaleY + (pose.scaleY - home.scaleY) * eased;
+          const skewX = home.skewX + (pose.skewX - home.skewX) * eased;
+          const wdth = home.wdth + (pose.wdth - home.wdth) * eased;
+          const wght = home.wght + (pose.wght - home.wght) * eased;
 
-          const opacity =
-            i < HERO_NAME.length ? 1 : Math.min(1, Math.max(0, (eased - 0.12) * 1.35));
+          el.style.zIndex = String(pose.z);
+          el.style.opacity = "1";
+          el.style.color = i === 0 || i === 2 ? "var(--ember)" : "var(--bone)";
 
-          el.style.opacity = String(opacity);
-          el.dataset.tailBoost = String(i >= LETTER_COUNT - 10 ? 1.4 : 0.35);
-          el.dataset.wigglePhase = String(i * 0.4);
-
-          // Fade the static measure name as letters take over
-          measure.style.opacity = String(Math.max(0, 1 - eased * 1.2));
-
-          setTransform(el, x, y, rot, scale);
+          const base = `translate(${x}px, ${y}px) translate(-50%, -50%) rotate(${rot}rad) skewX(${skewX}deg) scale(${scaleX}, ${scaleY})`;
+          letterBases.current[i] = base;
+          el.style.transform = base;
+          el.style.fontVariationSettings = `"opsz" 96, "wdth" ${wdth.toFixed(0)}, "wght" ${wght.toFixed(0)}`;
         });
       };
 
       const st = ScrollTrigger.create({
         trigger: pin,
         start: "top top",
-        end: "+=130%",
+        end: "+=140%",
         pin: true,
-        scrub: 0.5,
+        scrub: 0.55,
         anticipatePin: 1,
         onUpdate: (self) => applyProgress(self.progress),
       });
 
       layoutHome();
       applyProgress(0);
-      // Show measure name until letters have laid out
-      measure.style.opacity = "1";
 
       const ro = new ResizeObserver(() => applyProgress(st.progress));
       ro.observe(measure);
 
       const tick = () => {
         const mix = swimMixRef.current;
+        const sr = stageRect();
+
         if (mix > 0.05 && pointer.current.active) {
-          const sr = stageRect();
-          const targetX = pointer.current.x - sr.width * 0.52;
-          const targetY = pointer.current.y - sr.height * 0.48;
-          swim.current.x += (targetX - swim.current.x) * 0.065;
-          swim.current.y += (targetY - swim.current.y) * 0.065;
-          swim.current.rot += (targetX * 0.0001 - swim.current.rot) * 0.09;
+          const targetX = pointer.current.x - sr.width * 0.5;
+          const targetY = pointer.current.y - sr.height * 0.4;
+          flock.current.x += (targetX - flock.current.x) * 0.075;
+          flock.current.y += (targetY - flock.current.y) * 0.075;
+          const facing = Math.atan2(
+            targetY - flock.current.y,
+            targetX - flock.current.x,
+          );
+          flock.current.rot += (facing * 0.12 - flock.current.rot) * 0.09;
         } else {
-          swim.current.x *= 0.9;
-          swim.current.y *= 0.9;
-          swim.current.rot *= 0.88;
+          flock.current.x *= 0.9;
+          flock.current.y *= 0.9;
+          flock.current.rot *= 0.88;
         }
 
-        letters.forEach((el) => {
-          const base = el.dataset.baseTransform;
+        const speed = Math.hypot(
+          pointer.current.x - sr.width * 0.5 - flock.current.x,
+          pointer.current.y - sr.height * 0.4 - flock.current.y,
+        );
+        const bounceTarget =
+          mix > 0.1 && pointer.current.active
+            ? Math.sin(performance.now() * 0.014) * Math.min(12, speed * 0.045)
+            : 0;
+        flock.current.bounce += (bounceTarget - flock.current.bounce) * 0.18;
+
+        flockEl.style.transform = `translate3d(${flock.current.x * mix}px, ${flock.current.y * mix + flock.current.bounce}px, 0) rotate(${flock.current.rot * mix}rad)`;
+
+        // Tail sway + opposite-phase stubby legs (Jeff waddle)
+        const t = performance.now();
+        letters.forEach((el, i) => {
+          const base = letterBases.current[i];
           if (!base) return;
-          const tailBoost = Number(el.dataset.tailBoost || 0);
-          const wiggle =
-            Math.sin(performance.now() * 0.004 + Number(el.dataset.wigglePhase || 0)) *
-            0.05 *
-            mix *
-            tailBoost;
-          el.style.transform = `${base} translate(${swim.current.x * mix}px, ${swim.current.y * mix}px) rotate(${swim.current.rot * mix + wiggle}rad)`;
+          let extra = "";
+          if (i === 5 && mix > 0.15) {
+            const w = Math.sin(t * 0.011) * 0.18 * mix;
+            extra = ` rotate(${w}rad)`;
+          } else if ((i === 3 || i === 4) && mix > 0.15) {
+            const phase = Math.sin(t * 0.014 + (i === 3 ? 0 : Math.PI));
+            extra = ` translateY(${phase * 6 * mix}px)`;
+          }
+          el.style.transform = base + extra;
         });
 
         raf.current = requestAnimationFrame(tick);
@@ -297,25 +306,23 @@ function JeanneSharkStage() {
           </div>
 
           <div ref={stageRef} className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-            {slots.map((slot, i) => (
-              <span
-                key={`${slot.char}-${i}`}
-                ref={(el) => {
-                  letterRefs.current[i] = el;
-                }}
-                className="absolute left-0 top-0 select-none font-semibold text-bone will-change-transform"
-                style={{
-                  fontSize: "clamp(2.75rem, 9vw, 6.5rem)",
-                  lineHeight: 1,
-                  letterSpacing: "-0.05em",
-                  fontVariationSettings: '"opsz" 96, "wdth" 92, "wght" 700',
-                  color: i % 5 === 0 ? "var(--ember)" : undefined,
-                  opacity: i < HERO_NAME.length ? 1 : 0,
-                }}
-              >
-                {slot.char}
-              </span>
-            ))}
+            <div ref={flockRef} className="absolute inset-0 will-change-transform">
+              {JEANNE_CHARS.map((char, i) => (
+                <span
+                  key={`${char}-${i}`}
+                  ref={(el) => {
+                    letterRefs.current[i] = el;
+                  }}
+                  className="absolute left-0 top-0 select-none font-semibold leading-none text-bone will-change-transform"
+                  style={{
+                    letterSpacing: "-0.06em",
+                    fontVariationSettings: '"opsz" 96, "wdth" 90, "wght" 600',
+                  }}
+                >
+                  {char}
+                </span>
+              ))}
+            </div>
           </div>
 
           <div className="relative z-20 mt-auto flex max-w-3xl flex-col gap-8 md:flex-row md:items-end md:justify-between">
@@ -336,7 +343,7 @@ function JeanneSharkStage() {
           </div>
 
           <p className="meta-type relative z-20 mt-8 text-bone-soft">
-            Scroll — Jeanne swirls into a land shark
+            Scroll — Jeanne becomes a land shark
           </p>
 
           <div
