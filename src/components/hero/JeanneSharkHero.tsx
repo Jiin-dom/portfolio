@@ -1,21 +1,28 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRef, useSyncExternalStore } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { site } from "@/lib/content";
 import {
-  JEFF_FILL_RULE,
-  JEFF_LETTER_SEATS,
-  JEFF_PATH,
-  JEFF_VIEWBOX,
-} from "@/lib/jeffSilhouette";
+  JEANNE_HOME,
+  JEFF_LETTER_POSE,
+  type LetterPose,
+} from "@/lib/jeffLetterPose";
+import type { SharkDrive } from "@/components/hero/JeffLetterShark3D";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const HERO_NAME = "Jeanne";
 const CHARS = HERO_NAME.split("");
+
+const JeffLetterShark3D = dynamic(
+  () =>
+    import("@/components/hero/JeffLetterShark3D").then((m) => m.JeffLetterShark3D),
+  { ssr: false },
+);
 
 function StaticOpening() {
   return (
@@ -45,6 +52,17 @@ function StaticOpening() {
   );
 }
 
+function canUseWebGL(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const canvas = document.createElement("canvas");
+    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+    return Boolean(gl);
+  } catch {
+    return false;
+  }
+}
+
 export function JeanneSharkHero() {
   const ready = useSyncExternalStore(
     () => () => {},
@@ -60,225 +78,128 @@ export function JeanneSharkHero() {
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     () => false,
   );
+  const webgl = useSyncExternalStore(
+    () => () => {},
+    canUseWebGL,
+    () => false,
+  );
 
   if (!ready || reducedMotion) return <StaticOpening />;
-  return <JeanneSharkStage />;
+  return <JeanneSharkStage use3D={webgl} />;
 }
 
-function JeanneSharkStage() {
+function poseToStyle(pose: LetterPose, unit: number) {
+  return {
+    transform: `translate(${pose.x * unit}px, ${-pose.y * unit}px) rotate(${pose.rot}deg) scale(${pose.scale})`,
+  };
+}
+
+function JeanneSharkStage({ use3D }: { use3D: boolean }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
-  const flockRef = useRef<HTMLDivElement>(null);
-  const bodyRef = useRef<SVGPathElement>(null);
+  const fallbackRef = useRef<HTMLDivElement>(null);
+  const canvasHostRef = useRef<HTMLDivElement>(null);
   const letterRefs = useRef<(HTMLSpanElement | null)[]>([]);
-  const pointer = useRef({ x: 0, y: 0, active: false });
-  const flockPos = useRef({ x: 0, y: 0, rot: 0, bounce: 0 });
-  const restPos = useRef({ x: 0, y: 0 });
-  const morphRef = useRef(0);
-  const swimMixRef = useRef(0);
-  const raf = useRef(0);
-  const homeCache = useRef<{ x: number; y: number; size: string }[]>(
-    Array.from({ length: 6 }, () => ({ x: 0, y: 0, size: "4rem" })),
-  );
+  const drive = useRef<SharkDrive>({
+    morph: 0,
+    pointer: { x: 0, y: 0, active: false },
+    swim: 0,
+  });
 
   useGSAP(
     () => {
       const pin = pinRef.current;
       const stage = stageRef.current;
       const measure = measureRef.current;
-      const flockEl = flockRef.current;
-      const body = bodyRef.current;
-      if (!pin || !stage || !measure || !flockEl || !body) return;
+      if (!pin || !stage || !measure) return;
 
-      const letters = letterRefs.current.filter(Boolean) as HTMLSpanElement[];
-      if (letters.length !== 6) return;
-
-      const stageRect = () => stage.getBoundingClientRect();
-
-      /** Pixel size of the Jeff SVG on screen — large enough to read at a glance */
-      const sharkScale = () => Math.min(stageRect().width * 0.72, 640) / JEFF_VIEWBOX.w;
-
-      const layoutHome = () => {
-        const anchors = measure.querySelectorAll<HTMLElement>("[data-measure-char]");
-        const sr = stageRect();
-        letters.forEach((_, i) => {
-          const anchor = anchors[i];
-          if (!anchor) return;
-          const r = anchor.getBoundingClientRect();
-          homeCache.current[i] = {
-            x: r.left + r.width / 2 - sr.left,
-            y: r.top + r.height / 2 - sr.top,
-            size: getComputedStyle(anchor).fontSize,
-          };
-        });
-        // Park Jeff mid-viewport — silhouette must read as one composition
-        restPos.current = {
-          x: sr.width * 0.5,
-          y: sr.height * 0.46,
-        };
-        if (flockPos.current.x === 0 && flockPos.current.y === 0) {
-          flockPos.current.x = restPos.current.x;
-          flockPos.current.y = restPos.current.y;
-        }
-      };
-
-      // animate / emil: ease-out for entrance, ease-in-out for on-screen morph
       const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
       const easeInOut = (t: number) =>
         t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
       const applyProgress = (p: number) => {
-        layoutHome();
-        // Shape first: body locks fully before any letter motion
-        const bodyT = Math.min(1, Math.max(0, p / 0.14));
-        const bodyEase = easeOut(bodyT);
-        const letterT = Math.min(1, Math.max(0, (p - 0.2) / 0.22));
-        const letterEase = easeInOut(letterT);
-        morphRef.current = letterEase;
-        swimMixRef.current = Math.min(1, Math.max(0, (p - 0.38) / 0.4));
+        const morphT = Math.min(1, Math.max(0, p / 0.32));
+        const morph = easeInOut(morphT);
+        drive.current.morph = morph;
+        drive.current.swim = Math.min(1, Math.max(0, (p - 0.28) / 0.45));
 
-        measure.style.opacity = String(Math.max(0, 1 - bodyEase * 1.5));
-        measure.style.visibility = bodyEase > 0.92 ? "hidden" : "visible";
+        const fade = easeOut(Math.min(1, morph * 1.4));
+        measure.style.opacity = String(Math.max(0, 1 - fade));
+        measure.style.visibility = fade > 0.92 ? "hidden" : "visible";
         const sub = measure.parentElement?.querySelector<HTMLElement>("[data-measure-sub]");
         if (sub) {
-          sub.style.opacity = String(Math.max(0, 1 - bodyEase * 1.5));
-          sub.style.visibility = bodyEase > 0.92 ? "hidden" : "visible";
+          sub.style.opacity = String(Math.max(0, 1 - fade));
+          sub.style.visibility = fade > 0.92 ? "hidden" : "visible";
+        }
+        if (canvasHostRef.current) {
+          const show = Math.min(1, Math.max(0, (morph - 0.08) / 0.22));
+          canvasHostRef.current.style.opacity = String(show);
+          canvasHostRef.current.style.visibility = show < 0.02 ? "hidden" : "visible";
         }
 
-        // Silhouette fades in first — shark must read before letters arrive
-        body.style.opacity = String(bodyEase);
-
-        const s = sharkScale();
-        const svgW = JEFF_VIEWBOX.w * s;
-        const svgH = JEFF_VIEWBOX.h * s;
-
-        flockEl.style.width = `${svgW}px`;
-        flockEl.style.height = `${svgH}px`;
-        flockEl.style.marginLeft = `${-svgW / 2}px`;
-        flockEl.style.marginTop = `${-svgH / 2}px`;
-
-        if (letterEase < 0.95) {
-          flockPos.current.x += (restPos.current.x - flockPos.current.x) * 0.25;
-          flockPos.current.y += (restPos.current.y - flockPos.current.y) * 0.25;
+        // DOM fallback letters (also used under 3D as progressive enhancement base)
+        if (!use3D) {
+          const unit = Math.min(stage.getBoundingClientRect().width, 900) * 0.11;
+          letterRefs.current.forEach((el, i) => {
+            if (!el) return;
+            const home = JEANNE_HOME[i]!;
+            const shark = JEFF_LETTER_POSE[i]!;
+            const pose: LetterPose = {
+              char: home.char,
+              x: home.x + (shark.x - home.x) * morph,
+              y: home.y + (shark.y - home.y) * morph,
+              z: 0,
+              rot: home.rot + (shark.rot - home.rot) * morph,
+              rotY: 0,
+              scale: home.scale + (shark.scale - home.scale) * morph,
+            };
+            Object.assign(el.style, {
+              ...poseToStyle(pose, unit),
+              fontSize: `${Math.max(28, unit * 0.95)}px`,
+              opacity: "1",
+              color: "var(--bone)",
+            });
+          });
         }
-
-        letters.forEach((el, i) => {
-          const home = homeCache.current[i]!;
-          const seat = JEFF_LETTER_SEATS[i]!;
-
-          const seatX = seat.x * s;
-          const seatY = seat.y * s;
-
-          const homeLocalX = home.x - flockPos.current.x + svgW / 2;
-          const homeLocalY = home.y - flockPos.current.y + svgH / 2;
-
-          // Hold at home until body is solid, then glide into seats
-          const x = homeLocalX * (1 - letterEase) + seatX * letterEase;
-          const y = homeLocalY * (1 - letterEase) + seatY * letterEase;
-
-          const rot = ((seat.rot * Math.PI) / 180) * letterEase;
-          const scale = 1 + (seat.scale - 1) * letterEase;
-
-          el.style.fontSize =
-            letterEase > 0.35 ? `${Math.max(26, 40 * s * seat.scale)}px` : home.size;
-          // Void punch-outs only on solid bone body
-          el.style.color = letterEase > 0.25 ? "var(--void)" : "var(--bone)";
-          // Invisible while silhouette claims the frame; fade in as seats fill
-          el.style.opacity = String(
-            bodyEase < 0.95
-              ? Math.max(0, 1 - bodyEase) * Math.max(0, 1 - letterEase)
-              : letterEase,
-          );
-          el.style.zIndex = String(10 + i);
-          el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%) rotate(${rot}rad) scale(${scale})`;
-          el.style.fontVariationSettings = `"opsz" 96, "wdth" ${90 + 10 * letterEase}, "wght" ${600 + 200 * letterEase}`;
-          el.style.webkitTextStroke = "0px transparent";
-        });
-
-        flockEl.style.transform = `translate3d(${flockPos.current.x}px, ${flockPos.current.y}px, 0)`;
       };
 
       const st = ScrollTrigger.create({
         trigger: pin,
         start: "top top",
-        end: "+=140%",
+        end: "+=150%",
         pin: true,
-        scrub: 0.5,
+        scrub: 0.55,
         anticipatePin: 1,
         onUpdate: (self) => applyProgress(self.progress),
       });
 
-      layoutHome();
       applyProgress(0);
 
-      const ro = new ResizeObserver(() => applyProgress(st.progress));
-      ro.observe(measure);
-
-      const tick = () => {
-        const mix = swimMixRef.current;
-        const sr = stageRect();
-        const pad = 160;
-        const minX = pad;
-        const maxX = sr.width - pad;
-        const minY = pad;
-        const maxY = sr.height - pad;
-
-        if (mix > 0.05 && pointer.current.active) {
-          const tx = Math.min(maxX, Math.max(minX, pointer.current.x));
-          const ty = Math.min(maxY, Math.max(minY, pointer.current.y));
-          flockPos.current.x += (tx - flockPos.current.x) * 0.08;
-          flockPos.current.y += (ty - flockPos.current.y) * 0.08;
-          const dx = tx - flockPos.current.x;
-          const dy = ty - flockPos.current.y;
-          flockPos.current.rot += (Math.atan2(dy, dx) * 0.2 - flockPos.current.rot) * 0.1;
-          const speed = Math.hypot(dx, dy);
-          const bounceTarget =
-            Math.sin(performance.now() * 0.014) * Math.min(12, speed * 0.07);
-          flockPos.current.bounce += (bounceTarget - flockPos.current.bounce) * 0.2;
-        } else if (mix <= 0.05) {
-          flockPos.current.x += (restPos.current.x - flockPos.current.x) * 0.12;
-          flockPos.current.y += (restPos.current.y - flockPos.current.y) * 0.12;
-          flockPos.current.rot *= 0.85;
-          flockPos.current.bounce *= 0.85;
-        } else {
-          flockPos.current.rot *= 0.9;
-          flockPos.current.bounce *= 0.85;
-        }
-
-        // Tail wag via SVG path slight scale — bounce the whole Jeff
-        flockEl.style.transform = `translate3d(${flockPos.current.x}px, ${flockPos.current.y + flockPos.current.bounce * mix}px, 0) rotate(${flockPos.current.rot * mix}rad)`;
-
-        raf.current = requestAnimationFrame(tick);
-      };
-      raf.current = requestAnimationFrame(tick);
-
       const onMove = (e: PointerEvent) => {
-        const sr = stageRect();
-        pointer.current.x = e.clientX - sr.left;
-        pointer.current.y = e.clientY - sr.top;
-        pointer.current.active = true;
+        const r = stage.getBoundingClientRect();
+        // NDC-ish → scene units
+        drive.current.pointer.x = ((e.clientX - r.left) / r.width - 0.5) * 5.5;
+        drive.current.pointer.y = -((e.clientY - r.top) / r.height - 0.5) * 3.2;
+        drive.current.pointer.active = true;
       };
-
       window.addEventListener("pointermove", onMove, { passive: true });
       window.addEventListener("blur", () => {
-        pointer.current.active = false;
+        drive.current.pointer.active = false;
       });
 
       return () => {
-        cancelAnimationFrame(raf.current);
-        ro.disconnect();
         st.kill();
         window.removeEventListener("pointermove", onMove);
       };
     },
-    { scope: rootRef },
+    { scope: rootRef, dependencies: [use3D] },
   );
 
   return (
     <div ref={rootRef}>
-      <div ref={pinRef} className="relative h-[220vh]">
+      <div ref={pinRef} className="relative h-[230vh]">
         <div className="sticky top-0 flex min-h-[100dvh] flex-col justify-end overflow-hidden pb-16 pt-28 md:pb-24 md:pt-32">
           <p className="meta-type relative z-20 mb-6 max-w-[20rem] text-ember">
             Portfolio / 2026
@@ -294,7 +215,7 @@ function JeanneSharkStage() {
               aria-hidden="true"
             >
               {CHARS.map((c, i) => (
-                <span key={`m-${c}-${i}`} data-measure-char className="inline-block">
+                <span key={`m-${c}-${i}`} className="inline-block">
                   {c}
                 </span>
               ))}
@@ -308,43 +229,59 @@ function JeanneSharkStage() {
             </p>
           </div>
 
-          <div ref={stageRef} className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-            <div
-              ref={flockRef}
-              className="absolute left-0 top-0 will-change-transform"
-              style={{ transformOrigin: "center center" }}
-            >
-              <svg
-                viewBox={`0 0 ${JEFF_VIEWBOX.w} ${JEFF_VIEWBOX.h}`}
-                className="absolute inset-0 h-full w-full overflow-visible"
-                aria-hidden="true"
+          <div
+            ref={stageRef}
+            className="pointer-events-none absolute inset-0 z-30"
+            aria-hidden="true"
+          >
+            {use3D ? (
+              <div
+                ref={canvasHostRef}
+                className="absolute inset-0"
+                style={{ opacity: 0, visibility: "hidden" }}
               >
-                <path
-                  ref={bodyRef}
-                  d={JEFF_PATH}
-                  fill="var(--bone)"
-                  fillRule={JEFF_FILL_RULE}
-                  opacity={0}
-                />
-              </svg>
-
-              {CHARS.map((char, i) => (
-                <span
-                  key={`${char}-${i}`}
-                  ref={(el) => {
-                    letterRefs.current[i] = el;
-                  }}
-                  className="absolute left-0 top-0 select-none font-semibold leading-none text-bone will-change-transform"
-                  style={{
-                    letterSpacing: "-0.06em",
-                    fontVariationSettings: '"opsz" 96, "wdth" 90, "wght" 700',
-                  }}
-                >
-                  {char}
-                </span>
-              ))}
-            </div>
+                <JeffLetterShark3D drive={drive} active />
+              </div>
+            ) : (
+              <div
+                ref={fallbackRef}
+                className="absolute left-1/2 top-[46%] -translate-x-1/2 -translate-y-1/2"
+                style={{ filter: "url(#jeff-goo)" }}
+              >
+                {CHARS.map((char, i) => (
+                  <span
+                    key={`${char}-${i}`}
+                    ref={(el) => {
+                      letterRefs.current[i] = el;
+                    }}
+                    className="absolute left-0 top-0 origin-center select-none font-semibold leading-none text-bone will-change-transform"
+                    style={{
+                      letterSpacing: "-0.06em",
+                      fontVariationSettings: '"opsz" 96, "wdth" 95, "wght" 800',
+                    }}
+                  >
+                    {char}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
+
+          {/* Gooey filter for DOM fallback — fuses letters into one silhouette mass */}
+          <svg width="0" height="0" className="absolute" aria-hidden="true">
+            <defs>
+              <filter id="jeff-goo">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
+                <feColorMatrix
+                  in="blur"
+                  mode="matrix"
+                  values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10"
+                  result="goo"
+                />
+                <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+              </filter>
+            </defs>
+          </svg>
 
           <div className="relative z-20 mt-auto flex max-w-3xl flex-col gap-8 md:flex-row md:items-end md:justify-between">
             <p id="opening-role" className="m-0 max-w-[36ch] text-lg text-bone-soft md:text-xl">
@@ -366,11 +303,6 @@ function JeanneSharkStage() {
           <p className="meta-type relative z-20 mt-8 text-bone-soft">
             Scroll — Jeanne becomes a land shark
           </p>
-
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-px bg-[var(--line)]"
-          />
         </div>
       </div>
     </div>

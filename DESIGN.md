@@ -59,7 +59,7 @@ Animate only: `transform`, `opacity`, `clip-path`, `font-variation-settings`.
 
 Signature systems:
 
-1. **Jeanne → Jeff land shark** — scroll pin fades a filled Jeff SVG silhouette first (big round head, grin cutout, swept dorsal, stubby legs, short tail), then seats the six letters of “Jeanne” (no repeats) as void punch-outs; flock waddles toward the cursor. Shape before letters — no mid-morph letter pile.
+1. **Jeanne → Jeff land shark** — scroll pin morphs the six letters of “Jeanne” (no repeats) into a 3D letter-formed Jeff (R3F + drei `Text3D` / three.js). Letter anatomy: **e** = head, **J** = jaw, **a** = dorsal, **n/n** = stubby legs, **e** = tail. DOM gooey fallback when WebGL is unavailable. Flock waddles toward the cursor after the pose locks.
 2. **Scroll-choreographed chapters** — GSAP RevealLine masks + Education weight/width scrub
 3. **Title → preview reveal** — hover/focus clipped wipe of project screenshots
 4. **WebGL letterfield** — R3F spatial years on Experience with static fallback
