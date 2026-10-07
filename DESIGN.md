@@ -59,7 +59,7 @@ Animate only: `transform`, `opacity`, `clip-path`, `font-variation-settings`.
 
 Signature systems:
 
-1. **Variable pressure type** — pointer proximity (desktop) / scroll velocity (touch) on Opening name
+1. **Jeanne → land shark** — scroll pin morphs “Jeanne” letterforms (repeated `J/e/a/n/n/e`) into a Jess-inspired land-shark silhouette, then swims toward the cursor
 2. **Scroll-choreographed chapters** — GSAP RevealLine masks + Education weight/width scrub
 3. **Title → preview reveal** — hover/focus clipped wipe of project screenshots
 4. **WebGL letterfield** — R3F spatial years on Experience with static fallback
