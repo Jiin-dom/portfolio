@@ -1,69 +1,43 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useState } from "react";
 import { site } from "@/lib/content";
+import { chapters } from "@/lib/chapters";
+import { useActiveChapter } from "@/hooks/useActiveChapter";
 import { MobileNav } from "./MobileNav";
 
-const links = [
-  { href: "#about", label: "About" },
-  { href: "#work", label: "Work" },
-  { href: "#contact", label: "Contact" },
-] as const;
-
 export function Nav() {
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 16);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const active = useActiveChapter();
+  const darkText = active === "product" || active === "contact";
 
   return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-200 ease-[var(--ease-out)] ${
-        scrolled
-          ? "bg-mist/80 shadow-[0_1px_0_var(--line)] backdrop-blur-md"
-          : "bg-transparent"
-      }`}
-      style={{ height: "var(--nav-h)" }}
-    >
+    <header className="pointer-events-none fixed inset-x-0 top-0 z-[60]" style={{ height: "var(--nav-h)" }}>
       <div className="section-pad mx-auto flex h-full max-w-[var(--max)] items-center justify-between gap-6">
         <a
-          href="#top"
-          className="relative z-50 flex items-center gap-3"
+          href="#intro"
+          className={`pointer-events-auto text-[0.8rem] font-semibold tracking-[0.18em] uppercase transition-colors ${
+            darkText ? "text-ink" : "text-cream"
+          }`}
           aria-label={`${site.shortName} home`}
         >
-          <Image
-            src="/images/jplogo.png"
-            alt=""
-            width={34}
-            height={34}
-            className="h-8 w-8 object-contain mix-blend-multiply"
-            priority
-          />
-          <span className="text-sm font-bold tracking-tight">{site.shortName}</span>
+          {site.shortName.replace(" ", "\u00A0")}
         </a>
 
-        <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
-          {links.map((link) => (
-            <a key={link.href} href={link.href} className="nav-link text-sm font-medium text-ink-soft">
-              {link.label}
+        <nav className="pointer-events-auto hidden items-center gap-9 md:flex" aria-label="Chapters">
+          {chapters.map((chapter) => (
+            <a
+              key={chapter.id}
+              href={chapter.href}
+              className={`chapter-link ${darkText ? "chapter-link-dark" : ""}`}
+              aria-current={active === chapter.id ? "page" : undefined}
+            >
+              {chapter.label}
             </a>
           ))}
-          <a
-            href={site.resume}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-ghost !min-h-10 !px-4 !py-2 text-xs"
-          >
-            Resume
-          </a>
         </nav>
 
-        <MobileNav />
+        <div className="pointer-events-auto md:hidden">
+          <MobileNav active={active} dark={darkText} />
+        </div>
       </div>
     </header>
   );

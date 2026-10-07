@@ -1,17 +1,17 @@
-# Surface brief — Home (Atelier Cobalt)
+# Surface brief — Home (Oryzo Light Desk)
 
 Mode: Experience
 
 ## Direction contract
 
-THESIS: Daylight atelier portfolio; portrait and cobalt lead; refuse the prior dark kinetic Signal Film and Bootstrap cards.
+THESIS: Copy oryzo.ai chapter structure and desk-scene craft on a light warm palette; refuse Atelier Cobalt and generic section stacks.
 
-OWN-WORLD: Cool mist paper, Manrope, cobalt `#0b3dff`, soft media radii, one ink horizontal project film.
+OWN-WORLD: Desk wood, forest mat, cork circular product frame, cream type on scene, dark glass panels, Bricolage + JetBrains Mono, INTRO/FEATURES/PRODUCT/CONTACT nav.
 
-STORY: Visitor meets JD through portrait + name, understands practice via sticky chapters, pans selected work, exits via email.
+STORY: Visitor lands in desk intro, scrubs feature glass panels over the scene, picks a project tier, exits via punchline contact.
 
-FIRST VIEWPORT: Split composition - name + line + CTAs left; full-bleed portrait right with clip reveal; no WebGL in hero.
+FIRST VIEWPORT: Full-bleed wood + cutting mat; huge JD Paloma; right body line; bottom credit glass; PiP play; right side tab; scroll hint; fixed chapter nav.
 
-FORM: Atelier Cobalt on branch `design/atelier-cobalt`; brief-pinned redesign.
+FORM: Full redesign copying Oryzo layout language; light desk variant per user.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance

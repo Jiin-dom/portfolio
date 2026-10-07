@@ -3,15 +3,15 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { site } from "@/lib/content";
+import { chapters, type ChapterId } from "@/lib/chapters";
 import { ease } from "@/lib/easings";
 
-const links = [
-  { href: "#about", label: "About" },
-  { href: "#work", label: "Work" },
-  { href: "#contact", label: "Contact" },
-] as const;
+type Props = {
+  active: ChapterId;
+  dark?: boolean;
+};
 
-export function MobileNav() {
+export function MobileNav({ active, dark }: Props) {
   const [open, setOpen] = useState(false);
   const reduce = useReducedMotion();
 
@@ -23,10 +23,12 @@ export function MobileNav() {
   }, [open]);
 
   return (
-    <div className="md:hidden">
+    <div>
       <button
         type="button"
-        className="btn btn-ghost !min-h-10 !px-4 !py-2 text-xs"
+        className={`btn !min-h-9 !px-3 !py-2 !text-[0.62rem] ${
+          dark ? "btn-ghost-ink" : "btn-ghost-cream"
+        }`}
         aria-expanded={open}
         aria-controls="mobile-menu"
         onClick={() => setOpen((v) => !v)}
@@ -38,22 +40,23 @@ export function MobileNav() {
         {open ? (
           <motion.div
             id="mobile-menu"
-            className="fixed inset-0 z-40 bg-mist/96 pt-[calc(var(--nav-h)+1.25rem)] backdrop-blur-md"
-            initial={reduce ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: ease.out }}
+            className="glass-dark fixed inset-x-4 top-[calc(var(--nav-h)+0.5rem)] z-40 rounded-md p-6"
+            initial={reduce ? false : { opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22, ease: ease.out }}
           >
-            <nav className="section-pad flex flex-col gap-1" aria-label="Mobile">
-              {links.map((link, i) => (
+            <nav className="flex flex-col gap-5" aria-label="Mobile chapters">
+              {chapters.map((link, i) => (
                 <motion.a
-                  key={link.href}
+                  key={link.id}
                   href={link.href}
-                  className="border-b border-line py-5 text-3xl font-bold tracking-tight"
+                  className="chapter-link text-sm tracking-[0.12em]"
+                  aria-current={active === link.id ? "page" : undefined}
                   onClick={() => setOpen(false)}
-                  initial={reduce ? false : { opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.22, delay: i * 0.04, ease: ease.out }}
+                  initial={reduce ? false : { opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.2, delay: i * 0.04, ease: ease.out }}
                 >
                   {link.label}
                 </motion.a>
@@ -62,7 +65,7 @@ export function MobileNav() {
                 href={site.resume}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-primary mt-6 w-fit"
+                className="btn btn-cream mt-2 w-fit"
                 onClick={() => setOpen(false)}
               >
                 Resume

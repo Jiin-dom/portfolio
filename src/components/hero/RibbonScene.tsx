@@ -6,7 +6,7 @@ import { Suspense, useRef } from "react";
 import * as THREE from "three";
 import { useReducedMotion } from "motion/react";
 
-function CobaltRibbon({ reduced }: { reduced: boolean }) {
+function StudioRibbon({ reduced }: { reduced: boolean }) {
   const mesh = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
@@ -21,11 +21,11 @@ function CobaltRibbon({ reduced }: { reduced: boolean }) {
       <mesh ref={mesh} scale={1.35}>
         <torusKnotGeometry args={[0.85, 0.28, 160, 24]} />
         <meshStandardMaterial
-          color="#0b3dff"
-          metalness={0.55}
-          roughness={0.28}
-          emissive="#0b3dff"
-          emissiveIntensity={0.18}
+          color="#3d5c45"
+          metalness={0.45}
+          roughness={0.32}
+          emissive="#e85d2c"
+          emissiveIntensity={0.12}
         />
       </mesh>
     </Float>
@@ -45,9 +45,9 @@ export function RibbonScene() {
       >
         <ambientLight intensity={0.85} />
         <directionalLight position={[3, 4, 5]} intensity={1.2} color="#ffffff" />
-        <directionalLight position={[-3, -1, 2]} intensity={0.45} color="#0b3dff" />
+        <directionalLight position={[-3, -1, 2]} intensity={0.45} color="#e85d2c" />
         <Suspense fallback={null}>
-          <CobaltRibbon reduced={reduced} />
+          <StudioRibbon reduced={reduced} />
         </Suspense>
       </Canvas>
     </div>

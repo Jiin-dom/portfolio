@@ -1,14 +1,10 @@
-# Design System — JD Paloma Portfolio (Atelier Cobalt)
+# Design System — JD Paloma Portfolio (Oryzo Light Desk)
 
 <!-- impeccable:design-schema 1 -->
 
 ## Direction
 
-**Atelier Cobalt** — Experience-mode portfolio on a daylight paper ground. Portrait-led first viewport, sticky practice chapters, horizontal project film, singular cobalt signal. Replaces the prior Signal Film (ink + acid lime) world entirely.
-
-## Branch
-
-`design/atelier-cobalt`
+**Oryzo Light Desk** — Experience-mode portfolio that copies oryzo.ai’s chapter chrome, desk-scene hero, glass feature panels, product-tier work selector, and punchline contact — on a light warm desk palette. Replaces Atelier Cobalt and the prior Light Studio Bench pass.
 
 ## Mode
 
@@ -18,60 +14,44 @@ Experience
 
 - DESIGN_VARIANCE: 9
 - MOTION_INTENSITY: 8
-- VISUAL_DENSITY: 3
+- VISUAL_DENSITY: 4
 
 ## Color
 
 | Token | Value | Role |
 | --- | --- | --- |
-| `--mist` | `#f7f9fc` | Elevated surface |
-| `--paper` | `#e9eef5` | Page ground |
-| `--paper-deep` | `#d7e0ec` | Depth / media bed |
-| `--ink` | `#10141c` | Primary text |
-| `--ink-soft` | `#3a4454` | Secondary text |
-| `--accent` | `#0b3dff` | Cobalt signal |
-| `--accent-ink` | `#f7f9fc` | Text on accent |
-| `--line` | `rgb(16 20 28 / 0.12)` | Hairlines |
-
-Theme lock: light only. Projects chapter inverts once to ink for the horizontal film (intentional color-block story).
+| `--cream` | `#fff6e8` | UI text on dark overlays / light surfaces |
+| `--cream-soft` | `#f7ecd8` | Product chapter ground |
+| `--desk` | `#e8d5b8` | Wood scene ground |
+| `--desk-deep` | `#d4bc94` | Wood depth |
+| `--mat` | `#4a6b52` | Cutting mat |
+| `--cork` | `#b8956a` | Circular product frame |
+| `--ink` | `#1c1612` | Dark text |
+| `--signal` | `#e85d2c` | Accent / hover |
+| `--glass` | `rgb(28 22 18 / 0.42)` | Frosted dark panels |
 
 ## Typography
 
-- **UI / Display:** Manrope (`next/font`)
-- **Mono labels:** IBM Plex Mono (data / category only)
-- Display tracking ≈ `-0.04em`
-- No Satoshi-as-hero, no Inter, no acid-lime kinetic all-caps stack
-
-## Shape
-
-- Controls: pill
-- Media / panels: `1.25rem` soft radius
-- Soft tinted shadows (no hard offset blocks)
-
-## Motion
-
-| Token | Value |
-| --- | --- |
-| `--ease-out` | `cubic-bezier(0.23, 1, 0.32, 1)` |
-| `--ease-in-out` | `cubic-bezier(0.77, 0, 0.175, 1)` |
-
-Signature systems:
-
-1. Hero clip-path media reveal + type entrance
-2. Sticky practice stack (What I Do)
-3. Horizontal project pan (desktop ScrollTrigger)
-4. Cobalt torus-knot R3F island in About
+- **Display / UI:** Bricolage Grotesque
+- **Mono labels:** JetBrains Mono (chapter labels, metadata, side tab)
 
 ## Layout
 
-- Split hero: name/CTA left, full-height portrait right
-- About + R3F side panel
-- Tech as soft grid (not marquee)
-- Projects as ink horizontal film
-- Contact led by giant email
+- Chapters: Intro → Features → Product → Contact (Oryzo map)
+- Fixed chapter nav with dotted active underline
+- Intro: full-bleed desk + mat + circular portrait “product”, credit glass, side tab, PiP play, scroll hint
+- Features: sticky desk scene + scrolling glass panels
+- Product: circular media, JD / JD Pro / JD Pro Max project tiers, full work list
+- Contact: punchline + email + channels
+
+## Motion
+
+- Feature panels: GSAP pin + scrub fade
+- Intro: Motion entrance
+- Lenis + ScrollTrigger sync
 
 ## Anti-patterns avoided
 
-- Dark void + acid lime Signal Film language
-- Purple AI gradients, cream + terracotta luxury default
-- Bootstrap card grids, equal feature cards in hero
+- Cool cobalt paper atelier
+- Generic card-grid portfolio hero
+- Invented commercial claims (product truth from PRODUCT.md only)

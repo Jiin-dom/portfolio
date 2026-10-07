@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
-import { Manrope, IBM_Plex_Mono } from "next/font/google";
+import { Host_Grotesk, DM_Mono } from "next/font/google";
 import { SmoothScroll } from "@/components/providers/SmoothScroll";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { site } from "@/lib/content";
 import "./globals.css";
 
-const manrope = Manrope({
-  variable: "--font-atelier",
+/* Closest free stand-in for Oryzo's Halyard Display */
+const display = Host_Grotesk({
+  variable: "--font-display",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
 });
 
-const plexMono = IBM_Plex_Mono({
+/* Oryzo uses DM Mono for micro labels */
+const mono = DM_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
   weight: ["400", "500"],
@@ -33,7 +35,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${manrope.variable} ${plexMono.variable} h-full antialiased`}>
+    <html lang="en" className={`${display.variable} ${mono.variable} h-full antialiased`}>
       <body className="site-shell flex min-h-full flex-col font-sans">
         <SmoothScroll>
           <Nav />
