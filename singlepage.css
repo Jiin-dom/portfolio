@@ -7,7 +7,7 @@
   --frame-inset: 14px;
   --frame-radius: 28px;
   --pad: clamp(1.25rem, 3.5vw, 3.5rem);
-  --font: "Satoshi", "Satoshi-Variable", system-ui, sans-serif;
+  --font: "Satoshi-Variable", "Satoshi-Regular", sans-serif;
 }
 
 *,
@@ -404,6 +404,23 @@ a {
   color: var(--text) !important;
   border-top: 1px dotted rgba(245, 241, 234, 0.35);
   padding-top: 0.55rem;
+}
+
+.hero-cta {
+  display: inline-block;
+  margin-top: 1rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--text);
+  border-bottom: 1px dotted rgba(245, 241, 234, 0.7);
+  padding-bottom: 3px;
+  transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.hero-cta:hover {
+  color: var(--orange);
+  border-bottom-color: var(--orange);
 }
 
 @keyframes rise {
