@@ -63,6 +63,11 @@ export const SHARK_BODY: SharkGlyph[] = [
   { x: -0.08, y: 0.2, rot: -0.28, scale: 0.86 },
   { x: -0.26, y: 0.14, rot: -0.2, scale: 0.84 },
   { x: -0.42, y: 0.08, rot: -0.12, scale: 0.82 },
+  // Land-shark stub legs (Jess-style grounded stance)
+  { x: 0.2, y: -0.38, rot: 0.15, scale: 0.72 },
+  { x: 0.06, y: -0.42, rot: 0.05, scale: 0.7 },
+  { x: -0.1, y: -0.4, rot: -0.08, scale: 0.7 },
+  { x: -0.24, y: -0.36, rot: -0.18, scale: 0.68 },
 ];
 
 export function charForSlot(i: number): string {

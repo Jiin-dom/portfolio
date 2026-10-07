@@ -107,7 +107,7 @@ export function JeanneSharkHero() {
         layoutHome();
         const sr = stageRect();
         const cx = sr.width * 0.54;
-        const cy = sr.height * 0.46;
+        const cy = sr.height * 0.38;
         const spanX = Math.min(sr.width * 0.44, 540);
         const spanY = Math.min(sr.height * 0.3, 300);
 
@@ -205,15 +205,15 @@ export function JeanneSharkHero() {
         pointer.current.active = false;
       };
 
-      stage.addEventListener("pointermove", onMove, { passive: true });
-      stage.addEventListener("pointerleave", onLeave);
+      window.addEventListener("pointermove", onMove, { passive: true });
+      window.addEventListener("blur", onLeave);
 
       return () => {
         cancelAnimationFrame(raf.current);
         ro.disconnect();
         st.kill();
-        stage.removeEventListener("pointermove", onMove);
-        stage.removeEventListener("pointerleave", onLeave);
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("blur", onLeave);
       };
     },
     { scope: rootRef, dependencies: [reducedMotion] },
@@ -260,11 +260,7 @@ export function JeanneSharkHero() {
             </p>
           </div>
 
-          <div
-            ref={stageRef}
-            className="pointer-events-auto absolute inset-0 z-30"
-            aria-hidden="true"
-          >
+          <div ref={stageRef} className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
             {slots.map((slot, i) => (
               <span
                 key={`${slot.char}-${i}`}
