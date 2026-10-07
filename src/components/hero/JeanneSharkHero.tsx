@@ -245,7 +245,7 @@ function JeanneSharkStage() {
           const t = performance.now();
           letters.forEach((el, i) => {
             const pose = JEFF_POSE[i]!;
-            let lx = pose.x;
+            const lx = pose.x;
             let ly = pose.y;
             let rot = pose.rot;
             if (i === 5) {
