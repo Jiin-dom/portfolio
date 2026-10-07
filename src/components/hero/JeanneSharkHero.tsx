@@ -14,21 +14,73 @@ const LETTER_COUNT = SHARK_BODY.length;
 
 type LetterEl = HTMLSpanElement;
 
+function subscribeClientReady() {
+  return () => {};
+}
+
+function getClientReady() {
+  return true;
+}
+
+function getServerReady() {
+  return false;
+}
+
+function subscribeReducedMotion(onStoreChange: () => void) {
+  const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+  mq.addEventListener("change", onStoreChange);
+  return () => mq.removeEventListener("change", onStoreChange);
+}
+
 function getReducedMotion() {
-  if (typeof window === "undefined") return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-function subscribeReduced() {
-  if (typeof window === "undefined") return () => {};
-  const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const fn = () => {};
-  mq.addEventListener("change", fn);
-  return () => mq.removeEventListener("change", fn);
+function StaticOpening() {
+  return (
+    <div className="section-pad flex min-h-[100dvh] flex-col justify-end pb-16 pt-28 md:pb-24 md:pt-32">
+      <p className="meta-type mb-6 max-w-[20rem] text-ember">Portfolio / 2026</p>
+      <h1 id="opening-name" className="display-type mb-2 max-w-[14ch] text-bone">
+        Jeanne
+      </h1>
+      <p className="title-type m-0 mb-8 text-bone-soft">Dominique Paloma</p>
+      <div className="flex max-w-3xl flex-col gap-8 md:flex-row md:items-end md:justify-between">
+        <p id="opening-role" className="m-0 max-w-[36ch] text-lg text-bone-soft md:text-xl">
+          {site.role}
+        </p>
+        <div className="flex flex-wrap gap-x-8 gap-y-3">
+          <a href="#experience" className="magnetic-link meta-type text-bone">
+            Experience
+          </a>
+          <a href="#work" className="magnetic-link meta-type text-bone">
+            Selected work
+          </a>
+          <a href="#contact" className="magnetic-link meta-type text-ember">
+            Contact
+          </a>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function JeanneSharkHero() {
-  const reducedMotion = useSyncExternalStore(subscribeReduced, getReducedMotion, () => false);
+  const ready = useSyncExternalStore(subscribeClientReady, getClientReady, getServerReady);
+  const reducedMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotion,
+    () => false,
+  );
+
+  // SSR + hydration always render StaticOpening; interactive stage mounts after.
+  if (!ready || reducedMotion) {
+    return <StaticOpening />;
+  }
+
+  return <JeanneSharkStage />;
+}
+
+function JeanneSharkStage() {
   const rootRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -57,28 +109,20 @@ export function JeanneSharkHero() {
       const letters = letterRefs.current.filter(Boolean) as LetterEl[];
       if (letters.length !== LETTER_COUNT) return;
 
-      if (reducedMotion) return;
-
       const stageRect = () => stage.getBoundingClientRect();
 
       const layoutHome = () => {
         const anchors = measure.querySelectorAll<HTMLElement>("[data-measure-char]");
         letters.forEach((el, i) => {
-          if (i < HERO_NAME.length) {
-            const anchor = anchors[i];
-            if (!anchor) return;
-            const r = anchor.getBoundingClientRect();
-            const sr = stageRect();
-            el.dataset.baseX = String(r.left + r.width / 2 - sr.left);
-            el.dataset.baseY = String(r.top + r.height / 2 - sr.top);
-          } else {
-            const anchor = anchors[2] ?? anchors[0];
-            if (!anchor) return;
-            const r = anchor.getBoundingClientRect();
-            const sr = stageRect();
-            el.dataset.baseX = String(r.left + r.width / 2 - sr.left);
-            el.dataset.baseY = String(r.top + r.height / 2 - sr.top);
-          }
+          const anchor =
+            i < HERO_NAME.length
+              ? anchors[i]
+              : (anchors[2] ?? anchors[0]);
+          if (!anchor) return;
+          const r = anchor.getBoundingClientRect();
+          const sr = stageRect();
+          el.dataset.baseX = String(r.left + r.width / 2 - sr.left);
+          el.dataset.baseY = String(r.top + r.height / 2 - sr.top);
           el.dataset.baseRot = "0";
           el.dataset.baseScale = i < HERO_NAME.length ? "1" : "0.35";
         });
@@ -96,7 +140,7 @@ export function JeanneSharkHero() {
         const mix = swimMixRef.current;
         const tailBoost = Number(el.dataset.tailBoost || 0);
         const wiggle =
-          Math.sin(Date.now() * 0.004 + Number(el.dataset.wigglePhase || 0)) *
+          Math.sin(performance.now() * 0.004 + Number(el.dataset.wigglePhase || 0)) *
           0.05 *
           mix *
           tailBoost;
@@ -144,6 +188,9 @@ export function JeanneSharkHero() {
           el.dataset.tailBoost = String(i >= LETTER_COUNT - 10 ? 1.4 : 0.35);
           el.dataset.wigglePhase = String(i * 0.4);
 
+          // Fade the static measure name as letters take over
+          measure.style.opacity = String(Math.max(0, 1 - eased * 1.2));
+
           setTransform(el, x, y, rot, scale);
         });
       };
@@ -160,6 +207,8 @@ export function JeanneSharkHero() {
 
       layoutHome();
       applyProgress(0);
+      // Show measure name until letters have laid out
+      measure.style.opacity = "1";
 
       const ro = new ResizeObserver(() => applyProgress(st.progress));
       ro.observe(measure);
@@ -184,7 +233,7 @@ export function JeanneSharkHero() {
           if (!base) return;
           const tailBoost = Number(el.dataset.tailBoost || 0);
           const wiggle =
-            Math.sin(Date.now() * 0.004 + Number(el.dataset.wigglePhase || 0)) *
+            Math.sin(performance.now() * 0.004 + Number(el.dataset.wigglePhase || 0)) *
             0.05 *
             mix *
             tailBoost;
@@ -216,21 +265,8 @@ export function JeanneSharkHero() {
         window.removeEventListener("blur", onLeave);
       };
     },
-    { scope: rootRef, dependencies: [reducedMotion] },
+    { scope: rootRef },
   );
-
-  if (reducedMotion) {
-    return (
-      <div className="section-pad flex min-h-[100dvh] flex-col justify-end pb-16 pt-28 md:pb-24 md:pt-32">
-        <p className="meta-type mb-6 max-w-[20rem] text-ember">Portfolio / 2026</p>
-        <h1 id="opening-name" className="display-type mb-2 max-w-[14ch] text-bone">
-          Jeanne
-        </h1>
-        <p className="title-type m-0 mb-8 text-bone-soft">Dominique Paloma</p>
-        <p className="m-0 max-w-[36ch] text-lg text-bone-soft md:text-xl">{site.role}</p>
-      </div>
-    );
-  }
 
   return (
     <div ref={rootRef}>
@@ -246,7 +282,7 @@ export function JeanneSharkHero() {
             </h1>
             <div
               ref={measureRef}
-              className="display-type pointer-events-none inline-block text-bone opacity-0"
+              className="display-type pointer-events-none inline-block text-bone"
               aria-hidden="true"
             >
               {HERO_NAME.split("").map((c, i) => (
@@ -274,6 +310,7 @@ export function JeanneSharkHero() {
                   letterSpacing: "-0.05em",
                   fontVariationSettings: '"opsz" 96, "wdth" 92, "wght" 700',
                   color: i % 5 === 0 ? "var(--ember)" : undefined,
+                  opacity: i < HERO_NAME.length ? 1 : 0,
                 }}
               >
                 {slot.char}

@@ -37,8 +37,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${bricolage.variable} ${jetbrains.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="site-shell flex min-h-full flex-col font-sans">
+      <body
+        className="site-shell flex min-h-full flex-col font-sans"
+        suppressHydrationWarning
+      >
         <a href="#main" className="skip-link">
           Skip to content
         </a>
