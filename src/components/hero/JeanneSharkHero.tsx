@@ -182,7 +182,13 @@ function JeanneSharkStage() {
           const wght = 600 + (pose.wght - 600) * eased;
 
           el.style.zIndex = String(pose.z);
-          el.style.color = i === 0 || i === 2 ? "var(--ember)" : "var(--bone)";
+          // One fill when morphed so letters fuse into a silhouette (like SHARK posters)
+          el.style.color =
+            eased > 0.55
+              ? "var(--bone)"
+              : i === 0 || i === 2
+                ? "var(--ember)"
+                : "var(--bone)";
           setLetterLocal(el, lx, ly, rot, scaleX, scaleY, skewX, wdth, wght);
         });
 
