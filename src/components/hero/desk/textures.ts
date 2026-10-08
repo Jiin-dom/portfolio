@@ -676,6 +676,112 @@ export async function buildBookTextures(projects: readonly BookProject[]) {
 }
 
 /* Pegboard tile: cream board with dark rounded slots */
+/* tiny "developed" print for the photo string: a soft two-tone gradient */
+export function photoTexture(top: string, bottom: string) {
+  const { c, ctx } = surface(64, 64);
+  const g = ctx.createLinearGradient(0, 0, 0, 64);
+  g.addColorStop(0, top);
+  g.addColorStop(1, bottom);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 64, 64);
+  ctx.fillStyle = "rgb(20 12 6 / 0.35)";
+  ctx.beginPath();
+  ctx.ellipse(32, 50, 14, 20, 0, 0, Math.PI * 2);
+  ctx.fill();
+  return toTexture(c);
+}
+
+const CODE: [number, [string, string][]][] = [
+  [0, [["import", "k"], [" { useState } ", "p"], ["from", "k"], [' "react"', "s"]]],
+  [0, [["import", "k"], [" { renderPrint } ", "p"], ["from", "k"], [' "./print"', "s"]]],
+  [0, []],
+  [0, [["export function", "k"], [" Photobooth", "f"], ["({ onClose }) {", "p"]]],
+  [1, [["const", "k"], [" [stage, setStage] = ", "v"], ["useState", "f"], ['("shoot")', "s"]]],
+  [1, [["const", "k"], [" [format, setFormat] = ", "v"], ["useState", "f"], ['("polaroid")', "s"]]],
+  [1, [["const", "k"], [" [shots, setShots] = ", "v"], ["useState", "f"], ["([])", "p"]]],
+  [0, []],
+  [1, [["// prints come out the top, like the real thing", "c"]]],
+  [1, [["const", "k"], [" onShots = ", "v"], ["(s) => {", "p"]]],
+  [2, [["setShots", "f"], ["(s)", "p"]]],
+  [2, [["setStage", "f"], ['("print")', "s"]]],
+  [1, [["}", "p"]]],
+  [0, []],
+  [1, [["return", "k"], [" (", "p"]]],
+  [2, [["<Booth", "f"], [" stage", "v"], ["={stage}", "p"], [" format", "v"], ["={format}", "p"], [">", "f"]]],
+  [3, [["<Shoot", "f"], [" onShots", "v"], ["={onShots} />", "p"]]],
+  [3, [["<Print", "f"], [" spec", "v"], ["={spec} />", "p"]]],
+  [3, [["<Decorate", "f"], [" stickers", "v"], ["={stickers} />", "p"]]],
+  [2, [["</Booth>", "f"]]],
+  [1, [[")", "p"]]],
+  [0, [["}", "p"]]],
+];
+
+const CODE_COLORS: Record<string, string> = { k: "#c792ea", p: "#d6deeb", s: "#c3e88d", f: "#82aaff", v: "#f78c6c", c: "#637777" };
+
+/* The monitor shows this very booth being written */
+export function monitorTexture() {
+  const W = 1280;
+  const H = 720;
+  const { c, ctx } = surface(W, H);
+  ctx.fillStyle = "#1e1f24";
+  ctx.fillRect(0, 0, W, H);
+  /* activity bar + file tree */
+  ctx.fillStyle = "#16171b";
+  ctx.fillRect(0, 0, 64, H);
+  ctx.fillStyle = "#1a1b20";
+  ctx.fillRect(64, 0, 250, H);
+  ctx.fillStyle = "#3b3d46";
+  for (let i = 0; i < 5; i++) ctx.fillRect(20, 30 + i * 62, 24, 24);
+  ctx.font = "500 17px ui-monospace, Menlo, Consolas, monospace";
+  ["src", "  app", "  components", "    hero", "    photobooth", "      print.ts", "      Photobooth.tsx", "  lib", "package.json"].forEach((n, i) => {
+    ctx.fillStyle = n.includes("Photobooth") ? "#e8e6e1" : "#8a8d98";
+    if (n.includes("Photobooth")) {
+      ctx.fillStyle = "#2a2c34";
+      ctx.fillRect(64, 62 + i * 32, 250, 32);
+      ctx.fillStyle = "#e8e6e1";
+    }
+    ctx.fillText(n, 82, 84 + i * 32);
+  });
+  /* tabs */
+  ctx.fillStyle = "#18191d";
+  ctx.fillRect(314, 0, W - 314, 44);
+  ctx.fillStyle = "#1e1f24";
+  ctx.fillRect(314, 0, 210, 44);
+  ctx.fillStyle = "#e85d2c";
+  ctx.fillRect(314, 0, 210, 3);
+  ctx.fillStyle = "#e8e6e1";
+  ctx.fillText("Photobooth.tsx", 336, 28);
+  ctx.fillStyle = "#6c6f7a";
+  ctx.fillText("print.ts", 556, 28);
+  /* code */
+  ctx.font = "500 20px ui-monospace, Menlo, Consolas, monospace";
+  CODE.forEach(([indent, parts], i) => {
+    const y = 84 + i * 27;
+    ctx.fillStyle = "#4a4d57";
+    ctx.textAlign = "right";
+    ctx.fillText(String(i + 1), 372, y);
+    ctx.textAlign = "left";
+    let x = 396 + indent * 28;
+    for (const [text, kind] of parts) {
+      ctx.fillStyle = CODE_COLORS[kind];
+      ctx.fillText(text, x, y);
+      x += ctx.measureText(text).width;
+    }
+  });
+  /* cursor */
+  ctx.fillStyle = "#e8e6e1";
+  ctx.fillRect(396 + 3 * 28 + 300, 84 + 18 * 27 - 18, 2, 24);
+  /* status bar */
+  ctx.fillStyle = "#e85d2c";
+  ctx.fillRect(0, H - 30, W, 30);
+  ctx.fillStyle = "#fff3e6";
+  ctx.font = "500 16px ui-monospace, Menlo, Consolas, monospace";
+  ctx.fillText("main  ✓ 0 problems", 18, H - 10);
+  ctx.textAlign = "right";
+  ctx.fillText("TypeScript React   Ln 19, Col 31", W - 18, H - 10);
+  return toTexture(c);
+}
+
 export function pegboardTexture() {
   const { c, ctx } = surface(512, 512);
   ctx.fillStyle = "#e9e1d0";

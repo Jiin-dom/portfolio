@@ -1,7 +1,8 @@
 "use client";
 
 import { RoundedBox } from "@react-three/drei";
-import { useMemo } from "react";
+import { useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
 /* Every model sits on y = 0 with its footprint centered on the origin. */
@@ -302,6 +303,90 @@ export function Mouse() {
       <mesh position={[0, 0.27, -0.2]} rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.05, 0.05, 0.04, 20]} />
         <meshStandardMaterial color="#2a2a2a" roughness={0.6} />
+      </mesh>
+    </group>
+  );
+}
+
+/*
+ * Instax Mini, standing up with the lens toward the room. When `ejecting`
+ * flips on, the flash fires and a print feeds out of the top slot.
+ */
+export function InstaxCamera({ ejecting, reduced }: { ejecting: boolean; reduced: boolean }) {
+  const w = 1.5;
+  const h = 1.75;
+  const d = 0.9;
+  const print = useRef<THREE.Group>(null);
+  const flash = useRef<THREE.MeshStandardMaterial>(null);
+  const flashT = useRef(0);
+
+  useEffect(() => {
+    if (ejecting) flashT.current = 1;
+  }, [ejecting]);
+
+  useFrame((_, delta) => {
+    const dt = Math.min(delta, 1 / 30);
+    if (print.current) {
+      const goal = ejecting ? h + 0.32 : h - 0.7;
+      /* the motor feeds the print out steadily; retracting is instant-ish */
+      const y = print.current.position.y;
+      print.current.position.y = reduced ? goal : ejecting ? Math.min(goal, y + dt * 1.4) : THREE.MathUtils.damp(y, goal, 10, dt);
+    }
+    if (flash.current) {
+      flashT.current = Math.max(0, flashT.current - dt * 3.5);
+      flash.current.emissiveIntensity = 0.15 + flashT.current * 6;
+    }
+  });
+
+  return (
+    <group position={[0, 0, -0.08]}>
+      <RoundedBox args={[w, h, d]} radius={0.2} smoothness={5} position={[0, h / 2, 0]}>
+        <meshStandardMaterial color="#efc0c8" roughness={0.55} />
+      </RoundedBox>
+      {/* print slot */}
+      <mesh position={[0, h + 0.001, -0.12]}>
+        <boxGeometry args={[0.92, 0.004, 0.07]} />
+        <meshStandardMaterial color="#2b2224" roughness={0.8} />
+      </mesh>
+      <group ref={print} position={[0, h - 0.7, -0.12]}>
+        <mesh>
+          <boxGeometry args={[0.78, 1.24, 0.016]} />
+          <meshStandardMaterial color="#f6f2ea" roughness={0.75} />
+        </mesh>
+        <mesh position={[0, 0.08, 0.009]}>
+          <planeGeometry args={[0.66, 0.9]} />
+          <meshStandardMaterial color="#3d3633" roughness={0.4} />
+        </mesh>
+      </group>
+      {/* lens: pale outer ring, dark barrel, glass */}
+      <group position={[0, 0.78, d / 2]} rotation={[Math.PI / 2, 0, 0]}>
+        <mesh position={[0, 0.06, 0]}>
+          <cylinderGeometry args={[0.5, 0.52, 0.12, 64]} />
+          <meshStandardMaterial color="#f7e4e7" roughness={0.45} />
+        </mesh>
+        <mesh position={[0, 0.17, 0]}>
+          <cylinderGeometry args={[0.36, 0.38, 0.14, 48]} />
+          <meshStandardMaterial color="#2a2426" roughness={0.5} />
+        </mesh>
+        <mesh position={[0, 0.245, 0]}>
+          <cylinderGeometry args={[0.24, 0.24, 0.012, 48]} />
+          <meshPhysicalMaterial color="#0d1620" metalness={0.7} roughness={0.04} clearcoat={1} />
+        </mesh>
+      </group>
+      {/* flash */}
+      <mesh position={[0.4, 1.47, d / 2 + 0.002]}>
+        <planeGeometry args={[0.46, 0.22]} />
+        <meshStandardMaterial ref={flash} color="#f4f4f2" emissive="#fff6e8" emissiveIntensity={0.15} roughness={0.2} />
+      </mesh>
+      {/* viewfinder */}
+      <mesh position={[-0.46, 1.47, d / 2 + 0.002]}>
+        <planeGeometry args={[0.2, 0.16]} />
+        <meshPhysicalMaterial color="#141a20" roughness={0.05} clearcoat={1} />
+      </mesh>
+      {/* shutter button */}
+      <mesh position={[0.56, 1.02, d / 2 + 0.02]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.09, 0.09, 0.05, 32]} />
+        <meshStandardMaterial color="#d99aa6" roughness={0.5} />
       </mesh>
     </group>
   );

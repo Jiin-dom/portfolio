@@ -31,6 +31,7 @@ export const deskItems: DeskItem[] = [
   { id: "polaroid-sunset", label: "Polaroid", note: "Golden hour, shot on film.", w: 1.5, d: 1.82, h: 0.026, fx: -0.9, fz: 0.78, rot: -0.22, m: { fx: -0.75, fz: 0.3 } },
   { id: "pen", label: "Fountain pen", note: "For the notes that never become tickets.", w: 2.4, d: 0.16, h: 0.16, fx: -0.38, fz: 0.72, rot: 0.95, m: { fx: -0.25, fz: 0.72 } },
   { id: "camera", label: "Rangefinder", note: "Analog, on purpose.", w: 2.4, d: 1.5, h: 1.3, fx: -0.12, fz: 0.68, rot: 0.22, m: { fx: -0.6, fz: 0.6 } },
+  { id: "instax", label: "Instax Mini", note: "Click it to open the photobooth. Prints come out the top.", w: 1.5, d: 1.1, h: 1.75, fx: -0.3, fz: -0.5, rot: -0.28, m: { fx: -0.12, fz: -0.45 } },
   { id: "mouse", label: "Mouse", note: "Pointer events, handled.", w: 0.62, d: 1.0, h: 0.31, fx: 1.02, fz: -0.18, rot: 0.25, m: { fx: 0.9, fz: 0.7 } },
   { id: "knife", label: "Utility knife", note: "Cut scope, not corners.", w: 2.4, d: 0.42, h: 0.17, fx: 0.74, fz: 0.92, rot: 0.32, m: { fx: 0.35, fz: 0.84 } },
   { id: "ruler", label: "Steel ruler", note: "Spacing is a system, not a vibe.", w: 3.4, d: 0.34, h: 0.025, fx: 0.16, fz: 0.9, rot: -0.03, m: { fx: 0.1, fz: 0.55 } },

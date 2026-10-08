@@ -8,9 +8,7 @@ import { DESK } from "./constants";
 import { FitModel, MODEL_URLS } from "./FitModel";
 import { LAMP } from "./lighting";
 import type { SceneLink } from "./flashlight";
-import { buildBookTextures, pegboardTexture, type BookProject, type BookTextures } from "./textures";
-
-const WALL_Z = -4.9;
+import { buildBookTextures, type BookProject, type BookTextures } from "./textures";
 
 function useOak() {
   const maps = useTexture({
@@ -75,28 +73,6 @@ function DeskBody() {
   );
 }
 
-function Pegboard() {
-  const tex = useMemo(() => {
-    const t = pegboardTexture();
-    t.repeat.set(18, 12);
-    return t;
-  }, []);
-  useEffect(() => () => tex.dispose(), [tex]);
-  return (
-    <group>
-      <mesh position={[0, 12, WALL_Z]} receiveShadow>
-        <boxGeometry args={[36, 24, 0.15]} />
-        <meshStandardMaterial map={tex} roughness={0.85} />
-      </mesh>
-      {/* plaster wall around the board */}
-      <mesh position={[0, 14, WALL_Z - 0.2]} receiveShadow>
-        <planeGeometry args={[120, 60]} />
-        <meshStandardMaterial color="#d9cdb8" roughness={1} />
-      </mesh>
-    </group>
-  );
-}
-
 type LampProps = { onLamp: () => void; onLampHover: (on: boolean) => void };
 
 function Decor({ onLamp, onLampHover }: LampProps) {
@@ -133,7 +109,6 @@ export function Room(props: LampProps) {
       <Suspense fallback={null}>
         <DeskBody />
       </Suspense>
-      <Pegboard />
       <Decor {...props} />
     </>
   );

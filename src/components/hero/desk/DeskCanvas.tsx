@@ -9,6 +9,7 @@ import { DeskWorld, type ViewName } from "./world";
 import { CAMERA_HIDE, FitModel, MODEL_URLS } from "./FitModel";
 import { ProjectShelf, Room } from "./room";
 import { Lighting } from "./lighting";
+import { Wall } from "./wall";
 import { Flashlight, SceneLink } from "./flashlight";
 import type { BookProject } from "./textures";
 import { buildTextures, type DeskTextures } from "./textures";
@@ -31,9 +32,14 @@ type Props = {
   onHoverProject: (index: number | null) => void;
   onFocusItem: (id: string | null) => void;
   onReady: () => void;
+  printing: boolean;
+  onOpenBooth: () => void;
 };
 
-function renderModel(id: string, t: DeskTextures, night: boolean): ReactNode {
+/* pointer travel (px) below which a press on the Instax counts as a click, not a drag */
+const CLICK_SLOP = 6;
+
+function renderModel(id: string, t: DeskTextures, night: boolean, printing: boolean, reduced: boolean): ReactNode {
   switch (id) {
     case "mat":
       return <Model.CuttingMat w={7.6} d={5.2} map={t.mat} edge="#26422f" />;
@@ -59,6 +65,8 @@ function renderModel(id: string, t: DeskTextures, night: boolean): ReactNode {
           <FitModel url={MODEL_URLS.camera} size={2.4} rotY={Math.PI} hide={CAMERA_HIDE} />
         </Suspense>
       );
+    case "instax":
+      return <Model.InstaxCamera ejecting={printing} reduced={reduced} />;
     case "mouse":
       return <Model.Mouse />;
     case "knife":
@@ -76,7 +84,7 @@ function renderModel(id: string, t: DeskTextures, night: boolean): ReactNode {
   }
 }
 
-function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, onHoverProject, onFocusItem, onReady }: Omit<Props, "active">) {
+function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, onHoverProject, onFocusItem, onReady, printing, onOpenBooth }: Omit<Props, "active">) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const gl = useThree((s) => s.gl);
   const size = useThree((s) => s.size);
@@ -172,6 +180,7 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
           setCursor(on ? "pointer" : "");
         }}
       />
+      <Wall night={night} />
       <ProjectShelf projects={projects} open={openProject} reduced={reduced} night={night} link={link} onOpen={onOpenProject} onHover={onHoverProject} />
       <Flashlight
         link={link}
@@ -195,6 +204,11 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
             setCursor("grabbing");
             world.grab(i, e.point, e.pointerId, gl.domElement, camera, () => setCursor(""));
           }}
+          onClick={(e) => {
+            if (item.id !== "instax" || e.delta > CLICK_SLOP) return;
+            e.stopPropagation();
+            onOpenBooth();
+          }}
           onDoubleClick={(e) => {
             e.stopPropagation();
             world.turn(i);
@@ -203,7 +217,7 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
             e.stopPropagation();
             world.hover(i, true);
             if (!world.grabbing) {
-              setCursor("grab");
+              setCursor(item.id === "instax" ? "pointer" : "grab");
               onFocusItem(item.id);
             }
           }}
@@ -212,7 +226,7 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
             if (!world.grabbing) setCursor("");
           }}
         >
-          {renderModel(item.id, tex, night)}
+          {renderModel(item.id, tex, night, printing, reduced)}
         </group>
       ))}
     </>

@@ -19,6 +19,12 @@ const DeskCanvas = dynamic(() => import("@/components/hero/desk/DeskCanvas").the
   ssr: false,
 });
 
+const loadBooth = () => import("@/components/photobooth/Photobooth").then((m) => m.Photobooth);
+const Photobooth = dynamic(loadBooth, { ssr: false });
+
+/* time for the desk Instax to flash and feed its print before the booth opens */
+const EJECT_MS = 1100;
+
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 function subscribeDark(onChange: () => void) {
@@ -56,15 +62,34 @@ export function DeskHero() {
     else setFocusId("flashlight");
   }, [night]);
 
+  const [printing, setPrinting] = useState(false);
+  const [boothOpen, setBoothOpen] = useState(false);
+  const openBooth = useCallback(() => setPrinting(true), []);
+  const closeBooth = useCallback(() => {
+    setBoothOpen(false);
+    setPrinting(false);
+  }, []);
+
   useEffect(() => {
-    if (!night) return;
+    if (!printing || boothOpen) return;
+    const t = window.setTimeout(() => setBoothOpen(true), reduce ? 0 : EJECT_MS);
+    return () => window.clearTimeout(t);
+  }, [printing, boothOpen, reduce]);
+
+  useEffect(() => {
+    if (!night || boothOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLElement && e.target.closest("input, textarea")) return;
       if (e.key === "f" || e.key === "F") setFlashWanted((v) => !v);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [night]);
+  }, [night, boothOpen]);
+
+  useEffect(() => {
+    if (focusId === "instax") void loadBooth();
+  }, [focusId]);
+
   const [openProject, setOpenProject] = useState<number | null>(null);
   const [hoverProject, setHoverProject] = useState<number | null>(null);
 
@@ -102,7 +127,7 @@ export function DeskHero() {
       {/* ── 3D desk ── */}
       <div className={`absolute inset-0 transition-opacity duration-1000 ${ready ? "opacity-100" : "opacity-0"}`} aria-hidden>
         <DeskCanvas
-          active={inView}
+          active={inView && !boothOpen}
           reduced={reduce}
           command={command}
           view={view}
@@ -116,6 +141,8 @@ export function DeskHero() {
           onHoverProject={setHoverProject}
           onFocusItem={setFocusId}
           onReady={onReady}
+          printing={printing}
+          onOpenBooth={openBooth}
         />
       </div>
       <div className="desk-vignette pointer-events-none absolute inset-0" aria-hidden />
@@ -227,6 +254,8 @@ export function DeskHero() {
           </div>
         </div>
       )}
+
+      {boothOpen && <Photobooth onClose={closeBooth} />}
     </section>
   );
 }

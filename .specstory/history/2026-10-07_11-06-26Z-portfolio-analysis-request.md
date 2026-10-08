@@ -4629,4 +4629,77 @@ _**Agent (default)**_
 A controlled style prop issue was spotted while implementing the draggable canvas.
 
 The drag interaction conflicts with controlled x/y style props. Using `initial` instead of `style` for coordinates, or switching to `useMotionValue`, resolves the clash.
+
+Viewport resize requires resetting the canvas position. A useEffect will sync motion values to the origin whenever coordinates change. The hero wordmark and kicker already use dark text overrides. MobileNav receives the dark prop when needed.
 </details></think>
+
+_**Agent (default)**_
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2"><details>
+<summary>Tool use: **edit_file_v2** • Edit file: C:\Portfolio\src\components\hero\FreeformCanvas.tsx</summary>
+
+</details></tool-use>
+
+_**Agent (default)**_
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_command_v2"><details>
+<summary>Tool use: **run_terminal_command_v2** • Run command: npm run build</summary>
+```bash
+npm run build
+```
+
+```
+
+> jd-paloma-portfolio@0.1.0 build
+> next build
+
+▲ Next.js 16.3.8 (Turbopack)
+✓ Running next.config.ts took 123ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 5.4s
+  Running TypeScript ...
+  Finished TypeScript in 7.9s ...
+  Collecting page data using 5 workers ...
+  Generating static pages using 5 workers (0/4) ...
+  Generating static pages using 5 workers (1/4) 
+  Generating static pages using 5 workers (2/4) 
+  Generating static pages using 5 workers (3/4) 
+✓ Generating static pages using 5 workers (4/4) in 1289ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+└ ○ /_not-found
+
+
+○  (Static)  prerendered as static content
+
+
+```
+</details></tool-use>
+
+_**Agent (default)**_
+
+<think><details><summary>Thought Process</summary>
+The build completed successfully. I'll summarize what was built and how to use it.
+</details></think>
+
+_**Agent (default)**_
+
+Hero is now a **Framer-style freeform canvas**.
+
+### How it works
+- **100vh container** with overflow clipped  
+- **2800×2800 drag canvas** (pannable, constrained so it can’t disappear)  
+- **Floating pieces** you can drag on their own: wordmark, bio, projects, tech, experience, email, socials  
+- Fixed **“Drag to move”** hint + **Scroll for more** into Features  
+
+### Interaction
+1. Drag empty canvas → pan the whole board  
+2. Drag a card/chip → move that piece  
+3. Prefer reduced motion → static layout, no drag  
+
+Refresh [http://localhost:3000](http://localhost:3000) and try dragging.  
+
+Want the **entire site** to be only this canvas (no Features/Product scroll sections)? I can switch to that next.
