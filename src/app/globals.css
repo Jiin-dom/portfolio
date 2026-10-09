@@ -349,8 +349,7 @@ body {
 /* ── Desk hero: cream print over a 3D studio desk (Oryzo-style) ── */
 
 .desk-hero {
-  /* the desk owns every gesture here; the nav tabs lead to the other chapters */
-  touch-action: none;
+  /* the canvas owns its gestures (touch-action: none on its wrapper); the UI layer lets swipes scroll the page */
   overscroll-behavior: contain;
   --desk-cream: #fff0dc;
   --desk-glass: rgb(120 82 50 / 0.34);
@@ -623,13 +622,23 @@ body {
   border-radius: 999px;
 }
 
-.desk-ui > * {
+.desk-dock {
+  display: contents;
+}
+
+.desk-ui > *,
+.desk-dock > * {
   transition: opacity 400ms var(--ease-out);
 }
 
-.desk-ui[data-reading] > * {
+.desk-ui[data-reading] > *,
+.desk-ui[data-reading] .desk-dock > * {
   opacity: 0;
   pointer-events: none;
+}
+
+.desk-chip--explore {
+  display: none;
 }
 
 .desk-views {
@@ -722,20 +731,33 @@ body {
 }
 
 .shelf-tag__dot {
+  position: relative;
   width: 7px;
   height: 7px;
   border-radius: 999px;
   background: var(--signal);
-  box-shadow: 0 0 0 0 rgb(232 93 44 / 0.6);
+}
+
+/* compositor-only pulse: a scaled ring instead of an animated box-shadow */
+.shelf-tag__dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--signal);
+  opacity: 0;
   animation: shelf-pulse 2s ease-out infinite;
 }
 
 @keyframes shelf-pulse {
-  70% {
-    box-shadow: 0 0 0 8px rgb(232 93 44 / 0);
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
   }
+  70%,
   100% {
-    box-shadow: 0 0 0 0 rgb(232 93 44 / 0);
+    transform: scale(3.3);
+    opacity: 0;
   }
 }
 
@@ -790,61 +812,7 @@ body {
 }
 
 @media (max-width: 767px) {
-  .shelf-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.45rem 0.8rem 0.45rem 0.65rem;
-  border: 1px solid rgb(255 240 220 / 0.35);
-  border-radius: 999px;
-  background: rgb(28 18 10 / 0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: #fff0dc;
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    transform 160ms var(--ease-out),
-    background-color 160ms ease;
-}
-
-.shelf-tag:active {
-  transform: scale(0.96);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .shelf-tag:hover {
-    background: rgb(28 18 10 / 0.8);
-  }
-}
-
-.shelf-tag__count {
-  opacity: 0.6;
-}
-
-.shelf-tag__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: var(--signal);
-  box-shadow: 0 0 0 0 rgb(232 93 44 / 0.6);
-  animation: shelf-pulse 2s ease-out infinite;
-}
-
-@keyframes shelf-pulse {
-  70% {
-    box-shadow: 0 0 0 8px rgb(232 93 44 / 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgb(232 93 44 / 0);
-  }
-}
-
-.desk-reader {
+  .desk-reader {
     left: var(--page-pad);
     right: var(--page-pad);
     flex-wrap: wrap;
@@ -862,9 +830,95 @@ body {
     }
   }
 
-  .desk-views {
-    bottom: auto;
-    top: calc(var(--nav-h) + 13rem);
+  .desk-lede,
+  .desk-scroll,
+  .desk-card__body {
+    display: none;
+  }
+
+  /* one dock at the bottom: caption floats above it, the desk stays clear in the middle */
+  .desk-dock {
+    position: absolute;
+    left: var(--page-pad);
+    right: var(--page-pad);
+    bottom: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .desk-dock .desk-views {
+    position: static;
+    transform: none;
+  }
+
+  .desk-dock .desk-card {
+    position: static;
+    width: 100%;
+    padding: 0.8rem 0.95rem;
+    /* the canvas eats every touch; the card is where a swipe scrolls the page */
+    pointer-events: auto;
+    touch-action: pan-y;
+  }
+
+  .desk-card__head {
+    font-size: 0.92rem;
+  }
+
+  .desk-card__head br {
+    display: none;
+  }
+
+  .desk-card .dot-rule {
+    margin: 0.55rem 0 0;
+  }
+
+  .desk-card__actions {
+    margin-top: 0.65rem;
+    justify-content: space-between;
+  }
+
+  .desk-chip--explore {
+    display: inline-flex;
+    margin-right: auto;
+  }
+
+  .desk-dock .desk-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(100% + 0.55rem);
+    width: auto;
+    padding: 0.8rem 0.95rem 0.9rem;
+  }
+
+  .desk-caption__title {
+    font-size: 1.05rem;
+  }
+
+  /* keep the projects tag clear of the wordmark */
+  .shelf-tag {
+    translate: 0 3rem;
+  }
+}
+
+/* phones on their side: shrink the type and drop the long copy so nothing overlaps */
+@media (max-height: 520px) and (orientation: landscape) {
+  .desk-hero {
+    min-height: 0;
+  }
+
+  .desk-title {
+    top: calc(var(--nav-h) - 0.25rem);
+  }
+
+  .desk-kicker {
+    font-size: 0.7rem;
+  }
+
+  .desk-wordmark {
+    font-size: min(15.5vw, 22svh);
   }
 
   .desk-lede,
@@ -874,28 +928,37 @@ body {
   }
 
   .desk-card {
-    left: var(--page-pad);
-    right: var(--page-pad);
-    width: auto;
-    bottom: 1rem;
-    padding: 1rem 1.1rem;
+    bottom: 0.9rem;
+    width: min(250px, 30vw);
+    padding: 0.85rem 1rem;
+    pointer-events: auto;
+    touch-action: pan-y;
+  }
+
+  .desk-card__head {
+    font-size: 0.9rem;
   }
 
   .desk-card .dot-rule {
-    margin: 0.6rem 0 0;
+    margin: 0.5rem 0 0;
+  }
+
+  .desk-card__actions {
+    margin-top: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .desk-chip--explore {
+    display: inline-flex;
+  }
+
+  .desk-views {
+    bottom: 0.9rem;
   }
 
   .desk-caption {
-    left: var(--page-pad);
-    right: var(--page-pad);
-    width: auto;
     bottom: auto;
-    top: calc(var(--nav-h) + 9.5rem);
-  }
-
-  .desk-side-tab {
-    top: auto;
-    bottom: 12rem;
+    top: calc(var(--nav-h) + 0.25rem);
   }
 }
 

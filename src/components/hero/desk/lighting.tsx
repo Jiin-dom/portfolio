@@ -104,7 +104,14 @@ class LightRig {
       this.sun.color.lerpColors(DAY.sunColor, NIGHT.sunColor, m);
     }
     scene.environmentIntensity = THREE.MathUtils.lerp(DAY.env, NIGHT.env, m);
-    if (this.spot) this.spot.intensity = 30 * this.lamp;
+    if (this.spot) {
+      this.spot.intensity = 30 * this.lamp;
+      /*
+       * Skip the lamp's shadow pass while it is dark. castShadow stays on so no
+       * shader recompiles, and the map must exist first: lit materials sample it.
+       */
+      this.spot.shadow.autoUpdate = this.lamp > 0 || this.spot.shadow.map === null;
+    }
     if (this.glow) this.glow.intensity = 9 * this.lamp;
     if (this.bulbMat) this.bulbMat.emissiveIntensity = 6 * this.lamp;
   }

@@ -35,7 +35,7 @@ export function ProductChapter() {
                 alt={`${current.title} preview`}
                 fill
                 className="object-cover"
-                sizes="420px"
+                sizes="(max-width: 480px) 75vw, 420px"
               />
             </div>
           </div>
@@ -125,7 +125,7 @@ export function ProductChapter() {
 
         <div className="mt-20 border-t border-line pt-12">
           <p className="mono-label text-ink-soft">All selected work</p>
-          <ul className="mt-6 grid gap-4 md:grid-cols-2">
+          <ul className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
             {projects.map((project, i) => (
               <li key={project.slug}>
                 <a

@@ -206,6 +206,8 @@ class FlashRig {
       this.spot.target.position.copy(this.aim);
       this.spot.target.updateMatrixWorld();
       this.spot.intensity = 3.2 * Math.max(4, this.aim.distanceTo(tmp.lensPos)) * this.light;
+      /* a dark torch skips its shadow pass once the map exists (lit materials sample it) */
+      this.spot.shadow.autoUpdate = this.spot.intensity > 0 || this.spot.shadow.map === null;
     }
     /* short-range fill so the torch in hand reads as metal, not a silhouette */
     if (this.fill) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { Environment, Lightformer } from "@react-three/drei";
+import { Environment, Lightformer, PerformanceMonitor } from "@react-three/drei";
 import { Suspense, useEffect, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { deskItems } from "./items";
@@ -259,16 +259,28 @@ function WindowShadow() {
   );
 }
 
+const MAX_DPR = 2;
+
 export function DeskCanvas({ active, ...props }: Props) {
+  /* full sharpness by default; only steps down if the device can't hold the frame rate */
+  const [ceiling] = useState(() => Math.min(window.devicePixelRatio || 1, MAX_DPR));
+  const [dpr, setDpr] = useState(ceiling);
+
   return (
     <Canvas
       shadows="percentage"
-      dpr={[1, 2]}
+      dpr={dpr}
       frameloop={active ? "always" : "never"}
       camera={{ fov: 28, near: 0.5, far: 120, position: [0, 20, 9] }}
       gl={{ antialias: true, alpha: true }}
       style={{ touchAction: "none" }}
     >
+      <PerformanceMonitor
+        factor={1}
+        flipflops={3}
+        onChange={({ factor }) => setDpr(Math.max(1, Math.round((1 + (ceiling - 1) * factor) * 4) / 4))}
+        onFallback={() => setDpr(1)}
+      />
       <Lighting night={props.night} reduced={props.reduced} />
       <Environment resolution={256} frames={1}>
         <Lightformer form="rect" intensity={2.2} position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[12, 6, 1]} />

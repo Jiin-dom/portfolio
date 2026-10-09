@@ -69,15 +69,15 @@ export function FeaturesChapter() {
         {featurePanels.map((panel, index) => (
           <div
             key={panel.title}
-            className="feature-step sticky top-0 flex min-h-[100dvh] items-stretch section-pad py-16"
+            className="feature-step sticky top-0 flex min-h-[100dvh] items-end section-pad pb-8 pt-[calc(var(--nav-h)+1rem)] md:items-stretch md:py-16"
           >
-            <div className="feature-glass glass-dark flex w-full max-w-md flex-col justify-between rounded-sm p-7 md:p-9">
+            <div className="feature-glass glass-dark flex w-full max-w-md flex-col justify-between rounded-sm p-6 md:p-9">
               <div>
                 <p className="mono-label text-cream">{panel.kicker}</p>
                 <hr className="dot-rule text-cream" />
                 <p className="text-sm leading-relaxed text-cream/80">{panel.body}</p>
               </div>
-              <div className="mt-10">
+              <div className="mt-8 md:mt-10">
                 <h3 className="display text-[clamp(1.7rem,3.5vw,2.6rem)] uppercase text-cream">
                   {panel.title}
                 </h3>

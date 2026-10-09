@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useReducedMotion } from "motion/react";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Flashlight, LayoutGrid, Moon, MousePointer2, Shuffle, Sun, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Flashlight, LayoutGrid, Moon, MousePointer2, Shuffle, Sun, X } from "lucide-react";
 import { projects, site } from "@/lib/content";
 import { deskItemMap } from "@/components/hero/desk/items";
 import type { DeskCommand } from "@/components/hero/desk/DeskCanvas";
@@ -167,62 +167,64 @@ export function DeskHero() {
           </a>
         </div>
 
-        <aside className="desk-glass desk-card">
-          <p className="desk-card__head">
-            Full-stack developer
-            <br />
-            with a strong focus
-            <br />
-            on UI and UX.
-          </p>
-          <hr className="dot-rule" />
-          <p className="desk-card__body">
-            Everything on this desk moves. Drag it, hold + scroll to rotate, double-click to turn.
-          </p>
-          <div className="pointer-events-auto mt-4 flex justify-end gap-2">
-            <button type="button" className="desk-chip" onClick={() => send("tidy")}>
-              <LayoutGrid aria-hidden /> Tidy
-            </button>
-            <button type="button" className="desk-chip" onClick={() => send("scatter")}>
-              <Shuffle aria-hidden /> Scatter
-            </button>
+        {/* desktop: each child is placed on its own; phones stack them into one bottom dock */}
+        <div className="desk-dock">
+          <div className="desk-glass desk-caption" aria-live="polite" data-show={focus ? "" : undefined}>
+            {focus && (
+              <>
+                <p className="desk-caption__eyebrow">On the desk</p>
+                <p className="desk-caption__title">{focus.label}</p>
+                <p className="desk-caption__note">{focus.note}</p>
+                {focus.href && (
+                  <a className="pointer-events-auto desk-caption__link" href={focus.href}>
+                    Write to me <ArrowUpRight aria-hidden />
+                  </a>
+                )}
+              </>
+            )}
           </div>
-        </aside>
 
-        <div className="desk-glass desk-caption" aria-live="polite" data-show={focus ? "" : undefined}>
-          {focus && (
-            <>
-              <p className="desk-caption__eyebrow">On the desk</p>
-              <p className="desk-caption__title">{focus.label}</p>
-              <p className="desk-caption__note">{focus.note}</p>
-              {focus.href && (
-                <a className="pointer-events-auto desk-caption__link" href={focus.href}>
-                  Write to me <ArrowUpRight aria-hidden />
-                </a>
-              )}
-            </>
-          )}
+          <div className="pointer-events-auto desk-views" role="group" aria-label="Camera angle">
+            {VIEWS.map((v) => (
+              <button key={v.id} type="button" aria-pressed={view === v.id} onClick={() => setView(v.id)}>
+                {v.label}
+              </button>
+            ))}
+            <button type="button" className="desk-views__mode" aria-pressed={night} onClick={toggleNight} aria-label={night ? "Switch to day" : "Switch to night"}>
+              {night ? <Sun aria-hidden /> : <Moon aria-hidden />}
+            </button>
+            {night && (
+              <button type="button" className="desk-views__mode" aria-pressed={flashOn} onClick={toggleFlash} aria-label={flashOn ? "Put the flashlight down" : "Pick up the flashlight"} title="Flashlight (F)">
+                <Flashlight aria-hidden />
+              </button>
+            )}
+          </div>
+
+          <aside className="desk-glass desk-card">
+            <p className="desk-card__head">
+              Full-stack developer <br /> with a strong focus <br /> on UI and UX.
+            </p>
+            <hr className="dot-rule" />
+            <p className="desk-card__body">
+              Everything on this desk moves. Drag it, hold + scroll to rotate, double-click to turn.
+            </p>
+            <div className="desk-card__actions pointer-events-auto mt-4 flex justify-end gap-2">
+              <a href="#features" className="desk-chip desk-chip--explore">
+                <ArrowDown aria-hidden /> Explore
+              </a>
+              <button type="button" className="desk-chip" onClick={() => send("tidy")}>
+                <LayoutGrid aria-hidden /> Tidy
+              </button>
+              <button type="button" className="desk-chip" onClick={() => send("scatter")}>
+                <Shuffle aria-hidden /> Scatter
+              </button>
+            </div>
+          </aside>
         </div>
 
         <a href={site.resume} target="_blank" rel="noopener noreferrer" className="pointer-events-auto desk-side-tab">
           <span aria-hidden>●</span> Résumé ↗
         </a>
-
-        <div className="pointer-events-auto desk-views" role="group" aria-label="Camera angle">
-          {VIEWS.map((v) => (
-            <button key={v.id} type="button" aria-pressed={view === v.id} onClick={() => setView(v.id)}>
-              {v.label}
-            </button>
-          ))}
-          <button type="button" className="desk-views__mode" aria-pressed={night} onClick={toggleNight} aria-label={night ? "Switch to day" : "Switch to night"}>
-            {night ? <Sun aria-hidden /> : <Moon aria-hidden />}
-          </button>
-          {night && (
-            <button type="button" className="desk-views__mode" aria-pressed={flashOn} onClick={toggleFlash} aria-label={flashOn ? "Put the flashlight down" : "Pick up the flashlight"} title="Flashlight (F)">
-              <Flashlight aria-hidden />
-            </button>
-          )}
-        </div>
 
         <p className="desk-scroll">
           <span className="desk-scroll__icon">
