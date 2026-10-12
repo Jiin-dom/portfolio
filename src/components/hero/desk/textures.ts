@@ -441,19 +441,6 @@ function rulerTexture(f: Fonts) {
   return toTexture(c);
 }
 
-function corkTexture() {
-  const { c, ctx } = surface(512, 512);
-  ctx.fillStyle = "#c08a55";
-  ctx.fillRect(0, 0, 512, 512);
-  speckle(ctx, 512, 512, 6200, ["#8a5a30", "#dcae78", "#6f4626", "#d29a5e"], 2.2);
-  ctx.strokeStyle = "rgba(60,30,10,0.25)";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(256, 256, 196, 0, Math.PI * 2);
-  ctx.stroke();
-  return toTexture(c);
-}
-
 export type DeskTextures = Awaited<ReturnType<typeof buildTextures>>;
 
 export async function buildTextures() {
@@ -470,7 +457,6 @@ export async function buildTextures() {
     card: cardTexture(f),
     note: noteTexture(f),
     ruler: rulerTexture(f),
-    cork: corkTexture(),
   };
 }
 

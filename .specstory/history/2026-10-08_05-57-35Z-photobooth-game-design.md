@@ -4723,6 +4723,36 @@ _**Agent (default)**_
 ```bash
 git status --short
 ```
+
+```
+ M .specstory/history/2026-10-06_10-57-53Z-portfolio-repository-clone.md
+ M .specstory/history/2026-10-06_11-18-59Z-portfolio-design-enhancement.md
+ M .specstory/history/2026-10-06_11-26-52Z-high-end-portfolio-rebuild.md
+ M .specstory/history/2026-10-07_07-31-41Z-agent-prompt-typographic-portfolio.md
+ M .specstory/history/2026-10-07_11-06-26Z-portfolio-analysis-request.md
+ M .specstory/history/2026-10-07_11-14-47Z-map-portfolio-structure.md
+ M .specstory/history/2026-10-07_12-21-06Z-terminal-file-analysis.md
+ M .specstory/history/2026-10-07_12-48-16Z-npx-skills-add-https.md
+ M .specstory/history/2026-10-07_13-17-20Z-https-oryzo-ai-redesign.md
+ M .vscode/settings.json
+ M src/app/globals.css
+ M src/components/hero/DeskHero.tsx
+ M src/components/hero/desk/DeskCanvas.tsx
+ M src/components/hero/desk/FitModel.tsx
+ M src/components/hero/desk/items.ts
+ M src/components/hero/desk/models.tsx
+ M src/components/hero/desk/room.tsx
+ M src/components/hero/desk/textures.ts
+?? .specstory/history/2026-10-07_15-53-39Z-vercel-deployment-issue.md
+?? .specstory/history/2026-10-08_05-57-35Z-photobooth-game-design.md
+?? public/models/carved_wooden_elephant/
+?? public/models/gamepad/
+?? public/models/potted_plant_04/
+?? public/models/rubber_duck_toy/
+?? src/components/hero/desk/wall.tsx
+?? src/components/photobooth/
+
+```
 </details></tool-use>
 
 _**Agent (default)**_
@@ -4731,6 +4761,18 @@ _**Agent (default)**_
 <summary>Tool use: **run_terminal_command_v2** • Run command: git log --oneline -8</summary>
 ```bash
 git log --oneline -8
+```
+
+```
+c589311 inital portoflio, moslty complete
+2417cf5 initial cutting board design
+3b7868b Add in-repo agent skills and Next.js portfolio for cloud agents.
+7950de8 added exp
+932ae3a added resume
+8a4e59a removed uneccessary
+c098d2a removed images
+9c23cd3 added projects
+
 ```
 </details></tool-use>
 
@@ -4741,7 +4783,39 @@ _**Agent (default)**_
 ```bash
 git diff --stat; git diff --staged --stat
 ```
+
+```
+warning: in the working copy of '.specstory/history/2026-10-06_10-57-53Z-portfolio-repository-clone.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.specstory/history/2026-10-06_11-18-59Z-portfolio-design-enhancement.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.specstory/history/2026-10-06_11-26-52Z-high-end-portfolio-rebuild.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.specstory/history/2026-10-07_07-31-41Z-agent-prompt-typographic-portfolio.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.specstory/history/2026-10-07_11-06-26Z-portfolio-analysis-request.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.specstory/history/2026-10-07_11-14-47Z-map-portfolio-structure.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.specstory/history/2026-10-07_12-21-06Z-terminal-file-analysis.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.specstory/history/2026-10-07_12-48-16Z-npx-skills-add-https.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.specstory/history/2026-10-07_13-17-20Z-https-oryzo-ai-redesign.md', LF will be replaced by CRLF the next time Git touches it
+ ...6-10-07_11-06-26Z-portfolio-analysis-request.md |  73 +++
+ ...2026-10-07_13-17-20Z-https-oryzo-ai-redesign.md |  18 +-
+ .vscode/settings.json                              |   3 +-
+ src/app/globals.css                                | 709 +++++++++++++++++++++
+ src/components/hero/DeskHero.tsx                   |  35 +-
+ src/components/hero/desk/DeskCanvas.tsx            |  22 +-
+ src/components/hero/desk/FitModel.tsx              |  43 +-
+ src/components/hero/desk/items.ts                  |   1 +
+ src/components/hero/desk/models.tsx     
+… (output truncated)
+```
 </details></tool-use>
+
+_**Agent (default)**_
+
+<think><details><summary>Thought Process</summary>
+More details on the actual source changes are needed to write an accurate summary.
+
+The git diff contains all uncommitted work across the entire conversation, not just this turn. The scope for this commit covers Instax camera and photobooth changes, the wall pegboard full wall and monitor, and the realistic objects rewrite.
+
+I'll focus on the uncommitted product changes and ignore specstory/vscode noise. I'm checking items.ts and DeskHero briefly to gauge the photobooth files.
+</details></think>
 
 _**Agent (default)**_
 
@@ -4750,4 +4824,60 @@ _**Agent (default)**_
 ```bash
 git diff --stat -- src/components/hero/DeskHero.tsx src/components/hero/desk/DeskCanvas.tsx src/components/hero/desk/room.tsx; Get-ChildItem src/components/photobooth, public/models/gamepad, public/models/rubber_duck_toy, public/models/carved_wooden_elephant, public/models/potted_plant_04 -Recurse -File | Group-Object { $_.Directory.Parent.Name + '/' + $_.Directory.Name } | ForEach-Object { "{0}  {1} files  {2} KB" -f $_.Name, $_.Count, [int](($_.Group | Measure-Object Length -Sum).Sum/1KB) }
 ```
+
+```
+ src/components/hero/DeskHero.tsx        | 35 ++++++++++++++++++++++++++++++---
+ src/components/hero/desk/DeskCanvas.tsx | 22 +++++++++++++++++----
+ src/components/hero/desk/room.tsx       | 27 +------------------------
+ 3 files changed, 51 insertions(+), 33 deletions(-)
+components/photobooth  2 files  30 KB
+models/gamepad  2 files  253 KB
+gamepad/textures  3 files  1036 KB
+models/rubber_duck_toy  2 files  106 KB
+rubber_duck_toy/textures  3 files  612 KB
+models/carved_wooden_elephant  2 files  71 KB
+carved_wooden_elephant/textures  3 files  1749 KB
+models/potted_plant_04  2 files  243 KB
+potted_plant_04/textures  3 files  1830 KB
+
+```
 </details></tool-use>
+
+_**Agent (default)**_
+
+<think><details><summary>Thought Process</summary>
+The summary-commit template is required.
+
+Drafting the three-section commit summary now. The one-line will be imperative and casual, matching the repo style: "Add photobooth and a full pegboard wall to the desk".
+
+The one-line is tightened to roughly 50–72 characters. The detailed section covers both the Instax photobooth and the pegboard wall. Desk drag items, other pages, backend, and specstory are excluded. Notes include model size (~6 MB), lamp overlap, and gamepad cropping. The caveman template is overridden by the explicit summary-commit format.
+</details></think>
+
+_**Agent (default)**_
+
+### Detailed summary
+- **Scope:** The interactive desk hero on the portfolio home page (`src/components/hero`). Uncommitted work covers two features: an Instax photobooth, and a full-wall pegboard with a desk monitor. SpecStory history and `.vscode/settings.json` are unrelated noise.
+- **What improved:**
+  - An Instax Mini sits on the desk. Clicking it plays a print-eject animation, then opens a photobooth overlay.
+  - The booth supports polaroid, photo-strip, and normal photo formats. Visitors can shoot with the webcam or upload, pick a border, add and drag stickers, caption the print, and save a PNG.
+  - The back wall is now a floor-to-ceiling pegboard. The old small board is gone.
+  - Hung on it: pegboard bins of highlighters and pens, clear trays of binder clips, push pins, and paper clips, a polaroid string, a shelf with books and a framed print, two hanging pothos plants, over-ear headphones, and a green 60% keyboard.
+  - Four of those objects are real CC0 models from Poly Haven: a gamepad (hung from its own coiled cord), a rubber duck, a carved wooden elephant, and a potted succulent. They lazy-load the same way the lamp does.
+  - A monitor stands at the back of the desk, visible from the front and angle views, showing a code editor. It glows at night.
+- **What we did not change:**
+  - Other desk items still drag, rotate, and scatter as before. The Instax is the only new clickable object.
+  - No pages outside the hero, and no backend or data, were touched.
+- **Notes / risks:**
+  - The four models add about 6 MB under `public/models/`. They load only after the scene is up.
+  - The gamepad file includes a cord and plug baked into the same mesh. A crop in `FitModel` keeps the pad only.
+  - Whether the desk lamp overlaps the left bins in the real front and angle views is still unchecked.
+
+### Simple summary
+The desk now has a pink instant camera. Click it and a photobooth opens: take a picture, choose polaroid, strip, or a normal photo, decorate it with a border and stickers, then save it. The camera animates the print coming out of the top.
+
+The back wall is a full pegboard. It holds bins of markers and pens, clear boxes of clips and pins, photos on a string, a shelf with a rubber duck, a wooden elephant, a succulent, and books, plus hanging plants, headphones, a gamepad, and a green keyboard. A computer monitor sits on the desk in front of the wall.
+
+Dragging the other desk objects works the same as before.
+
+### One-line commit
+`Add an Instax photobooth and a full pegboard wall to the desk`

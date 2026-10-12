@@ -5,6 +5,7 @@ import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, type ReactNode }
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { FitModel, GAMEPAD_CROP, MODEL_URLS } from "./FitModel";
+import { InstaxCamera } from "./models";
 import { monitorTexture, pegboardTexture, photoTexture } from "./textures";
 
 /*
@@ -560,9 +561,9 @@ function Keyboard() {
   }, []);
   return (
     <group>
-      <Peg x={6.8} y={5.22} out={0.55} />
-      <Peg x={9.2} y={5.22} out={0.55} />
-      <group position={[8.0, 6.0, FACE + 0.22]} rotation={[-0.08, 0, 0]}>
+      <Peg x={3.4} y={5.22} out={0.55} />
+      <Peg x={5.8} y={5.22} out={0.55} />
+      <group position={[4.6, 6.0, FACE + 0.22]} rotation={[-0.08, 0, 0]}>
         <RoundedBox args={[15 * KEY_U + 0.22, 5 * KEY_U + 0.22, 0.3]} radius={0.07} smoothness={4} castShadow>
           <meshStandardMaterial color="#46583a" roughness={0.38} metalness={0.55} />
         </RoundedBox>
@@ -914,7 +915,59 @@ function Monitor({ night }: { night: boolean }) {
   );
 }
 
-export function Wall({ night }: { night: boolean }) {
+function HungInstax({
+  printing,
+  reduced,
+  onOpen,
+  onHover,
+}: {
+  printing: boolean;
+  reduced: boolean;
+  onOpen: () => void;
+  onHover: (on: boolean) => void;
+}) {
+  const x = 8.0;
+  const pegY = 6.25;
+  const camY = 4.35;
+  return (
+    <group>
+      <Peg x={x - 0.48} y={pegY} out={0.42} />
+      <Peg x={x + 0.48} y={pegY} out={0.42} />
+      <Rod a={[x - 0.48, pegY, FACE + 0.42]} b={[x - 0.32, camY + 1.72, FACE + 0.52]} r={0.014} color="#c8b48e" />
+      <Rod a={[x + 0.48, pegY, FACE + 0.42]} b={[x + 0.32, camY + 1.72, FACE + 0.52]} r={0.014} color="#c8b48e" />
+      <group
+        position={[x, camY, FACE + 0.55]}
+        rotation={[0.05, 0, 0]}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpen();
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          onHover(true);
+        }}
+        onPointerOut={() => onHover(false)}
+      >
+        <InstaxCamera ejecting={printing} reduced={reduced} />
+      </group>
+    </group>
+  );
+}
+
+export function Wall({
+  night,
+  printing,
+  reduced,
+  onOpenBooth,
+  onFocusItem,
+}: {
+  night: boolean;
+  printing: boolean;
+  reduced: boolean;
+  onOpenBooth: () => void;
+  onFocusItem: (id: string | null) => void;
+}) {
   return (
     <group>
       <Pegboard />
@@ -939,6 +992,12 @@ export function Wall({ night }: { night: boolean }) {
         <Headphones />
       </group>
       <Keyboard />
+      <HungInstax
+        printing={printing}
+        reduced={reduced}
+        onOpen={onOpenBooth}
+        onHover={(on) => onFocusItem(on ? "instax" : null)}
+      />
 
       <Monitor night={night} />
     </group>

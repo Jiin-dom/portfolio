@@ -26,7 +26,7 @@ export class SceneLink {
   }
 }
 
-/* where the torch rests on the desk */
+/* fallback rest pose until the desk layout publishes its slot */
 export const FLASH_HOME = new THREE.Vector3(-2.3, 0, 2.5);
 const FLASH_YAW = 2.3;
 const R = 0.2;
@@ -148,7 +148,7 @@ class FlashRig {
     return out;
   }
 
-  step(camera: THREE.PerspectiveCamera, pointer: THREE.Vector2, link: SceneLink, held: boolean, reduced: boolean, delta: number) {
+  step(camera: THREE.PerspectiveCamera, pointer: THREE.Vector2, link: SceneLink, held: boolean, reduced: boolean, delta: number, home: THREE.Vector3) {
     const g = this.group;
     if (!g) return;
     const dt = Math.min(delta, 1 / 30);
@@ -190,7 +190,7 @@ class FlashRig {
     const k = reduced ? 1 : 1 - Math.exp(-10 * dt);
     this.aim.lerp(target, k);
 
-    tmp.pos.copy(FLASH_HOME).setY(R).lerp(tmp.held, s);
+    tmp.pos.copy(home).setY(R).lerp(tmp.held, s);
     tmp.pos.y += Math.sin(Math.PI * s) * 1.4;
     /* eye = aim, target = hand: the resulting +z axis runs from the hand to the aim */
     this.m.lookAt(this.aim, tmp.held, tmp.up);
@@ -221,21 +221,22 @@ type Props = {
   link: SceneLink;
   held: boolean;
   reduced: boolean;
+  home: THREE.Vector3;
   onToggle: () => void;
   onHover: (on: boolean) => void;
 };
 
-export function Flashlight({ link, held, reduced, onToggle, onHover }: Props) {
+export function Flashlight({ link, held, reduced, home, onToggle, onHover }: Props) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const [rig] = useState(() => new FlashRig());
 
-  useFrame((state, delta) => rig.step(camera, state.pointer, link, held, reduced, delta));
+  useFrame((state, delta) => rig.step(camera, state.pointer, link, held, reduced, delta, home));
 
   return (
     <>
       <group
         ref={(g) => rig.attachGroup(g)}
-        position={[FLASH_HOME.x, R, FLASH_HOME.z]}
+        position={[home.x, R, home.z]}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();

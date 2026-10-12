@@ -27,7 +27,16 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     gsap.ticker.lagSmoothing(0);
     document.documentElement.classList.add("lenis", "lenis-smooth");
 
+    const syncLock = () => {
+      if (document.documentElement.classList.contains("desk-loading")) lenis.stop();
+      else lenis.start();
+    };
+    syncLock();
+    const mo = new MutationObserver(syncLock);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+
     return () => {
+      mo.disconnect();
       gsap.ticker.remove(ticker);
       lenis.destroy();
       document.documentElement.classList.remove("lenis", "lenis-smooth");

@@ -85,26 +85,28 @@ export function Ruler({ map }: { map: THREE.Texture }) {
   );
 }
 
-/* Cork coaster with a raised lip, Oryzo-style */
-export function Coaster({ map }: { map: THREE.Texture }) {
-  const geometry = useMemo(() => {
-    const profile = [
-      [0, 0],
-      [0.74, 0],
-      [0.78, 0.04],
-      [0.78, 0.13],
-      [0.74, 0.15],
-      [0.68, 0.14],
-      [0.64, 0.06],
-      [0.6, 0.045],
-      [0, 0.045],
-    ].map(([x, y]) => new THREE.Vector2(x, y));
-    return new THREE.LatheGeometry(profile, 96);
-  }, []);
+/* fanned colour chips — a designer object, same seat the cork coaster had */
+const SWATCH_COLORS = ["#1c1612", "#e85d2c", "#fff0dc", "#4a6b52", "#c08a55", "#2f4a6b", "#efc0c8"];
+
+export function SwatchFan() {
   return (
-    <mesh geometry={geometry}>
-      <meshStandardMaterial map={map} roughness={1} side={THREE.DoubleSide} />
-    </mesh>
+    <group>
+      {SWATCH_COLORS.map((color, i) => {
+        const t = SWATCH_COLORS.length === 1 ? 0.5 : i / (SWATCH_COLORS.length - 1);
+        const yaw = -0.52 + t * 1.04;
+        return (
+          <group key={color} rotation={[0, yaw, 0]}>
+            <RoundedBox args={[2.05, 0.016, 0.7]} radius={0.035} smoothness={3} position={[0.52, 0.01 + i * 0.013, 0]}>
+              <meshStandardMaterial color={color} roughness={0.55} />
+            </RoundedBox>
+            <mesh position={[-0.38, 0.019 + i * 0.013, 0]}>
+              <boxGeometry args={[0.28, 0.012, 0.42]} />
+              <meshStandardMaterial color="#f4efe6" roughness={0.8} />
+            </mesh>
+          </group>
+        );
+      })}
+    </group>
   );
 }
 
@@ -219,39 +221,6 @@ export function ApplePencil() {
       <mesh position={[0, -1.02, 0]}>
         <sphereGeometry args={[0.012, 12, 8]} />
         <meshStandardMaterial color="#9a9a96" />
-      </mesh>
-    </group>
-  );
-}
-
-export function UtilityKnife() {
-  return (
-    <group>
-      <RoundedBox args={[1.9, 0.14, 0.42]} radius={0.06} smoothness={4} position={[0.1, 0.07, 0]}>
-        <meshStandardMaterial color="#ee7a22" roughness={0.45} />
-      </RoundedBox>
-      {/* rubber grip */}
-      <RoundedBox args={[0.8, 0.03, 0.28]} radius={0.012} smoothness={2} position={[0.42, 0.145, 0]}>
-        <meshStandardMaterial color="#3a3836" roughness={0.95} />
-      </RoundedBox>
-      {Array.from({ length: 7 }).map((_, i) => (
-        <mesh key={i} position={[0.12 + i * 0.1, 0.163, 0]} rotation={[0, 0.5, 0]}>
-          <boxGeometry args={[0.02, 0.01, 0.22]} />
-          <meshStandardMaterial color="#2a2826" roughness={1} />
-        </mesh>
-      ))}
-      {/* slider */}
-      <RoundedBox args={[0.22, 0.06, 0.16]} radius={0.02} smoothness={2} position={[-0.38, 0.16, 0]}>
-        <meshStandardMaterial color="#dcdcda" metalness={0.6} roughness={0.35} />
-      </RoundedBox>
-      {/* steel channel + blade */}
-      <mesh position={[-0.9, 0.07, 0]}>
-        <boxGeometry args={[0.2, 0.1, 0.36]} />
-        <meshStandardMaterial color="#c7c8ca" metalness={1} roughness={0.3} />
-      </mesh>
-      <mesh position={[-1.12, 0.07, 0.02]} rotation={[0, 0.35, 0]}>
-        <boxGeometry args={[0.32, 0.012, 0.2]} />
-        <meshStandardMaterial color="#e4e5e7" metalness={1} roughness={0.15} />
       </mesh>
     </group>
   );

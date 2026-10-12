@@ -1,8 +1,8 @@
 "use client";
 
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { Environment, Lightformer, PerformanceMonitor } from "@react-three/drei";
-import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { Environment, Lightformer, PerformanceMonitor, useGLTF, useProgress, useTexture } from "@react-three/drei";
+import { Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { deskItems } from "./items";
 import { DeskWorld, type ViewName } from "./world";
@@ -14,6 +14,10 @@ import { Flashlight, SceneLink } from "./flashlight";
 import type { BookProject } from "./textures";
 import { buildTextures, type DeskTextures } from "./textures";
 import * as Model from "./models";
+
+const OAK_MAPS = ["/textures/oak_veneer_01/diffuse.jpg", "/textures/oak_veneer_01/rough.jpg", "/textures/oak_veneer_01/nor_gl.jpg"] as const;
+Object.values(MODEL_URLS).forEach((url) => useGLTF.preload(url));
+OAK_MAPS.forEach((url) => useTexture.preload(url));
 
 export type DeskCommand = { type: "tidy" | "scatter"; n: number };
 
@@ -32,19 +36,17 @@ type Props = {
   onHoverProject: (index: number | null) => void;
   onFocusItem: (id: string | null) => void;
   onReady: () => void;
+  onProgress?: (p: number) => void;
   printing: boolean;
   onOpenBooth: () => void;
 };
 
-/* pointer travel (px) below which a press on the Instax counts as a click, not a drag */
-const CLICK_SLOP = 6;
-
-function renderModel(id: string, t: DeskTextures, night: boolean, printing: boolean, reduced: boolean): ReactNode {
+function renderModel(id: string, t: DeskTextures, night: boolean): ReactNode {
   switch (id) {
     case "mat":
       return <Model.CuttingMat w={7.6} d={5.2} map={t.mat} edge="#26422f" />;
-    case "coaster":
-      return <Model.Coaster map={t.cork} />;
+    case "swatches":
+      return <Model.SwatchFan />;
     case "tablet":
       return <Model.Tablet map={night ? t.tabletNight : t.tablet} />;
     case "note":
@@ -65,12 +67,8 @@ function renderModel(id: string, t: DeskTextures, night: boolean, printing: bool
           <FitModel url={MODEL_URLS.camera} size={2.4} rotY={Math.PI} hide={CAMERA_HIDE} />
         </Suspense>
       );
-    case "instax":
-      return <Model.InstaxCamera ejecting={printing} reduced={reduced} />;
     case "mouse":
       return <Model.Mouse />;
-    case "knife":
-      return <Model.UtilityKnife />;
     case "ruler":
       return <Model.Ruler map={t.ruler} />;
     case "card":
@@ -84,13 +82,67 @@ function renderModel(id: string, t: DeskTextures, night: boolean, printing: bool
   }
 }
 
-function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, onHoverProject, onFocusItem, onReady, printing, onOpenBooth }: Omit<Props, "active">) {
+function Warmup({ onDone, onProgress }: { onDone: () => void; onProgress?: (p: number) => void }) {
+  const { gl, scene, camera } = useThree();
+  const { active, progress } = useProgress();
+  const fired = useRef(false);
+
+  useEffect(() => {
+    onProgress?.(Math.min(92, 18 + progress * 0.7));
+  }, [progress, onProgress]);
+
+  useEffect(() => {
+    if (fired.current || active) return;
+    let cancelled = false;
+    const failSafe = window.setTimeout(() => {
+      if (fired.current || cancelled) return;
+      fired.current = true;
+      onDone();
+    }, 8000);
+
+    const run = async () => {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+      if (cancelled) return;
+      const renderer = gl as THREE.WebGLRenderer;
+      try {
+        if (typeof renderer.compileAsync === "function") await renderer.compileAsync(scene, camera);
+        else renderer.compile(scene, camera);
+      } catch {
+        /* compile is a hitch-avoidance; a failure still reveals the desk */
+      }
+      if (cancelled || fired.current) return;
+      fired.current = true;
+      onProgress?.(100);
+      onDone();
+    };
+    void run();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(failSafe);
+    };
+  }, [active, gl, scene, camera, onDone, onProgress]);
+
+  return null;
+}
+
+function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, onHoverProject, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active">) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const gl = useThree((s) => s.gl);
   const size = useThree((s) => s.size);
   const [world] = useState(() => new DeskWorld(reduced));
   const [link] = useState(() => new SceneLink());
   const [tex, setTex] = useState<DeskTextures | null>(null);
+  const [booksReady, setBooksReady] = useState(false);
+  const onBooksLoaded = useCallback(() => setBooksReady(true), []);
+  const onWarm = useCallback(() => {
+    world.start();
+    onReady();
+  }, [world, onReady]);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setBooksReady(true), 5000);
+    return () => window.clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     world.frame(camera, size.width, size.height);
@@ -103,13 +155,13 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
       built = t;
       if (!alive) return;
       setTex(t);
-      onReady();
+      onProgress?.(16);
     });
     return () => {
       alive = false;
       if (built) Object.values(built).forEach((t) => t.dispose());
     };
-  }, [onReady]);
+  }, [onProgress]);
 
   useEffect(() => {
     if (!command) return;
@@ -167,12 +219,11 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
     world.step(delta);
   });
 
-  if (!tex) return null;
-
   const setCursor = (c: string) => world.setCursor(gl.domElement, c);
 
   return (
     <>
+      {tex && booksReady ? <Warmup onProgress={onProgress} onDone={onWarm} /> : null}
       <Room
         onLamp={onToggleNight}
         onLampHover={(on) => {
@@ -180,55 +231,74 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
           setCursor(on ? "pointer" : "");
         }}
       />
-      <Wall night={night} />
-      <ProjectShelf projects={projects} open={openProject} reduced={reduced} night={night} link={link} onOpen={onOpenProject} onHover={onHoverProject} />
+      <Wall
+        night={night}
+        printing={printing}
+        reduced={reduced}
+        onOpenBooth={onOpenBooth}
+        onFocusItem={(id) => {
+          onFocusItem(id);
+          setCursor(id ? "pointer" : "");
+        }}
+      />
+      <ProjectShelf
+        projects={projects}
+        open={openProject}
+        reduced={reduced}
+        night={night}
+        link={link}
+        onOpen={onOpenProject}
+        onHover={onHoverProject}
+        onLoaded={onBooksLoaded}
+      />
       <Flashlight
         link={link}
         held={flashOn}
         reduced={reduced}
+        home={world.flashHome}
         onToggle={onToggleFlash}
         onHover={(on) => {
           onFocusItem(on ? "flashlight" : null);
           setCursor(on ? "pointer" : "");
         }}
       />
-      {deskItems.map((item, i) => (
-        <group
-          key={item.id}
-          ref={(g) => world.attach(i, g)}
-          onPointerDown={(e: ThreeEvent<PointerEvent>) => {
-            if (e.pointerType === "mouse" && e.button !== 0) return;
-            if (world.grabbing) return;
-            e.stopPropagation();
-            onFocusItem(item.id);
-            setCursor("grabbing");
-            world.grab(i, e.point, e.pointerId, gl.domElement, camera, () => setCursor(""));
-          }}
-          onClick={(e) => {
-            if (item.id !== "instax" || e.delta > CLICK_SLOP) return;
-            e.stopPropagation();
-            onOpenBooth();
-          }}
-          onDoubleClick={(e) => {
-            e.stopPropagation();
-            world.turn(i);
-          }}
-          onPointerOver={(e) => {
-            e.stopPropagation();
-            world.hover(i, true);
-            if (!world.grabbing) {
-              setCursor(item.id === "instax" ? "pointer" : "grab");
-              onFocusItem(item.id);
-            }
-          }}
-          onPointerOut={() => {
-            world.hover(i, false);
-            if (!world.grabbing) setCursor("");
-          }}
-        >
-          {renderModel(item.id, tex, night, printing, reduced)}
-        </group>
-      ))}
+      {tex
+        ? deskItems.map((item, i) => (
+            <group
+              key={item.id}
+              ref={(g) => world.attach(i, g)}
+              onPointerDown={(e: ThreeEvent<PointerEvent>) => {
+                if (e.pointerType === "mouse" && e.button !== 0) return;
+                if (world.grabbing) return;
+                e.stopPropagation();
+                onFocusItem(item.id);
+                setCursor("grabbing");
+                world.grab(i, e.point, e.pointerId, gl.domElement, camera, () => setCursor(""));
+              }}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                world.turn(i);
+              }}
+              onPointerMove={(e) => {
+                world.hoverMove(i, e.point);
+              }}
+              onPointerOver={(e) => {
+                e.stopPropagation();
+                world.hover(i, true);
+                if (!world.grabbing) {
+                  setCursor("grab");
+                  onFocusItem(item.id);
+                }
+              }}
+              onPointerOut={() => {
+                world.hover(i, false);
+                if (!world.grabbing) setCursor("");
+              }}
+            >
+              {renderModel(item.id, tex, night)}
+            </group>
+          ))
+        : null}
     </>
   );
 }

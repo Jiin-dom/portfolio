@@ -50,6 +50,8 @@ export function DeskHero() {
   const root = useRef<HTMLElement>(null);
   const [inView, setInView] = useState(true);
   const [ready, setReady] = useState(false);
+  const [load, setLoad] = useState(8);
+  const [showLoader, setShowLoader] = useState(true);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [command, setCommand] = useState<DeskCommand | null>(null);
   const [view, setView] = useState<ViewName>("top");
@@ -113,6 +115,19 @@ export function DeskHero() {
   }, []);
 
   const onReady = useCallback(() => setReady(true), []);
+  const onProgress = useCallback((p: number) => setLoad((n) => Math.max(n, p)), []);
+
+  useEffect(() => {
+    if (ready) return;
+    document.documentElement.classList.add("desk-loading");
+    return () => document.documentElement.classList.remove("desk-loading");
+  }, [ready]);
+
+  useEffect(() => {
+    if (!ready) return;
+    const t = window.setTimeout(() => setShowLoader(false), 700);
+    return () => window.clearTimeout(t);
+  }, [ready]);
   const send = (type: DeskCommand["type"]) => setCommand((c) => ({ type, n: (c?.n ?? 0) + 1 }));
   const focus =
     hoverProject !== null
@@ -141,11 +156,22 @@ export function DeskHero() {
           onHoverProject={setHoverProject}
           onFocusItem={setFocusId}
           onReady={onReady}
+          onProgress={onProgress}
           printing={printing}
           onOpenBooth={openBooth}
         />
       </div>
       <div className="desk-vignette pointer-events-none absolute inset-0" aria-hidden />
+
+      {showLoader ? (
+        <div className="desk-loader" data-lenis-prevent data-ready={ready ? "" : undefined} aria-busy={!ready} aria-live="polite">
+          <p className="desk-loader__kicker">{site.shortName}</p>
+          <p className="desk-loader__mark">The desk</p>
+          <div className="desk-loader__bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(load)} aria-label="Loading the desk">
+            <span style={{ width: `${ready ? 100 : load}%` }} />
+          </div>
+        </div>
+      ) : null}
 
       {/* ── Type + UI, layered over the desk like print on a photo ── */}
       <div className="desk-ui pointer-events-none absolute inset-0 z-20" data-reading={reading ? "" : undefined}>

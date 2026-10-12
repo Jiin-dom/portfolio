@@ -132,6 +132,7 @@ type ShelfProps = {
   reduced: boolean;
   onOpen: (index: number | null) => void;
   onHover: (index: number | null) => void;
+  onLoaded?: () => void;
   /* at night a flashlight clicks on over the open book */
   night: boolean;
   link: SceneLink;
@@ -341,7 +342,7 @@ class ShelfAnim {
   }
 }
 
-export function ProjectShelf({ projects, open, reduced, night, link, onOpen, onHover }: ShelfProps) {
+export function ProjectShelf({ projects, open, reduced, night, link, onOpen, onHover, onLoaded }: ShelfProps) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
   const [tex, setTex] = useState<BookTextures | null>(null);
@@ -352,7 +353,9 @@ export function ProjectShelf({ projects, open, reduced, night, link, onOpen, onH
     let built: BookTextures | null = null;
     buildBookTextures(projects).then((t) => {
       built = t;
-      if (alive) setTex(t);
+      if (!alive) return;
+      setTex(t);
+      onLoaded?.();
     });
     return () => {
       alive = false;
@@ -361,7 +364,7 @@ export function ProjectShelf({ projects, open, reduced, night, link, onOpen, onH
         built.books.forEach((b) => [b.spine, b.cover, b.left, b.right].forEach((x) => x.dispose()));
       }
     };
-  }, [projects]);
+  }, [projects, onLoaded]);
 
   useEffect(() => {
     anim.setActive(open);

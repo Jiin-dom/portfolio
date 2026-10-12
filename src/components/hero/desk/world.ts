@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { deskItems, type DeskItem } from "./items";
+import { deskItems, flashlightSlot, type DeskItem } from "./items";
 import { DESK } from "./constants";
 
 /*
@@ -21,8 +21,14 @@ type Body = {
   tiltZ: number;
   spawnAt: number;
   liftUntil: number;
+  /* hover push: offset along the pointer's travel, eased back to rest */
+  nudge: THREE.Vector2;
+  nudgeGoal: THREE.Vector2;
+  lastHover: THREE.Vector2 | null;
   group: THREE.Group | null;
 };
+
+const NUDGE_MAX = 0.28;
 
 export type ViewName = "top" | "front" | "angle";
 type View = { pos: THREE.Vector3; target: THREE.Vector3; up: THREE.Vector3 };
@@ -55,7 +61,10 @@ export class DeskWorld {
   private seq = deskItems.length;
   private clock = 0;
   private portrait = false;
+  /* the drop-in waits until the loader lifts, so nobody misses it */
+  private live = false;
   grabbing = false;
+  readonly flashHome = new THREE.Vector3();
 
   constructor(private reduced: boolean) {
     this.bodies = deskItems.map((item, i) => ({
@@ -72,8 +81,15 @@ export class DeskWorld {
       tiltZ: reduced ? 0 : (Math.random() - 0.5) * 0.6,
       spawnAt: reduced ? 0 : 0.25 + i * 0.07,
       liftUntil: 0,
+      nudge: new THREE.Vector2(),
+      nudgeGoal: new THREE.Vector2(),
+      lastHover: null,
       group: null,
     }));
+  }
+
+  start() {
+    this.live = true;
   }
 
   attach(index: number, group: THREE.Group | null) {
@@ -140,6 +156,10 @@ export class DeskWorld {
     const portraitChanged = this.portrait !== portrait;
     this.portrait = portrait;
     this.laidOut = true;
+
+    const slot = portrait ? flashlightSlot.m : flashlightSlot;
+    const [fx, fz] = this.screenToDesk(slot.fx * 0.93, -slot.fz * 0.84);
+    this.flashHome.set(fx, 0, fz);
 
     for (const b of this.bodies) {
       if (first || portraitChanged) {
@@ -241,7 +261,24 @@ export class DeskWorld {
   }
 
   hover(index: number, on: boolean) {
-    this.bodies[index].hovered = on;
+    const b = this.bodies[index];
+    b.hovered = on;
+    b.lastHover = null;
+    if (!on) b.nudgeGoal.set(0, 0);
+  }
+
+  /* the pointer brushing across an object pushes it a little the same way */
+  hoverMove(index: number, point: THREE.Vector3) {
+    const b = this.bodies[index];
+    if (!b.hovered || this.grabbing || this.reduced || b.item.heavy) return;
+    if (b.lastHover) {
+      b.nudgeGoal.x += (point.x - b.lastHover.x) * 0.85;
+      b.nudgeGoal.y += (point.z - b.lastHover.y) * 0.85;
+      if (b.nudgeGoal.length() > NUDGE_MAX) b.nudgeGoal.setLength(NUDGE_MAX);
+      b.lastHover.set(point.x, point.z);
+    } else {
+      b.lastHover = new THREE.Vector2(point.x, point.z);
+    }
   }
 
   turn(index: number) {
@@ -307,8 +344,18 @@ export class DeskWorld {
     window.addEventListener("wheel", wheel, { capture: true, passive: false });
   }
 
+  private writeGroup(b: Body) {
+    if (!b.group) return;
+    b.group.position.set(b.pos.x + b.nudge.x, b.pos.y, b.pos.z + b.nudge.y);
+    b.group.rotation.set(b.tiltX, b.rotY, b.tiltZ, "XZY");
+  }
+
   step(delta: number) {
     if (!this.laidOut) return;
+    if (!this.live) {
+      for (const b of this.bodies) this.writeGroup(b);
+      return;
+    }
     const dt = Math.min(delta, 1 / 30);
     this.clock += dt;
     const t = this.clock;
@@ -325,9 +372,18 @@ export class DeskWorld {
 
       const heavy = !!b.item.heavy;
       const lifting = b.liftUntil > t && !heavy;
-      const lift = floating ? DRAG_LIFT : lifting ? 0.7 : b.hovered && !this.grabbing && !heavy ? 0.05 : 0;
+      const lift = floating ? DRAG_LIFT : lifting ? 0.7 : 0;
       const spawning = t < b.spawnAt;
       const ty = spawning ? b.pos.y : support + lift;
+
+      const still = !b.hovered || this.grabbing || this.reduced || heavy;
+      if (still) b.nudgeGoal.set(0, 0);
+      else {
+        b.nudgeGoal.x = damp(b.nudgeGoal.x, 0, 2.4, dt);
+        b.nudgeGoal.y = damp(b.nudgeGoal.y, 0, 2.4, dt);
+      }
+      b.nudge.x = damp(b.nudge.x, b.nudgeGoal.x, 14, dt);
+      b.nudge.y = damp(b.nudge.y, b.nudgeGoal.y, 14, dt);
 
       const px = b.pos.x;
       const pz = b.pos.z;
@@ -341,14 +397,11 @@ export class DeskWorld {
       const vx = (b.pos.x - px) / dt;
       const vz = (b.pos.z - pz) / dt;
       if (!spawning) {
-        b.tiltX = damp(b.tiltX, clamp(vz * k, -0.3, 0.3), 9, dt);
-        b.tiltZ = damp(b.tiltZ, clamp(-vx * k, -0.3, 0.3), 9, dt);
+        b.tiltX = damp(b.tiltX, clamp(vz * k + b.nudge.y * 0.55, -0.35, 0.35), 9, dt);
+        b.tiltZ = damp(b.tiltZ, clamp(-vx * k - b.nudge.x * 0.55, -0.35, 0.35), 9, dt);
       }
 
-      if (b.group) {
-        b.group.position.copy(b.pos);
-        b.group.rotation.set(b.tiltX, b.rotY, b.tiltZ, "XZY");
-      }
+      this.writeGroup(b);
     }
   }
 }
