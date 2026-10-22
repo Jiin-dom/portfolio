@@ -33,6 +33,12 @@ type Props = {
   projects: readonly BookProject[];
   openProject: number | null;
   onOpenProject: (index: number | null) => void;
+  experienceActive: boolean;
+  experienceExtracting: boolean;
+  onOpenExperience: (origin: { x: number; y: number }) => void;
+  onExperienceExtracted: () => void;
+  onExperienceReturned: () => void;
+  onCloseExperience: () => void;
   onHoverProject: (index: number | null) => void;
   onFocusItem: (id: string | null) => void;
   onReady: () => void;
@@ -41,12 +47,15 @@ type Props = {
   onOpenBooth: () => void;
 };
 
-function renderModel(id: string, t: DeskTextures, night: boolean): ReactNode {
+function renderModel(
+  id: string,
+  t: DeskTextures,
+  night: boolean,
+  experienceProps: Pick<Props, "experienceExtracting" | "reduced" | "onOpenExperience" | "onExperienceExtracted" | "onExperienceReturned">,
+): ReactNode {
   switch (id) {
     case "mat":
       return <Model.CuttingMat w={7.6} d={5.2} map={t.mat} edge="#26422f" />;
-    case "swatches":
-      return <Model.SwatchFan />;
     case "tablet":
       return <Model.Tablet map={night ? t.tabletNight : t.tablet} />;
     case "note":
@@ -73,6 +82,17 @@ function renderModel(id: string, t: DeskTextures, night: boolean): ReactNode {
       return <Model.Ruler map={t.ruler} />;
     case "card":
       return <Model.Card map={t.card} />;
+    case "experience":
+      return (
+        <Model.ExperienceFolder
+          map={t.experience}
+          extracting={experienceProps.experienceExtracting}
+          reduced={experienceProps.reduced}
+          onOpen={experienceProps.onOpenExperience}
+          onExtracted={experienceProps.onExperienceExtracted}
+          onReturned={experienceProps.onExperienceReturned}
+        />
+      );
     case "clip-a":
       return <Model.PaperClip />;
     case "clip-b":
@@ -125,7 +145,7 @@ function Warmup({ onDone, onProgress }: { onDone: () => void; onProgress?: (p: n
   return null;
 }
 
-function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, onHoverProject, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active">) {
+function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, experienceActive, experienceExtracting, onOpenExperience, onExperienceExtracted, onExperienceReturned, onCloseExperience, onHoverProject, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active">) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const gl = useThree((s) => s.gl);
   const size = useThree((s) => s.size);
@@ -204,7 +224,7 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
   useEffect(() => {
     const hero = gl.domElement.closest("section");
     const onWheel = (e: WheelEvent) => {
-      if (world.grabbing || openProject !== null) return;
+      if (world.grabbing || openProject !== null || experienceActive) return;
       if (!hero || window.scrollY > 4 || !hero.contains(e.target as Node)) return;
       e.preventDefault();
       e.stopPropagation();
@@ -212,7 +232,7 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
     };
     window.addEventListener("wheel", onWheel, { capture: true, passive: false });
     return () => window.removeEventListener("wheel", onWheel, { capture: true });
-  }, [gl, world, openProject]);
+  }, [gl, world, openProject, experienceActive]);
 
   useFrame((_, delta) => {
     world.stepCamera(camera, delta);
@@ -247,7 +267,10 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
         reduced={reduced}
         night={night}
         link={link}
-        onOpen={onOpenProject}
+        onOpen={(index) => {
+          onCloseExperience();
+          onOpenProject(index);
+        }}
         onHover={onHoverProject}
         onLoaded={onBooksLoaded}
       />
@@ -295,7 +318,13 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
                 if (!world.grabbing) setCursor("");
               }}
             >
-              {renderModel(item.id, tex, night)}
+              {renderModel(item.id, tex, night, {
+                experienceExtracting,
+                reduced,
+                onOpenExperience,
+                onExperienceExtracted,
+                onExperienceReturned,
+              })}
             </group>
           ))
         : null}

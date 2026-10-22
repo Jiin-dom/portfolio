@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { site } from "@/lib/content";
+import { experience, site } from "@/lib/content";
 
 type Fonts = { display: string; serif: string; mono: string };
 type Ctx = CanvasRenderingContext2D;
@@ -441,6 +441,34 @@ function rulerTexture(f: Fonts) {
   return toTexture(c);
 }
 
+function experienceFolderTexture(f: Fonts) {
+  const W = 768;
+  const H = 512;
+  const { c, ctx } = surface(W, H);
+  ctx.fillStyle = "#f4ead7";
+  ctx.fillRect(0, 0, W, H);
+  speckle(ctx, W, H, 1900, ["#fffaf0", "#b8a98f"], 0.7);
+  ctx.strokeStyle = "rgba(48, 35, 19, 0.16)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(18, 18, W - 36, H - 36);
+  ctx.fillStyle = INK;
+  ctx.font = `500 24px ${f.mono}`;
+  ctx.fillText("WORK RECORD", 48, 72);
+  ctx.fillRect(48, 92, W - 96, 2);
+  ctx.globalAlpha = 0.72;
+  experience.slice(0, 2).forEach((item, index) => {
+    const y = 166 + index * 150;
+    ctx.globalAlpha = index === 0 ? 1 : 0.72;
+    ctx.font = `800 30px ${f.display}`;
+    ctx.fillText(item.title.toUpperCase(), 48, y, W - 96);
+    ctx.font = `500 18px ${f.mono}`;
+    ctx.fillText(item.place.toUpperCase(), 48, y + 30, W - 96);
+    ctx.fillText(item.year.toUpperCase(), 48, y + 58, W - 96);
+  });
+  ctx.globalAlpha = 1;
+  return toTexture(c);
+}
+
 export type DeskTextures = Awaited<ReturnType<typeof buildTextures>>;
 
 export async function buildTextures() {
@@ -457,6 +485,7 @@ export async function buildTextures() {
     card: cardTexture(f),
     note: noteTexture(f),
     ruler: rulerTexture(f),
+    experience: experienceFolderTexture(f),
   };
 }
 

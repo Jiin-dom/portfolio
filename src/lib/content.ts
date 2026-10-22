@@ -61,6 +61,11 @@ export const education = [
 
 export const experience = [
   {
+    year: "January 2025 – Present",
+    title: "Software Engineer",
+    place: "MoveForward Inc. Ventures",
+  },
+  {
     year: "2023 - 2024",
     title: "Software Developer",
     place: "Efunity Pte Ltd",

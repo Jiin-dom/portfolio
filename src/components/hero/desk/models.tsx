@@ -58,6 +58,81 @@ export function Card({ map }: { map: THREE.Texture }) {
   );
 }
 
+type ExperienceFolderProps = {
+  map: THREE.Texture;
+  extracting: boolean;
+  reduced: boolean;
+  onOpen: () => void;
+  onExtracted: () => void;
+  onReturned: () => void;
+};
+
+export function ExperienceFolder({ map, extracting, reduced, onOpen, onExtracted, onReturned }: ExperienceFolderProps) {
+  const paper = useRef<THREE.Group>(null);
+  const restingPrint = useRef<THREE.Mesh>(null);
+  const progress = useRef(0);
+  const wasActive = useRef(false);
+  const reportedExtracted = useRef(false);
+
+  useFrame((_, delta) => {
+    if (!paper.current) return;
+    const target = extracting ? 1 : 0;
+    progress.current = reduced ? target : THREE.MathUtils.damp(progress.current, target, 4.8, Math.min(delta, 1 / 30));
+    const lift = THREE.MathUtils.smoothstep(progress.current, 0, 0.42);
+    const pull = THREE.MathUtils.smoothstep(progress.current, 0.18, 1);
+    if (restingPrint.current) restingPrint.current.visible = progress.current < 0.025;
+
+    // The group pivots at the tucked edge: the exposed edge lifts first, then
+    // the whole sheet slides forward and up out of the pocket.
+    paper.current.position.set(0, 0.054 + 0.38 * pull, -0.67 + 1.34 * pull);
+    paper.current.rotation.x = -0.48 * lift;
+
+    if (extracting) {
+      wasActive.current = true;
+      if (progress.current > 0.98 && !reportedExtracted.current) {
+        reportedExtracted.current = true;
+        onExtracted();
+      }
+    } else if (progress.current < 0.02 && wasActive.current) {
+      wasActive.current = false;
+      reportedExtracted.current = false;
+      onReturned();
+    }
+  });
+
+  return (
+    <group>
+      <RoundedBox args={[2.05, 0.05, 1.48]} radius={0.035} smoothness={3} position={[0, 0.025, 0]}>
+        <meshStandardMaterial color="#a98250" roughness={0.92} />
+      </RoundedBox>
+      {/* A short pocket lip holds the sheet while leaving its printed face visible. */}
+      <RoundedBox args={[1.98, 0.035, 0.2]} radius={0.018} smoothness={3} position={[0, 0.068, 0.57]}>
+        <meshStandardMaterial color="#c5a16c" roughness={0.9} />
+      </RoundedBox>
+      <mesh ref={restingPrint} position={[0, 0.052, 0]} rotation={[FLAT, 0, 0]}>
+        <planeGeometry args={[1.9, 1.34]} />
+        <meshBasicMaterial map={map} toneMapped={false} />
+      </mesh>
+      <group
+        ref={paper}
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpen();
+        }}
+      >
+        <mesh position={[0, 0.005, 0.67]}>
+          <boxGeometry args={[1.9, 0.012, 1.34]} />
+          <meshStandardMaterial color="#f4ead7" roughness={0.88} />
+        </mesh>
+        <mesh position={[0, 0.012, 0.67]} rotation={[FLAT, 0, 0]}>
+          <planeGeometry args={[1.88, 1.32]} />
+          <meshStandardMaterial map={map} roughness={0.9} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
 export function StickyNote({ map }: { map: THREE.Texture }) {
   return (
     <group>
@@ -81,31 +156,6 @@ export function Ruler({ map }: { map: THREE.Texture }) {
         <planeGeometry args={[3.4, 0.34]} />
         <meshStandardMaterial map={map} metalness={0.75} roughness={0.32} />
       </mesh>
-    </group>
-  );
-}
-
-/* fanned colour chips — a designer object, same seat the cork coaster had */
-const SWATCH_COLORS = ["#1c1612", "#e85d2c", "#fff0dc", "#4a6b52", "#c08a55", "#2f4a6b", "#efc0c8"];
-
-export function SwatchFan() {
-  return (
-    <group>
-      {SWATCH_COLORS.map((color, i) => {
-        const t = SWATCH_COLORS.length === 1 ? 0.5 : i / (SWATCH_COLORS.length - 1);
-        const yaw = -0.52 + t * 1.04;
-        return (
-          <group key={color} rotation={[0, yaw, 0]}>
-            <RoundedBox args={[2.05, 0.016, 0.7]} radius={0.035} smoothness={3} position={[0.52, 0.01 + i * 0.013, 0]}>
-              <meshStandardMaterial color={color} roughness={0.55} />
-            </RoundedBox>
-            <mesh position={[-0.38, 0.019 + i * 0.013, 0]}>
-              <boxGeometry args={[0.28, 0.012, 0.42]} />
-              <meshStandardMaterial color="#f4efe6" roughness={0.8} />
-            </mesh>
-          </group>
-        );
-      })}
     </group>
   );
 }

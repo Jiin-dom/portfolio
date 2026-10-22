@@ -1,10 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { useReducedMotion } from "motion/react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Flashlight, LayoutGrid, Moon, MousePointer2, Shuffle, Sun, X } from "lucide-react";
-import { projects, site } from "@/lib/content";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Briefcase, Flashlight, LayoutGrid, Moon, MousePointer2, Shuffle, Sun, X } from "lucide-react";
+import { experience, projects, site } from "@/lib/content";
 import { deskItemMap } from "@/components/hero/desk/items";
 import type { DeskCommand } from "@/components/hero/desk/DeskCanvas";
 import type { ViewName } from "@/components/hero/desk/world";
@@ -94,6 +94,59 @@ export function DeskHero() {
 
   const [openProject, setOpenProject] = useState<number | null>(null);
   const [hoverProject, setHoverProject] = useState<number | null>(null);
+  const [experienceState, setExperienceState] = useState<"closed" | "extracting" | "open" | "returning">("closed");
+  const [experienceOrigin, setExperienceOrigin] = useState({ x: 0, y: 0 });
+  const experienceScreen = useRef<HTMLElement>(null);
+  const experienceTrigger = useRef<HTMLButtonElement>(null);
+  const focusReturn = useRef<HTMLElement | null>(null);
+
+  const experienceActive = experienceState !== "closed";
+  const experienceExtracting = experienceState === "extracting" || experienceState === "open";
+
+  const openExperience = useCallback((origin?: { x: number; y: number }) => {
+    const active = document.activeElement;
+    focusReturn.current = active instanceof HTMLElement && active !== document.body ? active : experienceTrigger.current;
+    const bounds = root.current?.getBoundingClientRect();
+    setExperienceOrigin({
+      x: origin && bounds ? origin.x - bounds.left : (bounds?.width ?? 0) / 2,
+      y: origin && bounds ? origin.y - bounds.top : (bounds?.height ?? 0) / 2,
+    });
+    setOpenProject(null);
+    setExperienceState("extracting");
+  }, []);
+
+  const experienceExtracted = useCallback(() => {
+    setExperienceState((state) => state === "extracting" ? "open" : state);
+  }, []);
+
+  const experienceReturned = useCallback(() => {
+    setExperienceState((state) => state === "returning" ? "closed" : state);
+  }, []);
+
+  const closeExperience = useCallback(() => {
+    setExperienceState((state) => state === "closed" || state === "returning" ? state : "returning");
+  }, []);
+
+  useEffect(() => {
+    if (!experienceActive) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeExperience();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      focusReturn.current?.focus();
+    };
+  }, [experienceActive, closeExperience]);
+
+  useEffect(() => {
+    if (experienceState !== "open") return;
+    experienceScreen.current?.querySelector<HTMLElement>("button, a[href]")?.focus();
+  }, [experienceState]);
 
   useEffect(() => {
     if (openProject === null) return;
@@ -153,6 +206,12 @@ export function DeskHero() {
           projects={projects}
           openProject={openProject}
           onOpenProject={setOpenProject}
+          experienceActive={experienceActive}
+          experienceExtracting={experienceExtracting}
+          onOpenExperience={openExperience}
+          onExperienceExtracted={experienceExtracted}
+          onExperienceReturned={experienceReturned}
+          onCloseExperience={closeExperience}
           onHoverProject={setHoverProject}
           onFocusItem={setFocusId}
           onReady={onReady}
@@ -174,7 +233,7 @@ export function DeskHero() {
       ) : null}
 
       {/* ── Type + UI, layered over the desk like print on a photo ── */}
-      <div className="desk-ui pointer-events-none absolute inset-0 z-20" data-reading={reading ? "" : undefined}>
+      <div className="desk-ui pointer-events-none absolute inset-0 z-20" data-reading={reading || experienceActive ? "" : undefined}>
         <header className="desk-title">
           <p className="desk-kicker">Designs interfaces. Ships systems.</p>
           <h1 className="desk-wordmark">
@@ -234,12 +293,15 @@ export function DeskHero() {
             <p className="desk-card__body">
               Everything on this desk moves. Drag it, hold + scroll to rotate, double-click to turn.
             </p>
-            <div className="desk-card__actions pointer-events-auto mt-4 flex justify-end gap-2">
+            <div className="desk-card__actions pointer-events-auto mt-4 flex flex-wrap justify-end gap-2">
               <a href="#features" className="desk-chip desk-chip--explore">
                 <ArrowDown aria-hidden /> Explore
               </a>
               <button type="button" className="desk-chip" onClick={() => send("tidy")}>
                 <LayoutGrid aria-hidden /> Tidy
+              </button>
+              <button ref={experienceTrigger} type="button" className="desk-chip" onClick={(event) => openExperience({ x: event.clientX, y: event.clientY })}>
+                <Briefcase aria-hidden /> Experience
               </button>
               <button type="button" className="desk-chip" onClick={() => send("scatter")}>
                 <Shuffle aria-hidden /> Scatter
@@ -281,6 +343,38 @@ export function DeskHero() {
             </button>
           </div>
         </div>
+      )}
+
+      {(experienceState === "open" || experienceState === "returning") && (
+        <section
+          ref={experienceScreen}
+          className="desk-experience"
+          data-state={experienceState}
+          style={{ "--paper-origin-x": `${experienceOrigin.x}px`, "--paper-origin-y": `${experienceOrigin.y}px` } as CSSProperties}
+          aria-labelledby="desk-experience-title"
+        >
+          <div className="desk-experience__head">
+            <p className="desk-reader__count">Work record · {String(experience.length).padStart(2, "0")}</p>
+            <button type="button" className="desk-chip" onClick={closeExperience}>
+              <ArrowLeft aria-hidden /> Back to desk
+            </button>
+          </div>
+          <div className="desk-experience__content">
+            <h2 id="desk-experience-title" className="desk-experience__title">Experience</h2>
+            <ol className="desk-experience__list">
+              {experience.map((item) => (
+                <li key={`${item.title}-${item.year}`} className="desk-experience__entry">
+                  <p className="desk-experience__date">{item.year}</p>
+                  <h3>{item.title}</h3>
+                  <p className="desk-experience__place">{item.place}</p>
+                </li>
+              ))}
+            </ol>
+            <a className="desk-chip desk-experience__resume" href={site.resume} target="_blank" rel="noopener noreferrer">
+              Résumé <ArrowUpRight aria-hidden />
+            </a>
+          </div>
+        </section>
       )}
 
       {boothOpen && <Photobooth onClose={closeBooth} />}
