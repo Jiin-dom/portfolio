@@ -950,3 +950,181 @@ export function pegboardTexture() {
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   return t;
 }
+
+/* ── Contact pinboard on the wall ── */
+
+function corkTexture() {
+  const { c, ctx } = surface(512, 512);
+  ctx.fillStyle = "#b8956a";
+  ctx.fillRect(0, 0, 512, 512);
+  speckle(ctx, 512, 512, 4200, ["#8f6c44", "#d1b085", "#a37f55", "#6f5233"], 1.4);
+  const t = toTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+
+function contactCardTexture(f: Fonts, copied: boolean) {
+  const { c, ctx } = surface(1050, 600);
+  ctx.fillStyle = "#f2ece1";
+  ctx.fillRect(0, 0, 1050, 600);
+  speckle(ctx, 1050, 600, 900, ["#cfc5b4"], 0.9);
+  ctx.textAlign = "left";
+  ctx.fillStyle = INK;
+  ctx.font = `500 26px ${f.mono}`;
+  ctx.globalAlpha = 0.6;
+  ctx.fillText("SAY HELLO", 70, 110);
+  ctx.globalAlpha = 1;
+  ctx.font = `italic 92px ${f.serif}`;
+  ctx.fillStyle = "#2f5a40";
+  ctx.fillText("Let’s build", 66, 230);
+  ctx.fillText("something.", 66, 320);
+  ctx.fillStyle = INK;
+  ctx.font = `700 46px ${f.display}`;
+  ctx.fillText(site.email, 70, 450);
+  ctx.font = `500 24px ${f.mono}`;
+  ctx.globalAlpha = 0.6;
+  ctx.fillText("CLICK TO COPY EMAIL", 70, 520);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "#e85d2c";
+  ctx.beginPath();
+  ctx.arc(960, 110, 22, 0, Math.PI * 2);
+  ctx.fill();
+  if (copied) {
+    ctx.save();
+    ctx.translate(800, 300);
+    ctx.rotate(-0.16);
+    ctx.strokeStyle = "#e85d2c";
+    ctx.fillStyle = "#e85d2c";
+    ctx.lineWidth = 8;
+    ctx.globalAlpha = 0.88;
+    ctx.beginPath();
+    ctx.roundRect(-170, -62, 340, 124, 14);
+    ctx.stroke();
+    ctx.font = `800 72px ${f.display}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("COPIED", 0, 6);
+    ctx.restore();
+  }
+  return toTexture(c);
+}
+
+function resumeTexture(f: Fonts) {
+  const { c, ctx } = surface(480, 640);
+  ctx.fillStyle = PAPER;
+  ctx.fillRect(0, 0, 480, 640);
+  ctx.fillStyle = INK;
+  ctx.textAlign = "left";
+  ctx.font = `500 20px ${f.mono}`;
+  ctx.globalAlpha = 0.55;
+  ctx.fillText("CV — 2026", 44, 70);
+  ctx.globalAlpha = 1;
+  ctx.font = `800 64px ${f.display}`;
+  ctx.fillText("Resume", 40, 150);
+  ctx.globalAlpha = 0.16;
+  for (let i = 0; i < 9; i++) ctx.fillRect(44, 210 + i * 38, i % 3 === 2 ? 240 : 380, 12);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "#e85d2c";
+  ctx.font = `500 24px ${f.mono}`;
+  ctx.fillText("OPEN ↗", 44, 590);
+  return toTexture(c);
+}
+
+function phoneTagTexture(f: Fonts) {
+  const { c, ctx } = surface(560, 240);
+  ctx.fillStyle = "#e9e1d0";
+  ctx.fillRect(0, 0, 560, 240);
+  ctx.fillStyle = INK;
+  ctx.textAlign = "left";
+  ctx.font = `500 20px ${f.mono}`;
+  ctx.globalAlpha = 0.55;
+  ctx.fillText("PHONE", 36, 70);
+  ctx.globalAlpha = 1;
+  ctx.font = `700 46px ${f.display}`;
+  ctx.fillText(site.phone, 34, 150);
+  return toTexture(c);
+}
+
+const SOCIAL_TONES: [string, string][] = [
+  ["#3a3f47", "#14161a"],
+  ["#5aa9e6", "#2f5f8f"],
+  ["#9cc7e4", "#4a6fa8"],
+  ["#f3b27a", "#c0392b"],
+];
+
+function socialTexture(f: Fonts, label: string, mark: string, [top, bottom]: [string, string]) {
+  const W = 400;
+  const H = 480;
+  const { c, ctx } = surface(W, H);
+  ctx.fillStyle = PAPER;
+  ctx.fillRect(0, 0, W, H);
+  const g = ctx.createLinearGradient(0, 30, 0, 370);
+  g.addColorStop(0, top);
+  g.addColorStop(1, bottom);
+  ctx.fillStyle = g;
+  ctx.fillRect(30, 30, W - 60, 340);
+  ctx.fillStyle = "#fff6e8";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `800 120px ${f.display}`;
+  ctx.fillText(mark, W / 2, 200);
+  ctx.fillStyle = INK;
+  ctx.font = `italic 50px ${f.serif}`;
+  ctx.fillText(label, W / 2, 426);
+  return toTexture(c);
+}
+
+function drawAvailability(ctx: Ctx, f: Fonts, now: Date) {
+  ctx.fillStyle = "#f2d468";
+  ctx.fillRect(0, 0, 600, 600);
+  const g = ctx.createLinearGradient(0, 0, 0, 120);
+  g.addColorStop(0, "rgba(120,90,10,0.16)");
+  g.addColorStop(1, "rgba(120,90,10,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 600, 120);
+  ctx.fillStyle = "#2b2310";
+  ctx.textAlign = "left";
+  ctx.font = `500 22px ${f.mono}`;
+  ctx.globalAlpha = 0.65;
+  ctx.fillText("STATUS", 52, 110);
+  ctx.globalAlpha = 1;
+  ctx.font = `italic 74px ${f.serif}`;
+  ctx.fillText("open to", 50, 210);
+  ctx.fillText("full-stack roles", 50, 290);
+  const time = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Manila" }).format(now);
+  ctx.font = `500 24px ${f.mono}`;
+  ctx.globalAlpha = 0.75;
+  ctx.fillText("PH · UTC+8", 52, 420);
+  ctx.fillText(`${time.toUpperCase()} FOR JD`, 52, 462);
+  ctx.fillText("REPLIES < 24H", 52, 504);
+  ctx.globalAlpha = 1;
+}
+
+export type BoardTextures = Awaited<ReturnType<typeof buildBoardTextures>>;
+
+export async function buildBoardTextures() {
+  const f = readFonts();
+  await loadFonts(f);
+  const note = surface(600, 600);
+  const noteTex = toTexture(note.c);
+  const tick = () => {
+    drawAvailability(note.ctx, f, new Date());
+    noteTex.needsUpdate = true;
+  };
+  tick();
+  return {
+    cork: corkTexture(),
+    card: contactCardTexture(f, false),
+    cardCopied: contactCardTexture(f, true),
+    resume: resumeTexture(f),
+    phone: phoneTagTexture(f),
+    note: noteTex,
+    tickNote: tick,
+    socials: [
+      socialTexture(f, "GitHub", "GH", SOCIAL_TONES[0]),
+      socialTexture(f, "LinkedIn", "in", SOCIAL_TONES[1]),
+      socialTexture(f, "Facebook", "f", SOCIAL_TONES[2]),
+      socialTexture(f, "YouTube", "▶", SOCIAL_TONES[3]),
+    ],
+  };
+}

@@ -131,7 +131,10 @@ export function DeskHero() {
   const tankOpen = view === "tank";
   /* so does the project shelf: a face-on look at the book spines */
   const shelfOpen = view === "shelf";
-  /* the desk view to go back to from either close-up */
+  /* and the contact pinboard on the wall */
+  const boardOpen = view === "board";
+  const closeUp = tankOpen || shelfOpen || boardOpen;
+  /* the desk view to go back to from any close-up */
   const [viewBefore, setViewBefore] = useState<ViewName>("top");
   const tankTrigger = useRef<HTMLButtonElement>(null);
   /* a book in hand calls its fish to the front glass */
@@ -219,9 +222,9 @@ export function DeskHero() {
     closeExperience();
     setOpenProject(null);
     setFocusId(null);
-    if (!tankOpen && !shelfOpen) setViewBefore(view);
+    if (!closeUp) setViewBefore(view);
     setView("tank");
-  }, [closeExperience, view, tankOpen, shelfOpen]);
+  }, [closeExperience, view, closeUp]);
 
   const openShelf = useCallback(() => {
     closeExperience();
@@ -229,16 +232,26 @@ export function DeskHero() {
     setFocusId(null);
     setActiveSkill(null);
     setHoverSkill(null);
-    if (!tankOpen && !shelfOpen) setViewBefore(view);
+    if (!closeUp) setViewBefore(view);
     setView("shelf");
-  }, [closeExperience, view, tankOpen, shelfOpen]);
+  }, [closeExperience, view, closeUp]);
 
   const closeShelf = useCallback(() => setView(viewBefore), [viewBefore]);
 
+  const openBoard = useCallback(() => {
+    closeExperience();
+    setOpenProject(null);
+    setFocusId(null);
+    setActiveSkill(null);
+    setHoverSkill(null);
+    if (!closeUp) setViewBefore(view);
+    setView("board");
+  }, [closeExperience, view, closeUp]);
+
   useEffect(() => {
-    deskSpot.set(experienceOpen ? "about" : tankOpen ? "skills" : shelfOpen ? "projects" : null);
+    deskSpot.set(experienceOpen ? "about" : tankOpen ? "skills" : shelfOpen ? "projects" : boardOpen ? "contact" : null);
     return () => deskSpot.set(null);
-  }, [experienceOpen, tankOpen, shelfOpen]);
+  }, [experienceOpen, tankOpen, shelfOpen, boardOpen]);
 
   /* the zoom hint has done its job once the visitor has zoomed */
   const [zoomed, setZoomed] = useState(false);
@@ -280,7 +293,16 @@ export function DeskHero() {
     return () => window.removeEventListener("keydown", onKey);
   }, [shelfOpen, openProject, closeShelf]);
 
-  /* the Skills and Projects nav links, and their deep links, fly straight to the tank or the shelf */
+  useEffect(() => {
+    if (!boardOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setView(viewBefore);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [boardOpen, viewBefore]);
+
+  /* the Skills, Projects and Contact nav links, and their deep links, fly straight to the tank, the shelf or the pinboard */
   useEffect(() => {
     const toTop = () => root.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
     const skills = () => {
@@ -291,13 +313,19 @@ export function DeskHero() {
       toTop();
       openShelf();
     };
+    const board = () => {
+      toTop();
+      openBoard();
+    };
     window.addEventListener("desk:skills", skills);
     window.addEventListener("desk:projects", shelf);
+    window.addEventListener("desk:contact", board);
     return () => {
       window.removeEventListener("desk:skills", skills);
       window.removeEventListener("desk:projects", shelf);
+      window.removeEventListener("desk:contact", board);
     };
-  }, [openTank, openShelf, reduce]);
+  }, [openTank, openShelf, openBoard, reduce]);
 
   /*
    * About me opens the Experience folder. From a close-up the camera comes
@@ -308,7 +336,7 @@ export function DeskHero() {
     const about = () => {
       root.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
       setOpenProject(null);
-      if (tankOpen || shelfOpen) {
+      if (closeUp) {
         setActiveSkill(null);
         setHoverSkill(null);
         setView(viewBefore);
@@ -317,7 +345,7 @@ export function DeskHero() {
     };
     window.addEventListener("desk:about", about);
     return () => window.removeEventListener("desk:about", about);
-  }, [openExperience, tankOpen, shelfOpen, viewBefore, reduce]);
+  }, [openExperience, closeUp, viewBefore, reduce]);
 
   useEffect(() => {
     if (!aboutPending) return;
@@ -337,15 +365,15 @@ export function DeskHero() {
       setActiveSkill(null);
       setHoverSkill(null);
       setAboutPending(false);
-      if (tankOpen || shelfOpen) setView(viewBefore);
+      if (closeUp) setView(viewBefore);
     };
     window.addEventListener("desk:home", home);
     return () => window.removeEventListener("desk:home", home);
-  }, [closeExperience, tankOpen, shelfOpen, viewBefore]);
+  }, [closeExperience, closeUp, viewBefore]);
 
   useEffect(() => {
     if (!ready) return;
-    const spot = { "#about": "about", "#skills": "skills", "#projects": "projects" }[window.location.hash];
+    const spot = { "#about": "about", "#skills": "skills", "#projects": "projects", "#contact": "contact" }[window.location.hash];
     if (spot) window.dispatchEvent(new Event(`desk:${spot}`));
   }, [ready]);
 
@@ -481,7 +509,7 @@ export function DeskHero() {
       ) : null}
 
       {/* ── Type + UI, layered over the desk like print on a photo ── */}
-      <div className="desk-ui pointer-events-none absolute inset-0 z-20" data-reading={reading || experienceActive || tankOpen || shelfOpen ? "" : undefined}>
+      <div className="desk-ui pointer-events-none absolute inset-0 z-20" data-reading={reading || experienceActive || closeUp ? "" : undefined}>
         <header className="desk-title">
           <h1 className="desk-wordmark">
             Jeanne

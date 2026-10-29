@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { deskItems, flashlightSlot, type DeskItem } from "./items";
-import { DESK, SHELF, TANK } from "./constants";
+import { BOARD, DESK, SHELF, TANK } from "./constants";
 import type { SheetOrigin } from "./experience";
 
 /*
@@ -31,8 +31,8 @@ type Body = {
 
 const NUDGE_MAX = 0.28;
 
-/* "tank" and "shelf" have no view button of their own; the Skills and Projects links fly there */
-export type ViewName = "top" | "front" | "angle" | "tank" | "shelf";
+/* "tank", "shelf" and "board" have no view button of their own; the Skills, Projects and Contact links fly there */
+export type ViewName = "top" | "front" | "angle" | "tank" | "shelf" | "board";
 type View = { pos: THREE.Vector3; target: THREE.Vector3; up: THREE.Vector3 };
 
 const DRAG_LIFT = 0.9;
@@ -191,6 +191,10 @@ export class DeskWorld {
       shelf: portrait
         ? { pos: new THREE.Vector3(SHELF.x - 0.5, 4.6, SHELF.z + 25), target: new THREE.Vector3(SHELF.x - 0.5, 1.2, SHELF.z + 0.5), up: new THREE.Vector3(0, 1, 0) }
         : { pos: new THREE.Vector3(SHELF.x - 0.5, 4.2, SHELF.z + 13), target: new THREE.Vector3(SHELF.x - 0.5, 1.7, SHELF.z + 0.5), up: new THREE.Vector3(0, 1, 0) },
+      /* square onto the contact pinboard; portrait backs off to fit its width */
+      board: portrait
+        ? { pos: new THREE.Vector3(BOARD.x, BOARD.y + 0.6, BOARD.z + 26), target: new THREE.Vector3(BOARD.x, BOARD.y - 0.4, BOARD.z), up: new THREE.Vector3(0, 1, 0) }
+        : { pos: new THREE.Vector3(BOARD.x, BOARD.y + 0.4, BOARD.z + 12), target: new THREE.Vector3(BOARD.x, BOARD.y, BOARD.z), up: new THREE.Vector3(0, 1, 0) },
     };
 
     /* scratch camera posed at the top view, for screen-to-desk mapping */

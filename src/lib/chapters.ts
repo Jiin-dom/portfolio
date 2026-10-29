@@ -1,17 +1,16 @@
-export const chapters = [
-  { id: "intro", href: "#intro", label: "Home" },
-  { id: "contact", href: "#contact", label: "Contact" },
-] as const;
+export const chapters = [{ id: "intro", href: "#intro", label: "Home" }] as const;
 
 /*
  * Not page sections: each sends the desk somewhere. About me opens the
- * Experience folder, Skills flies to the aquarium, Projects to the book shelf.
+ * Experience folder, Skills flies to the aquarium, Projects to the book shelf,
+ * Contact to the pinboard on the wall.
  */
-export type DeskSpot = "about" | "skills" | "projects";
+export type DeskSpot = "about" | "skills" | "projects" | "contact";
 export const deskLinks: readonly { spot: DeskSpot; href: string; label: string }[] = [
   { spot: "about", href: "#about", label: "About me" },
   { spot: "skills", href: "#skills", label: "Skills" },
   { spot: "projects", href: "#projects", label: "Projects" },
+  { spot: "contact", href: "#contact", label: "Contact" },
 ];
 
 /* home: the link scrolls to the top, and the desk puts away whatever is open */
@@ -42,7 +41,8 @@ export const deskSpot = {
   },
 };
 
-export type ChapterId = (typeof chapters)[number]["id"];
+/* "contact" is the hidden contact section; it stays observable so it can come back */
+export type ChapterId = (typeof chapters)[number]["id"] | "contact";
 
 export const featurePanels = [
   {
