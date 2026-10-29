@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { deskItems, flashlightSlot, type DeskItem } from "./items";
-import { DESK, TANK } from "./constants";
+import { DESK, SHELF, TANK } from "./constants";
+import type { SheetOrigin } from "./experience";
 
 /*
  * Plain mutable simulation for the desk. Kept outside React state so the
@@ -30,8 +31,8 @@ type Body = {
 
 const NUDGE_MAX = 0.28;
 
-/* "tank" has no button of its own; the Skills chip flies there */
-export type ViewName = "top" | "front" | "angle" | "tank";
+/* "tank" and "shelf" have no view button of their own; the Skills and Projects links fly there */
+export type ViewName = "top" | "front" | "angle" | "tank" | "shelf";
 type View = { pos: THREE.Vector3; target: THREE.Vector3; up: THREE.Vector3 };
 
 const DRAG_LIFT = 0.9;
@@ -64,6 +65,9 @@ export class DeskWorld {
   private portrait = false;
   /* the drop-in waits until the loader lifts, so nobody misses it */
   private live = false;
+  /* the loader's Instax print stands in for this body until it lands */
+  private held: Body | null = null;
+  private v = new THREE.Vector3();
   grabbing = false;
   readonly flashHome = new THREE.Vector3();
 
@@ -91,6 +95,45 @@ export class DeskWorld {
 
   start() {
     this.live = true;
+  }
+
+  /* hide a body at rest, skipping its drop-in, until release() */
+  hold(id: string) {
+    const b = this.bodies.find((o) => o.item.id === id);
+    if (!b) return;
+    this.held = b;
+    b.pos.y = 0;
+    b.tiltX = 0;
+    b.tiltZ = 0;
+    b.spawnAt = 0;
+  }
+
+  release() {
+    this.held = null;
+  }
+
+  /* the held body's resting place in canvas pixels: centre, size and in-plane angle */
+  heldOrigin(camera: THREE.Camera, w: number, h: number): SheetOrigin | null {
+    const b = this.held;
+    if (!b || !this.laidOut) return null;
+    const y = this.bodies.reduce((top, o) => (o.order < b.order && overlaps(b, o) ? Math.max(top, o.item.h) : top), 0) + b.item.h;
+    const at = (x: number, z: number) => {
+      this.v.set(x, 0, z).applyAxisAngle(THREE.Object3D.DEFAULT_UP, b.targetRotY);
+      this.v.set(this.v.x + b.target.x, y, this.v.z + b.target.y).project(camera);
+      return { x: ((this.v.x + 1) / 2) * w, y: ((1 - this.v.y) / 2) * h };
+    };
+    const l = at(-b.item.w / 2, 0);
+    const r = at(b.item.w / 2, 0);
+    const t = at(0, -b.item.d / 2);
+    const bt = at(0, b.item.d / 2);
+    const c = at(0, 0);
+    return {
+      cx: c.x,
+      cy: c.y,
+      width: Math.hypot(r.x - l.x, r.y - l.y),
+      height: Math.hypot(bt.x - t.x, bt.y - t.y),
+      angle: Math.atan2(r.y - l.y, r.x - l.x),
+    };
   }
 
   attach(index: number, group: THREE.Group | null) {
@@ -144,6 +187,10 @@ export class DeskWorld {
       tank: portrait
         ? { pos: new THREE.Vector3(TANK.x + 27, 2.4, TANK.z), target: new THREE.Vector3(TANK.x, -1.7, TANK.z), up: new THREE.Vector3(0, 1, 0) }
         : { pos: new THREE.Vector3(TANK.x + 12.5, 2.3, TANK.z + 1.5), target: new THREE.Vector3(TANK.x, 1.55, TANK.z + 1.5), up: new THREE.Vector3(0, 1, 0) },
+      /* face on to the book spines, a little above, centred on the books (they lean on the left end); portrait backs off to fit the shelf's width */
+      shelf: portrait
+        ? { pos: new THREE.Vector3(SHELF.x - 0.5, 4.6, SHELF.z + 25), target: new THREE.Vector3(SHELF.x - 0.5, 1.2, SHELF.z + 0.5), up: new THREE.Vector3(0, 1, 0) }
+        : { pos: new THREE.Vector3(SHELF.x - 0.5, 4.2, SHELF.z + 13), target: new THREE.Vector3(SHELF.x - 0.5, 1.7, SHELF.z + 0.5), up: new THREE.Vector3(0, 1, 0) },
     };
 
     /* scratch camera posed at the top view, for screen-to-desk mapping */
@@ -355,6 +402,7 @@ export class DeskWorld {
 
   private writeGroup(b: Body) {
     if (!b.group) return;
+    b.group.visible = b !== this.held;
     b.group.position.set(b.pos.x + b.nudge.x, b.pos.y, b.pos.z + b.nudge.y);
     b.group.rotation.set(b.tiltX, b.rotY, b.tiltZ, "XZY");
   }

@@ -7,4 +7,7 @@ export const SIDE_WALL_X = RETURN.x0 - 0.1;
  * The skills aquarium, on the return with its front glass facing +x (into the
  * room). w runs along z, d along x.
  */
+/* the project book shelf, standing on the desk's back right */
+export const SHELF = { x: 4.3, z: -3.0 };
+
 export const TANK = { x: -21.2, z: 6.4, w: 5.4, d: 2.4, h: 3.3 };

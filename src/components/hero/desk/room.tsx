@@ -4,7 +4,7 @@ import { Html, useTexture } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
-import { DESK, RETURN, SIDE_WALL_X } from "./constants";
+import { DESK, RETURN, SHELF, SIDE_WALL_X } from "./constants";
 import { FitModel, MODEL_URLS } from "./FitModel";
 import { LAMP } from "./lighting";
 import type { SceneLink } from "./flashlight";
@@ -155,7 +155,6 @@ export function Room(props: LampProps) {
 
 /* ── Project bookshelf ── */
 
-export const SHELF = { x: 4.3, z: -3.0 };
 const BOOK_W = 2.0;
 const COVER = 0.05;
 const THICK = [0.56, 0.48, 0.62, 0.5, 0.58];

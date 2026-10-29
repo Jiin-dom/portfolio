@@ -375,7 +375,9 @@ html.desk-loading body {
   background: #8a5a32;
   color: var(--desk-cream);
   pointer-events: auto;
-  transition: opacity 560ms var(--ease-out);
+  transition:
+    opacity 560ms var(--ease-out),
+    background-color 2400ms ease-in-out;
 }
 
 .desk-hero[data-night] .desk-loader {
@@ -383,8 +385,25 @@ html.desk-loading body {
 }
 
 .desk-loader[data-ready] {
-  opacity: 0;
   pointer-events: none;
+}
+
+/* the backdrop lifts while the print drifts down, so the desk comes up under it (day or night) */
+.desk-hero .desk-loader:is([data-print="flying"], [data-print="settling"]) {
+  background-color: transparent;
+}
+
+.desk-loader[data-ready][data-reduced] {
+  opacity: 0;
+}
+
+.desk-loader__kicker,
+.desk-loader__mark {
+  transition: opacity 420ms var(--ease-out);
+}
+
+.desk-loader[data-ready] :is(.desk-loader__kicker, .desk-loader__mark) {
+  opacity: 0;
 }
 
 .desk-loader__kicker {
@@ -406,18 +425,128 @@ html.desk-loading body {
   text-transform: uppercase;
 }
 
-.desk-loader__bar {
-  width: min(16rem, 52vw);
-  height: 2px;
-  margin-top: 1.15rem;
-  background: rgb(255 240 220 / 0.22);
+/*
+ * The Instax print from the desk, laid out like its canvas texture (600 x 728:
+ * a 532 square photo inset 34, caption on the bottom strip) so it can land on
+ * the 3D polaroid and swap without a jump. --dev runs 0..1 with the load.
+ */
+.desk-print {
+  /* big while it's close to the viewer; the fall shrinks it to the desk polaroid's size */
+  --w: clamp(15rem, 52vmin, 27rem);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--w);
+  aspect-ratio: 600 / 728;
+  margin: calc(var(--w) * -728 / 1200) 0 0 calc(var(--w) / -2);
+  container-type: inline-size;
+  background: #f6f2ea;
+  color: #2a2420;
+  box-shadow:
+    0 1px 2px rgb(30 15 5 / 0.25),
+    0 18px 40px -12px rgb(30 15 5 / 0.55);
+  transform: rotate(-4deg);
+  transform-origin: 50% 50%;
+  will-change: transform;
 }
 
-.desk-loader__bar span {
-  display: block;
-  height: 100%;
-  background: var(--desk-cream);
-  transition: width 220ms var(--ease-out);
+.desk-print[data-phase="shaking"] {
+  animation: desk-print-shake 480ms var(--ease-out);
+}
+
+.desk-print[data-phase="flying"] {
+  box-shadow:
+    0 1px 1px rgb(30 15 5 / 0.25),
+    0 2px 4px -2px rgb(30 15 5 / 0.3);
+  /* the fall itself runs from script (leafFall); the shadow tightens as it nears the desk */
+  transition: box-shadow 2800ms ease-in;
+}
+
+/* the 3D polaroid is showing underneath by now; fading the print lets the wordmark come back over it */
+.desk-print[data-phase="settling"] {
+  opacity: 0;
+  box-shadow: none;
+  transition: opacity 600ms ease-out;
+}
+
+@keyframes desk-print-shake {
+  20% {
+    transform: translate(-0.4rem, 0.15rem) rotate(-9deg);
+  }
+  40% {
+    transform: translate(0.35rem, -0.15rem) rotate(2deg);
+  }
+  60% {
+    transform: translate(-0.25rem, 0.1rem) rotate(-7deg);
+  }
+  80% {
+    transform: translate(0.15rem, 0) rotate(-3deg);
+  }
+}
+
+.desk-print__photo {
+  position: absolute;
+  top: calc(34 / 600 * 100%);
+  left: calc(34 / 600 * 100%);
+  width: calc(532 / 600 * 100%);
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: linear-gradient(#d9c3a2, #b89770);
+}
+
+.desk-print__photo img {
+  object-fit: cover;
+  object-position: 50% 12%;
+  filter: blur(calc((1 - var(--dev)) * 6px)) sepia(calc(1 - var(--dev))) saturate(calc(0.2 + var(--dev) * 0.8))
+    contrast(calc(0.55 + var(--dev) * 0.45)) brightness(calc(0.8 + var(--dev) * 0.2));
+  transition: filter 700ms linear;
+}
+
+/* undeveloped film on top, fading as the image comes up; then warmth and vignette like the texture */
+.desk-print__photo::before,
+.desk-print__photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.desk-print__photo::before {
+  background: radial-gradient(circle at 50% 45%, #5a5446, #2c2822);
+  opacity: calc((1 - var(--dev)) * 0.94);
+  transition: opacity 700ms linear;
+}
+
+.desk-print__photo::after {
+  background:
+    radial-gradient(circle, transparent 38%, rgb(30 15 5 / 0.35) 100%),
+    rgb(255 190 130 / 0.1);
+}
+
+.desk-print__caption,
+.desk-print__tag {
+  position: absolute;
+  bottom: calc(78 / 728 * 100%);
+  margin: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.desk-print__caption {
+  left: calc(42 / 600 * 100cqw);
+  font-family: var(--font-serif);
+  font-size: calc(50 / 600 * 100cqw);
+  font-style: italic;
+}
+
+.desk-print__tag {
+  right: calc(42 / 600 * 100cqw);
+  font-family: var(--font-mono);
+  font-size: calc(16 / 600 * 100cqw);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.55;
 }
 
 .desk-hero {

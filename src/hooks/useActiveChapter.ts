@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { tankView, type ChapterId } from "@/lib/chapters";
+import { deskSpot, type ChapterId } from "@/lib/chapters";
 
-const sectionIds: ChapterId[] = ["intro", "features", "product", "contact"];
+const sectionIds: ChapterId[] = ["intro", "contact"];
 
-/* true while the desk camera is at the aquarium */
-export function useTankOpen() {
-  return useSyncExternalStore(tankView.subscribe, tankView.get, () => false);
+/* what the desk is showing: the Experience folder, the aquarium, the book shelf, or nothing */
+export function useDeskSpot() {
+  return useSyncExternalStore(deskSpot.subscribe, deskSpot.get, () => null);
 }
 
 export function useActiveChapter() {

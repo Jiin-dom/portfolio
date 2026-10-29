@@ -2,14 +2,14 @@
 
 import { Fragment } from "react";
 import { site } from "@/lib/content";
-import { chapters, goHome, openSkills, skillsLink } from "@/lib/chapters";
-import { useActiveChapter, useTankOpen } from "@/hooks/useActiveChapter";
+import { chapters, deskLinks, goHome, goToSpot } from "@/lib/chapters";
+import { useActiveChapter, useDeskSpot } from "@/hooks/useActiveChapter";
 import { MobileNav } from "./MobileNav";
 
 export function Nav() {
   const active = useActiveChapter();
-  const tank = useTankOpen();
-  const darkText = active === "product" || active === "contact";
+  const spot = useDeskSpot();
+  const darkText = active === "contact";
 
   return (
     <header
@@ -37,21 +37,23 @@ export function Nav() {
               <a
                 href={chapter.href}
                 className={`chapter-link ${darkText ? "chapter-link-dark" : ""}`}
-                aria-current={active === chapter.id && !(tank && chapter.id === "intro") ? "page" : undefined}
+                aria-current={active === chapter.id && !(spot && chapter.id === "intro") ? "page" : undefined}
                 onClick={chapter.id === "intro" ? goHome : undefined}
               >
                 {chapter.label}
               </a>
-              {i === 0 && (
-                <a
-                  href={skillsLink.href}
-                  className={`chapter-link ${darkText ? "chapter-link-dark" : ""}`}
-                  aria-current={tank ? "page" : undefined}
-                  onClick={openSkills}
-                >
-                  {skillsLink.label}
-                </a>
-              )}
+              {i === 0 &&
+                deskLinks.map((link) => (
+                  <a
+                    key={link.spot}
+                    href={link.href}
+                    className={`chapter-link ${darkText ? "chapter-link-dark" : ""}`}
+                    aria-current={spot === link.spot ? "page" : undefined}
+                    onClick={(e) => goToSpot(link.spot, e)}
+                  >
+                    {link.label}
+                  </a>
+                ))}
             </Fragment>
           ))}
         </nav>

@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { site } from "@/lib/content";
-import { chapters, goHome, openSkills, skillsLink, type ChapterId } from "@/lib/chapters";
+import { chapters, deskLinks, goHome, goToSpot, type ChapterId } from "@/lib/chapters";
 import { ease } from "@/lib/easings";
-import { useTankOpen } from "@/hooks/useActiveChapter";
+import { useDeskSpot } from "@/hooks/useActiveChapter";
 
 type Props = {
   active: ChapterId;
@@ -15,7 +15,7 @@ type Props = {
 export function MobileNav({ active, dark }: Props) {
   const [open, setOpen] = useState(false);
   const reduce = useReducedMotion();
-  const tank = useTankOpen();
+  const spot = useDeskSpot();
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -54,7 +54,7 @@ export function MobileNav({ active, dark }: Props) {
                   key={link.id}
                   href={link.href}
                   className="chapter-link text-sm tracking-[0.12em]"
-                  aria-current={active === link.id && !(tank && link.id === "intro") ? "page" : undefined}
+                  aria-current={active === link.id && !(spot && link.id === "intro") ? "page" : undefined}
                   onClick={() => {
                     setOpen(false);
                     if (link.id === "intro") goHome();
@@ -66,17 +66,20 @@ export function MobileNav({ active, dark }: Props) {
                   {link.label}
                 </motion.a>
               ))}
-              <a
-                href={skillsLink.href}
-                className="chapter-link text-sm tracking-[0.12em]"
-                aria-current={tank ? "page" : undefined}
-                onClick={(e) => {
-                  setOpen(false);
-                  openSkills(e);
-                }}
-              >
-                {skillsLink.label}
-              </a>
+              {deskLinks.map((link) => (
+                <a
+                  key={link.spot}
+                  href={link.href}
+                  className="chapter-link text-sm tracking-[0.12em]"
+                  aria-current={spot === link.spot ? "page" : undefined}
+                  onClick={(e) => {
+                    setOpen(false);
+                    goToSpot(link.spot, e);
+                  }}
+                >
+                  {link.label}
+                </a>
+              ))}
               <a
                 href={site.resume}
                 target="_blank"

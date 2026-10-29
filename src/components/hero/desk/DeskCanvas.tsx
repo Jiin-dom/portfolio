@@ -28,6 +28,10 @@ export type DeskCommand = { type: "tidy" | "scatter"; n: number };
 /* lets the HTML page find the folder's sheet on screen, and hide it while the page is out */
 export type PaperBridge = { origin: () => SheetOrigin | null; setOut: (out: boolean) => void };
 
+/* the loader's Instax print lands on this polaroid; it stays hidden until then */
+const PRINT_ID = "polaroid-me";
+export type PrintBridge = { origin: () => SheetOrigin | null; release: () => void };
+
 type Props = {
   active: boolean;
   reduced: boolean;
@@ -44,6 +48,7 @@ type Props = {
   onOpenExperience: () => void;
   onCloseExperience: () => void;
   onPaperBridge: (bridge: PaperBridge | null) => void;
+  onPrintBridge: (bridge: PrintBridge | null) => void;
   onHoverProject: (index: number | null) => void;
   skills: readonly Skill[];
   activeSkill: number | null;
@@ -151,11 +156,15 @@ function Warmup({ onDone, onProgress }: { onDone: () => void; onProgress?: (p: n
   return null;
 }
 
-function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, experienceOpen, onOpenExperience, onCloseExperience, onPaperBridge, onHoverProject, skills, activeSkill, featuredSkills, labelledSkill, onSelectSkill, onHoverSkill, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active">) {
+function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, experienceOpen, onOpenExperience, onCloseExperience, onPaperBridge, onPrintBridge, onHoverProject, skills, activeSkill, featuredSkills, labelledSkill, onSelectSkill, onHoverSkill, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active">) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const gl = useThree((s) => s.gl);
   const size = useThree((s) => s.size);
-  const [world] = useState(() => new DeskWorld(reduced));
+  const [world] = useState(() => {
+    const w = new DeskWorld(reduced);
+    w.hold(PRINT_ID);
+    return w;
+  });
   const [link] = useState(() => new SceneLink());
   const [paper] = useState(() => new PaperLink());
 
@@ -166,6 +175,14 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
     });
     return () => onPaperBridge(null);
   }, [onPaperBridge, paper, camera, size]);
+
+  useEffect(() => {
+    onPrintBridge({
+      origin: () => world.heldOrigin(camera, size.width, size.height),
+      release: () => world.release(),
+    });
+    return () => onPrintBridge(null);
+  }, [onPrintBridge, world, camera, size]);
   const [tex, setTex] = useState<DeskTextures | null>(null);
   const [booksReady, setBooksReady] = useState(false);
   const onBooksLoaded = useCallback(() => setBooksReady(true), []);
@@ -239,7 +256,7 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
   useEffect(() => {
     const hero = gl.domElement.closest("section");
     const onWheel = (e: WheelEvent) => {
-      if (world.grabbing || openProject !== null || experienceOpen || view === "tank") return;
+      if (world.grabbing || openProject !== null || experienceOpen || view === "tank" || view === "shelf") return;
       if (!hero || window.scrollY > 4 || !hero.contains(e.target as Node)) return;
       e.preventDefault();
       e.stopPropagation();
@@ -279,7 +296,7 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
       <ProjectShelf
         projects={projects}
         open={openProject}
-        quiet={experienceOpen || view === "tank"}
+        quiet={experienceOpen || view === "tank" || view === "shelf"}
         reduced={reduced}
         night={night}
         link={link}

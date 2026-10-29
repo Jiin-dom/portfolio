@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useReducedMotion } from "motion/react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Briefcase, ChevronDown, Fish, Flashlight, LayoutGrid, Moon, MousePointer2, Shuffle, Sun, X } from "lucide-react";
 import { projects, site } from "@/lib/content";
@@ -11,9 +11,9 @@ import { speciesOf } from "@/components/hero/desk/species";
 import { PAPER, type SheetOrigin } from "@/components/hero/desk/experience";
 import { WorkRecord } from "@/components/hero/WorkRecord";
 import { useScrollFade } from "@/hooks/useScrollFade";
-import { tankView } from "@/lib/chapters";
+import { deskSpot } from "@/lib/chapters";
 import { deskItemMap } from "@/components/hero/desk/items";
-import type { DeskCommand, PaperBridge } from "@/components/hero/desk/DeskCanvas";
+import type { DeskCommand, PaperBridge, PrintBridge } from "@/components/hero/desk/DeskCanvas";
 import type { ViewName } from "@/components/hero/desk/world";
 
 const VIEWS: { id: ViewName; label: string }[] = [
@@ -32,26 +32,43 @@ const Photobooth = dynamic(loadBooth, { ssr: false });
 /* time for the desk Instax to flash and feed its print before the booth opens */
 const EJECT_MS = 1100;
 
+/* the loader's print: a shake once developed, then it drifts down onto its polaroid on the desk */
+const SHAKE_MS = 480;
+const FLY_MS = 2800;
+const SWINGS = 2.5;
+
+/*
+ * A leaf's fall from the window centre to (x, y): it swings side to side,
+ * leaning into each swing and lifting a little at either end, and the swings
+ * die out as it settles at the polaroid's angle and size.
+ */
+function leafFall(x: number, y: number, angle: number, scale: number): Keyframe[] {
+  const sway = Math.min(140, window.innerWidth * 0.1);
+  const from = (-4 * Math.PI) / 180;
+  return Array.from({ length: 61 }, (_, i) => {
+    const t = i / 60;
+    const p = t * t * (3 - 2 * t);
+    const calm = (1 - t) ** 1.5;
+    const swing = Math.sin(t * Math.PI * 2 * SWINGS);
+    const lean = Math.cos(t * Math.PI * 2 * SWINGS);
+    const tx = x * p + sway * swing * calm;
+    const ty = y * p - 18 * Math.abs(swing) * calm;
+    const rot = from + (angle - from) * p + 0.32 * lean * calm;
+    return {
+      transform: `perspective(900px) translate(${tx}px, ${ty}px) rotate(${rot}rad) rotateY(${28 * swing * calm}deg) rotateX(${12 * lean * calm}deg) scale(${1 + (scale - 1) * p})`,
+    };
+  });
+}
+/* once down, the print fades off the real polaroid, letting the type above the desk show back through */
+const SETTLE_MS = 600;
+type PrintPhase = "developing" | "flying" | "settling" | "landed";
+
 const NONE: readonly number[] = [];
 
-const DARK_QUERY = "(prefers-color-scheme: dark)";
-
-function subscribeDark(onChange: () => void) {
-  const mq = window.matchMedia(DARK_QUERY);
-  mq.addEventListener("change", onChange);
-  return () => mq.removeEventListener("change", onChange);
-}
-
-/* Night follows the system theme until the visitor flips the lamp themselves. */
+/* The desk opens in daylight whatever the system theme; the lamp switches it to night. */
 function useNight() {
-  const systemDark = useSyncExternalStore(
-    subscribeDark,
-    () => window.matchMedia(DARK_QUERY).matches,
-    () => false,
-  );
-  const [override, setOverride] = useState<boolean | null>(null);
-  const night = override ?? systemDark;
-  return [night, () => setOverride(!night)] as const;
+  const [night, setNight] = useState(false);
+  return [night, () => setNight((n) => !n)] as const;
 }
 
 export function DeskHero() {
@@ -60,7 +77,12 @@ export function DeskHero() {
   const [inView, setInView] = useState(true);
   const [ready, setReady] = useState(false);
   const [load, setLoad] = useState(8);
-  const [showLoader, setShowLoader] = useState(true);
+  const [print, setPrint] = useState<PrintPhase>("developing");
+  const printCard = useRef<HTMLDivElement>(null);
+  const printBridge = useRef<PrintBridge | null>(null);
+  const onPrintBridge = useCallback((bridge: PrintBridge | null) => {
+    printBridge.current = bridge;
+  }, []);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [command, setCommand] = useState<DeskCommand | null>(null);
   const [view, setView] = useState<ViewName>("top");
@@ -107,7 +129,10 @@ export function DeskHero() {
   const [hoverSkill, setHoverSkill] = useState<number | null>(null);
   /* the aquarium on the L return has its own close-up view; the field guide lives there */
   const tankOpen = view === "tank";
-  const [viewBeforeTank, setViewBeforeTank] = useState<ViewName>("top");
+  /* so does the project shelf: a face-on look at the book spines */
+  const shelfOpen = view === "shelf";
+  /* the desk view to go back to from either close-up */
+  const [viewBefore, setViewBefore] = useState<ViewName>("top");
   const tankTrigger = useRef<HTMLButtonElement>(null);
   /* a book in hand calls its fish to the front glass */
   const handProject = openProject ?? hoverProject;
@@ -194,14 +219,26 @@ export function DeskHero() {
     closeExperience();
     setOpenProject(null);
     setFocusId(null);
-    if (view !== "tank") setViewBeforeTank(view);
+    if (!tankOpen && !shelfOpen) setViewBefore(view);
     setView("tank");
-  }, [closeExperience, view]);
+  }, [closeExperience, view, tankOpen, shelfOpen]);
+
+  const openShelf = useCallback(() => {
+    closeExperience();
+    setOpenProject(null);
+    setFocusId(null);
+    setActiveSkill(null);
+    setHoverSkill(null);
+    if (!tankOpen && !shelfOpen) setViewBefore(view);
+    setView("shelf");
+  }, [closeExperience, view, tankOpen, shelfOpen]);
+
+  const closeShelf = useCallback(() => setView(viewBefore), [viewBefore]);
 
   useEffect(() => {
-    tankView.set(tankOpen);
-    return () => tankView.set(false);
-  }, [tankOpen]);
+    deskSpot.set(experienceOpen ? "about" : tankOpen ? "skills" : shelfOpen ? "projects" : null);
+    return () => deskSpot.set(null);
+  }, [experienceOpen, tankOpen, shelfOpen]);
 
   /* the zoom hint has done its job once the visitor has zoomed */
   const [zoomed, setZoomed] = useState(false);
@@ -219,9 +256,9 @@ export function DeskHero() {
   const closeTank = useCallback(() => {
     setActiveSkill(null);
     setHoverSkill(null);
-    setView(viewBeforeTank);
+    setView(viewBefore);
     tankTrigger.current?.focus();
-  }, [viewBeforeTank]);
+  }, [viewBefore]);
 
   useEffect(() => {
     if (!tankOpen || openProject !== null) return;
@@ -234,15 +271,62 @@ export function DeskHero() {
     return () => window.removeEventListener("keydown", onKey);
   }, [tankOpen, openProject, activeSkill, closeTank]);
 
-  /* the Skills nav link, and a #skills deep link, fly straight to the tank */
   useEffect(() => {
-    const go = () => {
-      root.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+    if (!shelfOpen || openProject !== null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeShelf();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [shelfOpen, openProject, closeShelf]);
+
+  /* the Skills and Projects nav links, and their deep links, fly straight to the tank or the shelf */
+  useEffect(() => {
+    const toTop = () => root.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+    const skills = () => {
+      toTop();
       openTank();
     };
-    window.addEventListener("desk:skills", go);
-    return () => window.removeEventListener("desk:skills", go);
-  }, [openTank, reduce]);
+    const shelf = () => {
+      toTop();
+      openShelf();
+    };
+    window.addEventListener("desk:skills", skills);
+    window.addEventListener("desk:projects", shelf);
+    return () => {
+      window.removeEventListener("desk:skills", skills);
+      window.removeEventListener("desk:projects", shelf);
+    };
+  }, [openTank, openShelf, reduce]);
+
+  /*
+   * About me opens the Experience folder. From a close-up the camera comes
+   * back to the desk first, so the page lifts off a sheet that is on screen.
+   */
+  const [aboutPending, setAboutPending] = useState(false);
+  useEffect(() => {
+    const about = () => {
+      root.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+      setOpenProject(null);
+      if (tankOpen || shelfOpen) {
+        setActiveSkill(null);
+        setHoverSkill(null);
+        setView(viewBefore);
+        setAboutPending(true);
+      } else openExperience();
+    };
+    window.addEventListener("desk:about", about);
+    return () => window.removeEventListener("desk:about", about);
+  }, [openExperience, tankOpen, shelfOpen, viewBefore, reduce]);
+
+  useEffect(() => {
+    if (!aboutPending) return;
+    const t = window.setTimeout(() => {
+      setAboutPending(false);
+      openExperience();
+    }, reduce ? 0 : 900);
+    return () => window.clearTimeout(t);
+  }, [aboutPending, openExperience, reduce]);
 
   /* Home (nav or logo) puts everything away and returns to the desk */
   useEffect(() => {
@@ -252,14 +336,17 @@ export function DeskHero() {
       setFocusId(null);
       setActiveSkill(null);
       setHoverSkill(null);
-      if (tankOpen) setView(viewBeforeTank);
+      setAboutPending(false);
+      if (tankOpen || shelfOpen) setView(viewBefore);
     };
     window.addEventListener("desk:home", home);
     return () => window.removeEventListener("desk:home", home);
-  }, [closeExperience, tankOpen, viewBeforeTank]);
+  }, [closeExperience, tankOpen, shelfOpen, viewBefore]);
 
   useEffect(() => {
-    if (ready && window.location.hash === "#skills") window.dispatchEvent(new Event("desk:skills"));
+    if (!ready) return;
+    const spot = { "#about": "about", "#skills": "skills", "#projects": "projects" }[window.location.hash];
+    if (spot) window.dispatchEvent(new Event(`desk:${spot}`));
   }, [ready]);
 
   useEffect(() => {
@@ -279,11 +366,49 @@ export function DeskHero() {
     return () => document.documentElement.classList.remove("desk-loading");
   }, [ready]);
 
+  const land = useCallback(() => {
+    printBridge.current?.release();
+    setPrint((p) => (p === "landed" ? p : "settling"));
+  }, []);
+
   useEffect(() => {
     if (!ready) return;
-    const t = window.setTimeout(() => setShowLoader(false), 700);
+    if (reduce) {
+      printBridge.current?.release();
+      const t = window.setTimeout(() => setPrint("landed"), 600);
+      return () => window.clearTimeout(t);
+    }
+    let fall: Animation | undefined;
+    const t = window.setTimeout(() => {
+      /* drift from the centre of the window to the polaroid's resting place on the desk */
+      const to = printBridge.current?.origin();
+      const card = printCard.current;
+      const box = root.current?.getBoundingClientRect();
+      if (!to || !card || !box) return land();
+      const x = box.left + to.cx - window.innerWidth / 2;
+      const y = box.top + to.cy - window.innerHeight / 2;
+      fall = card.animate(leafFall(x, y, to.angle, to.width / card.offsetWidth), { duration: FLY_MS, fill: "forwards" });
+      fall.finished.then(land, () => {});
+      setPrint("flying");
+    }, SHAKE_MS);
+    return () => {
+      window.clearTimeout(t);
+      fall?.cancel();
+    };
+  }, [ready, reduce, land]);
+
+  /* the fall finishing is the cue to land; this only covers one that never reports back */
+  useEffect(() => {
+    if (print !== "flying") return;
+    const t = window.setTimeout(land, FLY_MS + 400);
     return () => window.clearTimeout(t);
-  }, [ready]);
+  }, [print, land]);
+
+  useEffect(() => {
+    if (print !== "settling") return;
+    const t = window.setTimeout(() => setPrint("landed"), SETTLE_MS);
+    return () => window.clearTimeout(t);
+  }, [print]);
   const send = (type: DeskCommand["type"]) => setCommand((c) => ({ type, n: (c?.n ?? 0) + 1 }));
   const focus =
     hoverProject !== null
@@ -313,6 +438,7 @@ export function DeskHero() {
           onOpenExperience={openExperience}
           onCloseExperience={closeExperience}
           onPaperBridge={onPaperBridge}
+          onPrintBridge={onPrintBridge}
           onHoverProject={setHoverProject}
           skills={skills}
           activeSkill={activeSkill}
@@ -329,18 +455,33 @@ export function DeskHero() {
       </div>
       <div className="desk-vignette pointer-events-none absolute inset-0" aria-hidden />
 
-      {showLoader ? (
-        <div className="desk-loader" data-lenis-prevent data-ready={ready ? "" : undefined} aria-busy={!ready} aria-live="polite">
+      {print !== "landed" ? (
+        <div className="desk-loader" data-lenis-prevent data-ready={ready ? "" : undefined} data-print={print} data-reduced={reduce ? "" : undefined} aria-busy={!ready}>
           <p className="desk-loader__kicker">{site.shortName}</p>
           <p className="desk-loader__mark">The desk</p>
-          <div className="desk-loader__bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(load)} aria-label="Loading the desk">
-            <span style={{ width: `${ready ? 100 : load}%` }} />
+          {/* the Instax print from the desk, developing as the scene loads */}
+          <div
+            ref={printCard}
+            className="desk-print"
+            data-phase={ready && print === "developing" && !reduce ? "shaking" : print}
+            style={{ "--dev": ready ? 1 : load / 100 } as CSSProperties}
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={ready ? 100 : Math.round(load)}
+            aria-label="Developing the desk"
+          >
+            <div className="desk-print__photo">
+              <Image src="/images/me2.png" alt="" fill preload unoptimized />
+            </div>
+            <p className="desk-print__caption">{ready ? "it's me, JD" : "developing…"}</p>
+            <p className="desk-print__tag">{ready ? "’26" : `${Math.round(load)}%`}</p>
           </div>
         </div>
       ) : null}
 
       {/* ── Type + UI, layered over the desk like print on a photo ── */}
-      <div className="desk-ui pointer-events-none absolute inset-0 z-20" data-reading={reading || experienceActive || tankOpen ? "" : undefined}>
+      <div className="desk-ui pointer-events-none absolute inset-0 z-20" data-reading={reading || experienceActive || tankOpen || shelfOpen ? "" : undefined}>
         <header className="desk-title">
           <h1 className="desk-wordmark">
             Jeanne
@@ -394,7 +535,7 @@ export function DeskHero() {
               Full-stack developer <br /> with a strong focus <br /> on UI and UX.
             </p>
             <div className="desk-card__actions pointer-events-auto mt-4 flex flex-wrap justify-end gap-2">
-              <a href="#features" className="desk-chip desk-chip--explore">
+              <a href="#contact" className="desk-chip desk-chip--explore">
                 <ArrowDown aria-hidden /> Explore
               </a>
               <button type="button" className="desk-chip" onClick={() => send("tidy")}>
@@ -443,6 +584,25 @@ export function DeskHero() {
             </a>
             <button type="button" className="desk-chip" onClick={() => setOpenProject(null)}>
               <X aria-hidden /> Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {shelfOpen && !reading && (
+        <div className="desk-reader desk-glass" role="group" aria-label="Project shelf">
+          <p className="desk-reader__count">
+            Projects {String(projects.length).padStart(2, "0")}
+          </p>
+          <p className="desk-reader__title">Pick a book off the shelf</p>
+          <div className="desk-reader__actions">
+            {projects.map((p, i) => (
+              <button key={p.slug} type="button" className="desk-chip" aria-label={`Open ${p.title}`} onClick={() => setOpenProject(i)}>
+                {String(i + 1).padStart(2, "0")}
+              </button>
+            ))}
+            <button type="button" className="desk-chip" onClick={closeShelf}>
+              <ArrowLeft aria-hidden /> Desk
             </button>
           </div>
         </div>

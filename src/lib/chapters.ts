@@ -1,37 +1,43 @@
 export const chapters = [
   { id: "intro", href: "#intro", label: "Home" },
-  { id: "features", href: "#features", label: "Features" },
-  { id: "product", href: "#product", label: "Product" },
   { id: "contact", href: "#contact", label: "Contact" },
 ] as const;
 
-/* not a page section: it flies the desk camera to the aquarium on the L return */
-export const skillsLink = { href: "#skills", label: "Skills" } as const;
+/*
+ * Not page sections: each sends the desk somewhere. About me opens the
+ * Experience folder, Skills flies to the aquarium, Projects to the book shelf.
+ */
+export type DeskSpot = "about" | "skills" | "projects";
+export const deskLinks: readonly { spot: DeskSpot; href: string; label: string }[] = [
+  { spot: "about", href: "#about", label: "About me" },
+  { spot: "skills", href: "#skills", label: "Skills" },
+  { spot: "projects", href: "#projects", label: "Projects" },
+];
 
 /* home: the link scrolls to the top, and the desk puts away whatever is open */
 export const goHome = () => {
   window.dispatchEvent(new Event("desk:home"));
 };
 
-export const openSkills = (e: { preventDefault(): void }) => {
+export const goToSpot = (spot: DeskSpot, e: { preventDefault(): void }) => {
   e.preventDefault();
-  window.dispatchEvent(new Event("desk:skills"));
+  window.dispatchEvent(new Event(`desk:${spot}`));
 };
 
-/* whether the desk camera is at the aquarium, so the nav can mark Skills as current */
-let tankOpen = false;
-const tankListeners = new Set<() => void>();
-export const tankView = {
-  get: () => tankOpen,
-  set(open: boolean) {
-    if (open === tankOpen) return;
-    tankOpen = open;
-    tankListeners.forEach((l) => l());
+/* where the desk is showing right now, so the nav can mark that link as current */
+let current: DeskSpot | null = null;
+const spotListeners = new Set<() => void>();
+export const deskSpot = {
+  get: () => current,
+  set(spot: DeskSpot | null) {
+    if (spot === current) return;
+    current = spot;
+    spotListeners.forEach((l) => l());
   },
   subscribe(listener: () => void) {
-    tankListeners.add(listener);
+    spotListeners.add(listener);
     return () => {
-      tankListeners.delete(listener);
+      spotListeners.delete(listener);
     };
   },
 };
