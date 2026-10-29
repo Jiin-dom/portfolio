@@ -1,37 +1,60 @@
-export const chapters = [
-  { id: "intro", href: "#intro", label: "Intro" },
-  { id: "features", href: "#features", label: "Features" },
-  { id: "product", href: "#product", label: "Product" },
-  { id: "contact", href: "#contact", label: "Contact" },
-] as const;
+export const chapters = [{ id: "intro", href: "#intro", label: "Home" }] as const;
 
-/* not a page section: it flies the desk camera to the aquarium on the L return */
-export const skillsLink = { href: "#skills", label: "Skills" } as const;
+/*
+ * Not page sections: each sends the desk somewhere. About me opens the
+ * Experience folder, Skills flies to the aquarium, Projects to the book shelf,
+ * Contact to the pinboard on the wall.
+ */
+export type DeskSpot = "about" | "skills" | "projects" | "contact";
+export const deskLinks: readonly { spot: DeskSpot; href: string; label: string }[] = [
+  { spot: "about", href: "#about", label: "About me" },
+  { spot: "skills", href: "#skills", label: "Skills" },
+  { spot: "projects", href: "#projects", label: "Projects" },
+  { spot: "contact", href: "#contact", label: "Contact" },
+];
 
-export const openSkills = (e: { preventDefault(): void }) => {
-  e.preventDefault();
-  window.dispatchEvent(new Event("desk:skills"));
+/* home: the link scrolls to the top, and the desk puts away whatever is open */
+export const goHome = () => {
+  window.dispatchEvent(new Event("desk:home"));
 };
 
-export type ChapterId = (typeof chapters)[number]["id"];
+export const goToSpot = (spot: DeskSpot, e: { preventDefault(): void }) => {
+  e.preventDefault();
+  window.dispatchEvent(new Event(`desk:${spot}`));
+};
+
+/* where the desk is showing right now, so the nav can mark that link as current */
+let current: DeskSpot | null = null;
+const spotListeners = new Set<() => void>();
+export const deskSpot = {
+  get: () => current,
+  set(spot: DeskSpot | null) {
+    if (spot === current) return;
+    current = spot;
+    spotListeners.forEach((l) => l());
+  },
+  subscribe(listener: () => void) {
+    spotListeners.add(listener);
+    return () => {
+      spotListeners.delete(listener);
+    };
+  },
+};
+
+/* "contact" is the hidden contact section; it stays observable so it can come back */
+export type ChapterId = (typeof chapters)[number]["id"] | "contact";
 
 export const featurePanels = [
   {
-    kicker: "Rise above mediocrity",
     title: "Interfaces that elevate",
     body: "Layout, type, and motion engineered so the product feels considered before a single API call lands.",
-    aside: "Δh ≈ craft",
   },
   {
-    kicker: "Handles extremes with ease",
     title: "Full-stack stability",
     body: "React surfaces wired to Spring Boot services and MySQL — one coherent stack, one owner through ship.",
-    aside: "React · Spring · MySQL",
   },
   {
-    kicker: "Precision grip, zero drama",
     title: "Shipped end to end",
     body: "Auth, payments, OAuth, and admin flows built to stay maintainable after launch — not just demo-ready.",
-    aside: "JWT · PayPal · OAuth",
   },
 ] as const;

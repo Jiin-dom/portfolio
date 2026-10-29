@@ -1178,10 +1178,7 @@ export function Aquarium({ skills, active, featured, labelled, reduced, night, o
         <group ref={label}>
           {labelled !== null && (
             <Html center zIndexRange={[15, 10]} pointerEvents="none">
-              <p className="tank-label">
-                {skills[labelled].name}
-                <span>{species[labelled].common}</span>
-              </p>
+              <p className="tank-label">{skills[labelled].name}</p>
             </Html>
           )}
         </group>

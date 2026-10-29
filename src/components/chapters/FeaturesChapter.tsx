@@ -30,13 +30,14 @@ export function FeaturesChapter() {
           pinSpacing: false,
         });
         gsap.to(step.querySelector(".feature-glass"), {
-          opacity: 0.2,
-          y: -28,
+          opacity: 0,
+          y: -40,
           ease: "none",
           scrollTrigger: {
             trigger: steps[i + 1],
+            /* gone before the next panel reaches it, so the two never stack */
             start: "top bottom",
-            end: "top top",
+            end: "top 55%",
             scrub: true,
           },
         });
@@ -72,16 +73,11 @@ export function FeaturesChapter() {
             className="feature-step sticky top-0 flex min-h-[100dvh] items-end section-pad pb-8 pt-[calc(var(--nav-h)+1rem)] md:items-stretch md:py-16"
           >
             <div className="feature-glass glass-dark flex w-full max-w-md flex-col justify-between rounded-sm p-6 md:p-9">
-              <div>
-                <p className="mono-label text-cream">{panel.kicker}</p>
-                <hr className="dot-rule text-cream" />
-                <p className="text-sm leading-relaxed text-cream/80">{panel.body}</p>
-              </div>
+              <p className="text-sm leading-relaxed text-cream/80">{panel.body}</p>
               <div className="mt-8 md:mt-10">
                 <h3 className="display text-[clamp(1.7rem,3.5vw,2.6rem)] uppercase text-cream">
                   {panel.title}
                 </h3>
-                <p className="mt-4 font-mono text-xs tracking-wide text-cream/60">{panel.aside}</p>
                 {index === 1 ? (
                   <ul className="mt-6 flex flex-wrap gap-2">
                     {techStack.slice(0, 6).map((tech) => (

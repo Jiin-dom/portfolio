@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { ChapterId } from "@/lib/chapters";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { deskSpot, type ChapterId } from "@/lib/chapters";
 
-const sectionIds: ChapterId[] = ["intro", "features", "product", "contact"];
+const sectionIds: ChapterId[] = ["intro", "contact"];
+
+/* what the desk is showing: the Experience folder, the aquarium, the book shelf, or nothing */
+export function useDeskSpot() {
+  return useSyncExternalStore(deskSpot.subscribe, deskSpot.get, () => null);
+}
 
 export function useActiveChapter() {
   const [active, setActive] = useState<ChapterId>("intro");

@@ -12,8 +12,9 @@ const channels = [
 ] as const;
 
 export function ContactChapter() {
+  /* hidden: the Contact link flies to the wall pinboard instead */
   return (
-    <section id="contact" className="relative overflow-hidden bg-cream text-ink">
+    <section id="contact" hidden className="relative overflow-hidden bg-cream text-ink">
       <div className="section-pad section-inner py-28 md:py-36">
         <Reveal>
           <h2 className="display max-w-[18ch] text-[clamp(2rem,5.5vw,4.25rem)]">

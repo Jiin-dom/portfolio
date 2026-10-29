@@ -1,12 +1,15 @@
 "use client";
 
 import { RoundedBox } from "@react-three/drei";
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
+import { useFrame } from "@react-three/fiber";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { BOARD } from "./constants";
 import { FitModel, GAMEPAD_CROP, MODEL_URLS } from "./FitModel";
 import { InstaxCamera } from "./models";
-import { monitorTexture, pegboardTexture, photoTexture } from "./textures";
+import { site } from "@/lib/content";
+import { buildBoardTextures, monitorTexture, pegboardTexture, photoTexture, type BoardTextures } from "./textures";
 
 /*
  * The back wall: a floor-to-ceiling pegboard with everything hung on it, plus
@@ -180,7 +183,7 @@ const TRAY = { w: 2.1, h: 1.35, d: 1.3, front: 1.0 };
 const binGeo = once(() => binGeometry(BIN.w, BIN.h, BIN.d, BIN.front));
 const trayGeo = once(() => binGeometry(TRAY.w, TRAY.h, TRAY.d, TRAY.front));
 
-/* highlighter or pen: barrel, cap with a pocket clip, end plug. Origin at the base. */
+/* pen: barrel, cap with a pocket clip, end plug. Origin at the base. */
 function Marker({
   p,
   r,
@@ -228,44 +231,7 @@ function Marker({
   );
 }
 
-const HIGHLIGHTER = {
-  yellow: ["#f6e53a", "#efd20c"],
-  pink: ["#ff6fa8", "#f04d8f"],
-  green: ["#86e05e", "#5cc83a"],
-  orange: ["#ffa04a", "#f5822a"],
-} as const;
-
-type MarkerSpec = { kind: keyof typeof HIGHLIGHTER; x: number; z: number; tilt: V3 };
-
-const BIN_MARKERS: MarkerSpec[][] = [
-  [
-    { kind: "yellow", x: -0.55, z: 0.75, tilt: [-0.32, 0, 0.18] },
-    { kind: "yellow", x: -0.2, z: 0.85, tilt: [-0.36, 0, -0.05] },
-    { kind: "orange", x: 0.2, z: 0.7, tilt: [-0.28, 0, -0.2] },
-    { kind: "yellow", x: 0.55, z: 0.8, tilt: [-0.33, 0, -0.32] },
-  ],
-  [
-    { kind: "pink", x: -0.45, z: 0.8, tilt: [-0.3, 0, 0.25] },
-    { kind: "yellow", x: -0.05, z: 0.72, tilt: [-0.34, 0, 0.04] },
-    { kind: "green", x: 0.4, z: 0.82, tilt: [-0.3, 0, -0.22] },
-  ],
-];
-
-function WhiteBin({ x, y, set }: { x: number; y: number; set?: number }) {
-  const markers = set === undefined ? [] : BIN_MARKERS[set];
-  return (
-    <group position={[x, y - BIN.h / 2, FACE]}>
-      <mesh geometry={binGeo()} castShadow receiveShadow>
-        <meshStandardMaterial color="#f3f1ec" roughness={0.42} />
-      </mesh>
-      {markers.map((m, i) => (
-        <Marker key={i} p={[m.x, WALL_T, m.z]} r={m.tilt} body={HIGHLIGHTER[m.kind][0]} cap={HIGHLIGHTER[m.kind][1]} />
-      ))}
-    </group>
-  );
-}
-
-/* the third bin holds ballpoints and a steel rule instead */
+/* bin of ballpoints and a steel rule */
 function PenBin({ x, y }: { x: number; y: number }) {
   const pens: [number, number, V3, string][] = [
     [-0.5, 0.8, [-0.3, 0, 0.16], "#1f3f8a"],
@@ -880,6 +846,209 @@ function PhotoString({ x0, x1, y, sag = 0.5 }: { x0: number; x1: number; y: numb
   );
 }
 
+/* ── contact pinboard ── */
+
+const SOCIALS = [
+  { id: "board-github", href: site.links.github, p: [-2.75, 0.95], r: -0.06 },
+  { id: "board-linkedin", href: site.links.linkedin, p: [-1.75, 1.0], r: 0.05 },
+  { id: "board-facebook", href: site.links.facebook, p: [-2.7, -0.95], r: 0.04 },
+  { id: "board-youtube", href: site.links.youtube, p: [-1.72, -1.0], r: -0.07 },
+] as const;
+
+/* a sheet stuck to the cork with one push pin; clickable sheets lift toward the viewer on hover */
+function Pinned({
+  x,
+  y,
+  r,
+  w,
+  h,
+  map,
+  pin,
+  reduced,
+  onAction,
+  onHover,
+}: {
+  x: number;
+  y: number;
+  r: number;
+  w: number;
+  h: number;
+  map: THREE.Texture;
+  pin: string;
+  reduced: boolean;
+  onAction?: () => void;
+  onHover?: (on: boolean) => void;
+}) {
+  const ref = useRef<THREE.Group>(null);
+  const hot = useRef(false);
+  useFrame((_, dt) => {
+    const g = ref.current;
+    if (!g) return;
+    const lift = hot.current ? 0.12 : 0;
+    const tilt = hot.current ? r * 0.3 : r;
+    g.position.z = reduced ? lift : THREE.MathUtils.damp(g.position.z, lift, 12, dt);
+    g.rotation.z = reduced ? tilt : THREE.MathUtils.damp(g.rotation.z, tilt, 10, dt);
+  });
+  const handlers = onAction
+    ? {
+        onPointerDown: (e: { stopPropagation(): void }) => e.stopPropagation(),
+        onClick: (e: { stopPropagation(): void }) => {
+          e.stopPropagation();
+          onAction();
+        },
+        onPointerOver: (e: { stopPropagation(): void }) => {
+          e.stopPropagation();
+          hot.current = true;
+          onHover?.(true);
+        },
+        onPointerOut: () => {
+          hot.current = false;
+          onHover?.(false);
+        },
+      }
+    : {};
+  return (
+    <group position={[x, y, 0.16]}>
+      <group ref={ref} rotation={[0, 0, r]} {...handlers}>
+        <mesh castShadow>
+          <boxGeometry args={[w, h, 0.012]} />
+          <meshStandardMaterial color="#f3ede2" roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 0, 0.007]}>
+          <planeGeometry args={[w, h]} />
+          <meshStandardMaterial map={map} roughness={0.7} />
+        </mesh>
+        <group position={[0, h / 2 - 0.13, 0.01]} rotation={[Math.PI / 2, 0, 0]} scale={1.5}>
+          <mesh geometry={pinHeadGeo()} castShadow>
+            <meshStandardMaterial color={pin} roughness={0.3} />
+          </mesh>
+        </group>
+      </group>
+    </group>
+  );
+}
+
+function openLink(href: string) {
+  if (href.startsWith("http")) window.open(href, "_blank", "noopener,noreferrer");
+  else window.location.href = href;
+}
+
+function disposeBoard(t: BoardTextures) {
+  [t.cork, t.card, t.cardCopied, t.resume, t.phone, t.note, ...t.socials].forEach((x) => x.dispose());
+}
+
+function ContactBoard({ reduced, onFocusItem }: { reduced: boolean; onFocusItem: (id: string | null) => void }) {
+  const [tex, setTex] = useState<BoardTextures | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    let made: BoardTextures | null = null;
+    void buildBoardTextures().then((t) => {
+      if (!live) return disposeBoard(t);
+      made = t;
+      t.cork.repeat.set(3, 2);
+      setTex(t);
+    });
+    return () => {
+      live = false;
+      if (made) disposeBoard(made);
+    };
+  }, []);
+
+  /* the sticky note's clock only needs the minute */
+  useEffect(() => {
+    if (!tex) return;
+    const id = window.setInterval(tex.tickNote, 30_000);
+    return () => window.clearInterval(id);
+  }, [tex]);
+
+  useEffect(() => {
+    if (!copied) return;
+    const id = window.setTimeout(() => setCopied(false), 1800);
+    return () => window.clearTimeout(id);
+  }, [copied]);
+
+  const hover = (id: string) => (on: boolean) => onFocusItem(on ? id : null);
+
+  const copy = () => {
+    const mail = () => openLink(`mailto:${site.email}`);
+    if (!navigator.clipboard) return mail();
+    navigator.clipboard.writeText(site.email).then(() => {
+      setCopied(true);
+      onFocusItem("board-copied");
+    }, mail);
+  };
+
+  return (
+    <group position={[BOARD.x, BOARD.y, FACE]}>
+      <RoundedBox args={[BOARD.w, BOARD.h, 0.14]} radius={0.05} smoothness={3} position={[0, 0, 0.07]} castShadow receiveShadow>
+        <meshStandardMaterial color="#8a6a44" roughness={0.7} />
+      </RoundedBox>
+      <mesh position={[0, 0, 0.142]} receiveShadow>
+        <planeGeometry args={[BOARD.w - 0.3, BOARD.h - 0.3]} />
+        <meshStandardMaterial map={tex?.cork ?? null} color={tex ? "#ffffff" : "#b8956a"} roughness={0.95} />
+      </mesh>
+      {tex && (
+        <>
+          {SOCIALS.map((s, i) => (
+            <Pinned
+              key={s.id}
+              x={s.p[0]}
+              y={s.p[1]}
+              r={s.r}
+              w={0.9}
+              h={1.08}
+              map={tex.socials[i]}
+              pin={PIN_COLORS[i]}
+              reduced={reduced}
+              onAction={() => openLink(s.href)}
+              onHover={hover(s.id)}
+            />
+          ))}
+          <Pinned
+            x={0.15}
+            y={0.85}
+            r={0.03}
+            w={2.3}
+            h={1.31}
+            map={copied ? tex.cardCopied : tex.card}
+            pin="#e85d2c"
+            reduced={reduced}
+            onAction={copy}
+            onHover={hover(copied ? "board-copied" : "board-card")}
+          />
+          <Pinned
+            x={-0.25}
+            y={-1.1}
+            r={-0.05}
+            w={1.0}
+            h={1.33}
+            map={tex.resume}
+            pin="#5aa9e6"
+            reduced={reduced}
+            onAction={() => openLink(site.resume)}
+            onHover={hover("board-resume")}
+          />
+          <Pinned x={2.4} y={0.7} r={0.07} w={1.45} h={1.45} map={tex.note} pin="#7bc47f" reduced={reduced} />
+          <Pinned
+            x={2.3}
+            y={-1.3}
+            r={0.05}
+            w={1.4}
+            h={0.6}
+            map={tex.phone}
+            pin="#f2c94c"
+            reduced={reduced}
+            onAction={() => openLink(`tel:${site.phone.replace(/\s+/g, "")}`)}
+            onHover={hover("board-phone")}
+          />
+        </>
+      )}
+    </group>
+  );
+}
+
 /* ── monitor ── */
 
 export const MONITOR = { x: -1.6, z: -3.75 };
@@ -972,13 +1141,10 @@ export function Wall({
     <group>
       <Pegboard />
 
-      {/* upper left: white bins over clear trays */}
-      <WhiteBin x={-12.6} y={9.2} set={0} />
-      <WhiteBin x={-10.3} y={9.2} set={1} />
-      <PenBin x={-8.0} y={9.2} />
-      <ClearTray x={-12.6} y={6.3} fill="binder" seed={3} />
-      <ClearTray x={-10.3} y={6.3} fill="pins" seed={7} />
-      <ClearTray x={-8.0} y={6.3} fill="paperclips" seed={11} />
+      {/* upper left: pen bin and pin tray, contact pinboard below */}
+      <PenBin x={-11.45} y={9.2} />
+      <ClearTray x={-9.15} y={9.2} fill="pins" seed={7} />
+      <ContactBoard reduced={reduced} onFocusItem={onFocusItem} />
 
       <PhotoString x0={-6.4} x1={2.4} y={11} />
       <FigureShelf />

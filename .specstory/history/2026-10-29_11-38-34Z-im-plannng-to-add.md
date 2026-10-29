@@ -15029,3 +15029,6562 @@ The messages after this summary are the most recent messages from before compact
 _**User (2026-10-29 13:51:07Z)**_
 
 <local-command-stdout>Compacted </local-command-stdout>
+
+---
+
+_**User (2026-10-29 14:14:53Z)**_
+
+i pushed and merge my chages to main but got this error and it did not deploy to vercel /caveman
+
+---
+
+_**User (2026-10-29 14:14:53Z)**_
+
+[Image: source: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\images\2.png]
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 14:15:05Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Inspect submodule gitlink on main
+
+`git fetch -q origin && git ls-tree origin/main | grep -E "commit|ponytail"; echo ---; git show origin/main:.gitmodules 2>&1 | head; echo ---; ls -la ponytail 2>&1 | head; git log --oneline -3 origin/main; ls .github/workflows 2>&1; cat .gitignore | grep -n ponytail`
+
+```text
+160000 commit 9cc65d03aa2da1db7121b912d03596409ee340b8	ponytail
+---
+fatal: ambiguous argument 'origin\main;.gitmodules': unknown revision or path not in the working tree.
+Use '--' to separate paths from revisions, like this:
+'git <command> [<revision>...] -- [<file>...]'
+---
+total 133
+drwxr-xr-x 1 Jeanne 197609     0 Oct  9 17:41 .
+drwxr-xr-x 1 Jeanne 197609     0 Oct  9 17:44 ..
+drwxr-xr-x 1 Jeanne 197609     0 Oct  9 17:41 .agents
+drwxr-xr-x 1 Jeanne 197609     0 Oct  9 17:41 .claude-plugin
+drwxr-xr-x 1 Jeanne 197609     0 Oct  9 17:41 .clinerules
+drwxr-xr-x 1 Jeanne 197609     0 Oct  9 17:41 .codex-plugin
+drwxr-xr-x 1 Jeanne 197609     0 Oct  9 17:41 .cursor
+drwxr-xr-x 1 Jeanne 197609     0 Oct  9 17:41 .devin-plugin
+drwxr-xr-x 1 Jeanne 197609     0 Oct 29 21:55 .git
+2c265a1 Merge pull request #3 from Jiin-dom/codex/experience-folder
+d3d47b9 experience section folder
+7951add skills aquarium
+ls: cannot access '.github/workflows': No such file or directory
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:15:09Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Find commit that added ponytail and usages
+
+`git log --oneline --diff-filter=A -- ponytail | head; git -C ponytail remote -v; grep -rn "ponytail" --include=*.ts --include=*.tsx --include=*.json --include=*.mjs src package.json tsconfig.json next.config.* 2>/dev/null | head`
+
+```text
+8ca85e5 Hold the desk until it is ready and restage the pegboard
+origin	https://github.com/DietrichGebert/ponytail (fetch)
+origin	https://github.com/DietrichGebert/ponytail (push)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:15:17Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Untrack ponytail gitlink and ignore it on main
+
+`git checkout -q main && git pull -q --ff-only origin main && git rm -q --cached ponytail && printf '\n# local agent tooling clone, not part of the site\n/ponytail/\n' >> .gitignore && git add .gitignore && git status --short`
+
+```text
+Exit code 1
+error: Your local changes to the following files would be overwritten by checkout:
+	.specstory/history/2026-10-29_11-38-34Z-im-plannng-to-add.md
+Please commit your changes or stash them before you switch branches.
+Aborting
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:15:24Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Branch from main, untrack ponytail, ignore it
+
+`git checkout -q -b fix/drop-ponytail-gitlink origin/main && git rm -q --cached ponytail && printf '\n# local agent tooling clone, not part of the site\n/ponytail/\n' >> .gitignore && git add .gitignore && git status --short`
+
+```text
+warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+M  .gitignore
+ M .specstory/history/2026-10-29_11-38-34Z-im-plannng-to-add.md
+D  ponytail
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:15:30Z)**_
+
+The build failed because of a broken submodule. Commit `8ca85e5` accidentally added `ponytail/` as a submodule. That folder is a clone of `github.com/DietrichGebert/ponytail` sitting inside your repo. It has no entry in `.gitmodules`, so the clone on GitHub dies with `No url found for submodule path 'ponytail'`. Nothing in `src` uses it.
+
+I've staged a fix on a new branch, `fix/drop-ponytail-gitlink`, cut from `origin/main`:
+- `git rm --cached ponytail` removes it from git only. Your local folder is untouched.
+- `.gitignore` now has `/ponytail/`, so it can't be added again by accident.
+
+Nothing is committed or pushed yet. To ship it:
+```
+git commit -m "Stop tracking the ponytail clone"
+git push -u origin fix/drop-ponytail-gitlink
+```
+Then open a PR and merge it to main. I can commit and push it for you if you want.
+
+About Vercel: the failing run in your screenshot is GitHub Pages ("pages build and deployment"), not Vercel. GitHub Pages can't host a Next.js app anyway, so turn it off in Repo → Settings → Pages. If Vercel still doesn't deploy after the merge, check its dashboard. The same missing-submodule clone error is the likely cause, and the fix above clears it.
+
+---
+
+_**User (2026-10-29 14:24:35Z)**_
+
+what can be improved in the UI. also, remove sub texts or descriptions if its not necesary, theUI itself should be inuitive without the need of sub texts or descriptions. use necessary skills to assess the UI /emil-design-eng /caveman
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 14:24:39Z)**_
+
+<tool-use data-tool-type="generic" data-tool-name="Skill"><details>
+<summary>Tool use: **Skill**</summary>
+
+**Input:**
+
+- skill: `emil-design-eng`
+
+</details></tool-use>
+
+---
+
+_**User (2026-10-29 14:24:39Z)**_
+
+Base directory for this skill: C:\Users\Jeanne\.claude\skills\emil-design-eng
+
+# Design Engineering
+
+## Initial Response
+
+When this skill is first invoked without a specific question, respond only with:
+
+> I'm ready to help you build interfaces that feel right, my knowledge comes from Emil Kowalski's design engineering philosophy.
+
+Do not provide any other information until the user asks a question.
+
+You are a design engineer with the craft sensibility. You build interfaces where every detail compounds into something that feels right. You understand that in a world where everyone's software is good enough, taste is the differentiator.
+
+## Core Philosophy
+
+### Taste is trained, not innate
+
+Good taste is not personal preference. It is a trained instinct: the ability to see beyond the obvious and recognize what elevates. You develop it by surrounding yourself with great work, thinking deeply about why something feels good, and practicing relentlessly.
+
+When building UI, don't just make it work. Study why the best interfaces feel the way they do. Reverse engineer animations. Inspect interactions. Be curious.
+
+### Unseen details compound
+
+Most details users never consciously notice. That is the point. When a feature functions exactly as someone assumes it should, they proceed without giving it a second thought. That is the goal.
+
+> "All those unseen details combine to produce something that's just stunning, like a thousand barely audible voices all singing in tune." - Paul Graham
+
+Every decision below exists because the aggregate of invisible correctness creates interfaces people love without knowing why.
+
+### Beauty is leverage
+
+People select tools based on the overall experience, not just functionality. Good defaults and good animations are real differentiators. Beauty is underutilized in software. Use it as leverage to stand out.
+
+## Review Format (Required)
+
+When reviewing UI code, you MUST use a markdown table with Before/After columns. Do NOT use a list with "Before:" and "After:" on separate lines. Always output an actual markdown table like this:
+
+| Before | After | Why |
+| --- | --- | --- |
+| `transition: all 300ms` | `transition: transform 200ms ease-out` | Specify exact properties; avoid `all` |
+| `transform: scale(0)` | `transform: scale(0.95); opacity: 0` | Nothing in the real world appears from nothing |
+| `ease-in` on dropdown | `ease-out` with custom curve | `ease-in` feels sluggish; `ease-out` gives instant feedback |
+| No `:active` state on button | `transform: scale(0.97)` on `:active` | Buttons must feel responsive to press |
+| `transform-origin: center` on popover | `transform-origin: var(--transform-origin)` | Popovers should scale from their trigger (not modals — modals stay centered) |
+
+Wrong format (never do this):
+
+```
+Before: transition: all 300ms
+After: transition: transform 200ms ease-out
+────────────────────────────
+Before: scale(0)
+After: scale(0.95)
+```
+
+Correct format: A single markdown table with | Before | After | Why | columns, one row per issue found. The "Why" column briefly explains the reasoning.
+
+## The Animation Decision Framework
+
+Before writing any animation code, answer these questions in order:
+
+### 1. Should this animate at all?
+
+**Ask:** How often will users see this animation?
+
+| Frequency                                                   | Decision                     |
+| ----------------------------------------------------------- | ---------------------------- |
+| 100+ times/day (keyboard shortcuts, command palette toggle) | No animation. Ever.          |
+| Tens of times/day (hover effects, list navigation)          | Remove or drastically reduce |
+| Occasional (modals, drawers, toasts)                        | Standard animation           |
+| Rare/first-time (onboarding, feedback forms, celebrations)  | Can add delight              |
+
+**Never animate keyboard-initiated actions.** These actions are repeated hundreds of times daily. Animation makes them feel slow, delayed, and disconnected from the user's actions.
+
+Raycast has no open/close animation. That is the optimal experience for something used hundreds of times a day.
+
+### 2. What is the purpose?
+
+Every animation must have a clear answer to "why does this animate?"
+
+Valid purposes:
+
+- **Spatial consistency**: toast enters and exits from the same direction, making swipe-to-dismiss feel intuitive
+- **State indication**: a morphing feedback button shows the state change
+- **Explanation**: a marketing animation that shows how a feature works
+- **Feedback**: a button scales down on press, confirming the interface heard the user
+- **Preventing jarring changes**: elements appearing or disappearing without transition feel broken
+
+If the purpose is just "it looks cool" and the user will see it often, don't animate.
+
+### 3. What easing should it use?
+
+Is the element entering or exiting?
+  Yes → ease-out (starts fast, feels responsive)
+  No →
+    Is it moving/morphing on screen?
+      Yes → ease-in-out (natural acceleration/deceleration)
+    Is it a hover/color change?
+      Yes → ease
+    Is it constant motion (marquee, progress bar)?
+      Yes → linear
+    Default → ease-out
+
+**Critical: use custom easing curves.** The built-in CSS easings are too weak. They lack the punch that makes animations feel intentional.
+
+```css
+/* Strong ease-out for UI interactions */
+--ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+/* Strong ease-in-out for on-screen movement */
+--ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
+/* iOS-like drawer curve (from Ionic Framework) */
+--ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+```
+
+**Never use ease-in for UI animations.** It starts slow, which makes the interface feel sluggish and unresponsive. A dropdown with `ease-in` at 300ms _feels_ slower than `ease-out` at the same 300ms, because ease-in delays the initial movement — the exact moment the user is watching most closely.
+
+**Easing curve resources:** Don't create curves from scratch. Use [easing.dev](https://easing.dev/) or [easings.co](https://easings.co/) to find stronger custom variants of standard easings.
+
+### 4. How fast should it be?
+
+| Element                  | Duration      |
+| ------------------------ | ------------- |
+| Button press feedback    | 100-160ms     |
+| Tooltips, small popovers | 125-200ms     |
+| Dropdowns, selects       | 150-250ms     |
+| Modals, drawers          | 200-500ms     |
+| Marketing/explanatory    | Can be longer |
+
+**Rule: UI animations should stay under 300ms.** A 180ms dropdown feels more responsive than a 400ms one. A faster-spinning spinner makes the app feel like it loads faster, even when the load time is identical.
+
+### Perceived performance
+
+Speed in animation is not just about feeling snappy — it directly affects how users perceive your app's performance:
+
+- A **fast-spinning spinner** makes loading feel faster (same load time, different perception)
+- A **180ms select** animation feels more responsive than a **400ms** one
+- **Instant tooltips** after the first one is open (skip delay + skip animation) make the whole toolbar feel faster
+
+The perception of speed matters as much as actual speed. Easing amplifies this: `ease-out` at 200ms _feels_ faster than `ease-in` at 200ms because the user sees immediate movement.
+
+## Spring Animations
+
+Springs feel more natural than duration-based animations because they simulate real physics. They don't have fixed durations — they settle based on physical parameters.
+
+### When to use springs
+
+- Drag interactions with momentum
+- Elements that should feel "alive" (like Apple's Dynamic Island)
+- Gestures that can be interrupted mid-animation
+- Decorative mouse-tracking interactions
+
+### Spring-based mouse interactions
+
+Tying visual changes directly to mouse position feels artificial because it lacks motion. Use `useSpring` from Motion (formerly Framer Motion) to interpolate value changes with spring-like behavior instead of updating immediately.
+
+```jsx
+import { useSpring } from 'framer-motion';
+
+// Without spring: feels artificial, instant
+const rotation = mouseX * 0.1;
+
+// With spring: feels natural, has momentum
+const springRotation = useSpring(mouseX * 0.1, {
+  stiffness: 100,
+  damping: 10,
+});
+```
+
+This works because the animation is **decorative** — it doesn't serve a function. If this were a functional graph in a banking app, no animation would be better. Know when decoration helps and when it hinders.
+
+### Spring configuration
+
+**Apple's approach (recommended — easier to reason about):**
+
+```js
+{ type: "spring", duration: 0.5, bounce: 0.2 }
+```
+
+**Traditional physics (more control):**
+
+```js
+{ type: "spring", mass: 1, stiffness: 100, damping: 10 }
+```
+
+Keep bounce subtle (0.1-0.3) when used. Avoid bounce in most UI contexts. Use it for drag-to-dismiss and playful interactions.
+
+### Interruptibility advantage
+
+Springs maintain velocity when interrupted — CSS animations and keyframes restart from zero. This makes springs ideal for gestures users might change mid-motion. When you click an expanded item and quickly press Escape, a spring-based animation smoothly reverses from its current position.
+
+## Component Building Principles
+
+### Buttons must feel responsive
+
+Add `transform: scale(0.97)` on `:active`. This gives instant feedback, making the UI feel like it is truly listening to the user.
+
+```css
+.button {
+  transition: transform 160ms ease-out;
+}
+
+.button:active {
+  transform: scale(0.97);
+}
+```
+
+This applies to any pressable element. The scale should be subtle (0.95-0.98).
+
+### Never animate from scale(0)
+
+Nothing in the real world disappears and reappears completely. Elements animating from `scale(0)` look like they come out of nowhere.
+
+Start from `scale(0.9)` or higher, combined with opacity. Even a barely-visible initial scale makes the entrance feel more natural, like a balloon that has a visible shape even when deflated.
+
+```css
+/* Bad */
+.entering {
+  transform: scale(0);
+}
+
+/* Good */
+.entering {
+  transform: scale(0.95);
+  opacity: 0;
+}
+```
+
+### Make popovers origin-aware
+
+Popovers should scale in from their trigger, not from center. The default `transform-origin: center` is wrong for almost every popover. **Exception: modals.** Modals should keep `transform-origin: center` because they are not anchored to a specific trigger — they appear centered in the viewport.
+
+```css
+/* Base UI */
+.popover {
+  transform-origin: var(--transform-origin);
+}
+```
+
+Whether the user notices the difference individually does not matter. In the aggregate, unseen details become visible. They compound.
+
+### Tooltips: skip delay on subsequent hovers
+
+Tooltips should delay before appearing to prevent accidental activation. But once one tooltip is open, hovering over adjacent tooltips should open them instantly with no animation. This feels faster without defeating the purpose of the initial delay.
+
+```css
+.tooltip {
+  transition: transform 125ms ease-out, opacity 125ms ease-out;
+  transform-origin: var(--transform-origin);
+}
+
+.tooltip[data-starting-style],
+.tooltip[data-ending-style] {
+  opacity: 0;
+  transform: scale(0.97);
+}
+
+/* Skip animation on subsequent tooltips */
+.tooltip[data-instant] {
+  transition-duration: 0ms;
+}
+```
+
+### Use CSS transitions over keyframes for interruptible UI
+
+CSS transitions can be interrupted and retargeted mid-animation. Keyframes restart from zero. For any interaction that can be triggered rapidly (adding toasts, toggling states), transitions produce smoother results.
+
+```css
+/* Interruptible - good for UI */
+.toast {
+  transition: transform 400ms ease;
+}
+
+/* Not interruptible - avoid for dynamic UI */
+@keyframes slideIn {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+```
+
+### Use blur to mask imperfect transitions
+
+When a crossfade between two states feels off despite trying different easings and durations, add subtle `filter: blur(2px)` during the transition.
+
+**Why blur works:** Without blur, you see two distinct objects during a crossfade — the old state and the new state overlapping. This looks unnatural. Blur bridges the visual gap by blending the two states together, tricking the eye into perceiving a single smooth transformation instead of two objects swapping.
+
+Combine blur with scale-on-press (`scale(0.97)`) for a polished button state transition:
+
+```css
+.button {
+  transition: transform 160ms ease-out;
+}
+
+.button:active {
+  transform: scale(0.97);
+}
+
+.button-content {
+  transition: filter 200ms ease, opacity 200ms ease;
+}
+
+.button-content.transitioning {
+  filter: blur(2px);
+  opacity: 0.7;
+}
+```
+
+Keep blur under 20px. Heavy blur is expensive, especially in Safari.
+
+### Animate enter states with @starting-style
+
+The modern CSS way to animate element entry without JavaScript:
+
+```css
+.toast {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 400ms ease, transform 400ms ease;
+
+  @starting-style {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+```
+
+This replaces the common React pattern of using `useEffect` to set `mounted: true` after initial render. Use `@starting-style` when browser support allows; fall back to the `data-mounted` attribute pattern otherwise.
+
+```jsx
+// Legacy pattern (still works everywhere)
+useEffect(() => {
+  setMounted(true);
+}, []);
+// <div data-mounted={mounted}>
+```
+
+## CSS Transform Mastery
+
+### translateY with percentages
+
+Percentage values in `translate()` are relative to the element's own size. Use `translateY(100%)` to move an element by its own height, regardless of actual dimensions. This is how Sonner positions toasts and how Vaul hides the drawer before animating in.
+
+```css
+/* Works regardless of drawer height */
+.drawer-hidden {
+  transform: translateY(100%);
+}
+
+/* Works regardless of toast height */
+.toast-enter {
+  transform: translateY(-100%);
+}
+```
+
+Prefer percentages over hardcoded pixel values. They are less error-prone and adapt to content.
+
+### scale() scales children too
+
+Unlike `width`/`height`, `scale()` also scales an element's children. When scaling a button on press, the font size, icons, and content scale proportionally. This is a feature, not a bug.
+
+### 3D transforms for depth
+
+`rotateX()`, `rotateY()` with `transform-style: preserve-3d` create real 3D effects in CSS. Orbiting animations, coin flips, and depth effects are all possible without JavaScript.
+
+```css
+.wrapper {
+  transform-style: preserve-3d;
+}
+
+@keyframes orbit {
+  from {
+    transform: translate(-50%, -50%) rotateY(0deg) translateZ(72px) rotateY(360deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotateY(360deg) translateZ(72px) rotateY(0deg);
+  }
+}
+```
+
+### transform-origin
+
+Every element has an anchor point from which transforms execute. The default is center. Set it to match where the trigger lives for origin-aware interactions.
+
+## clip-path for Animation
+
+`clip-path` is not just for shapes. It is one of the most powerful animation tools in CSS.
+
+### The inset shape
+
+`clip-path: inset(top right bottom left)` defines a rectangular clipping region. Each value "eats" into the element from that side.
+
+```css
+/* Fully hidden from right */
+.hidden {
+  clip-path: inset(0 100% 0 0);
+}
+
+/* Fully visible */
+.visible {
+  clip-path: inset(0 0 0 0);
+}
+
+/* Reveal from left to right */
+.overlay {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 200ms ease-out;
+}
+.button:active .overlay {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 2s linear;
+}
+```
+
+### Tabs with perfect color transitions
+
+Duplicate the tab list. Style the copy as "active" (different background, different text color). Clip the copy so only the active tab is visible. Animate the clip on tab change. This creates a seamless color transition that timing individual color transitions can never achieve.
+
+### Hold-to-delete pattern
+
+Use `clip-path: inset(0 100% 0 0)` on a colored overlay. On `:active`, transition to `inset(0 0 0 0)` over 2s with linear timing. On release, snap back with 200ms ease-out. Add `scale(0.97)` on the button for press feedback.
+
+### Image reveals on scroll
+
+Start with `clip-path: inset(0 0 100% 0)` (hidden from bottom). Animate to `inset(0 0 0 0)` when the element enters the viewport. Use `IntersectionObserver` or Framer Motion's `useInView` with `{ once: true, margin: "-100px" }`.
+
+### Comparison sliders
+
+Overlay two images. Clip the top one with `clip-path: inset(0 50% 0 0)`. Adjust the right inset value based on drag position. No extra DOM elements needed, fully hardware-accelerated.
+
+## Gesture and Drag Interactions
+
+### Momentum-based dismissal
+
+Don't require dragging past a threshold. Calculate velocity: `Math.abs(dragDistance) / elapsedTime`. If velocity exceeds ~0.11, dismiss regardless of distance. A quick flick should be enough.
+
+```js
+const timeTaken = new Date().getTime() - dragStartTime.current.getTime();
+const velocity = Math.abs(swipeAmount) / timeTaken;
+
+if (Math.abs(swipeAmount) >= SWIPE_THRESHOLD || velocity > 0.11) {
+  dismiss();
+}
+```
+
+### Damping at boundaries
+
+When a user drags past the natural boundary (e.g., dragging a drawer up when already at top), apply damping. The more they drag, the less the element moves. Things in real life don't suddenly stop; they slow down first.
+
+### Pointer capture for drag
+
+Once dragging starts, set the element to capture all pointer events. This ensures dragging continues even if the pointer leaves the element bounds.
+
+### Multi-touch protection
+
+Ignore additional touch points after the initial drag begins. Without this, switching fingers mid-drag causes the element to jump to the new position.
+
+```js
+function onPress() {
+  if (isDragging) return;
+  // Start drag...
+}
+```
+
+### Friction instead of hard stops
+
+Instead of preventing upward drag entirely, allow it with increasing friction. It feels more natural than hitting an invisible wall.
+
+## Performance Rules
+
+### Only animate transform and opacity
+
+These properties skip layout and paint, running on the GPU. Animating `padding`, `margin`, `height`, or `width` triggers all three rendering steps.
+
+### CSS variables are inheritable
+
+Changing a CSS variable on a parent recalculates styles for all children. In a drawer with many items, updating `--swipe-amount` on the container causes expensive style recalculation. Update `transform` directly on the element instead.
+
+```js
+// Bad: triggers recalc on all children
+element.style.setProperty('--swipe-amount', `${distance}px`);
+
+// Good: only affects this element
+element.style.transform = `translateY(${distance}px)`;
+```
+
+### Framer Motion hardware acceleration caveat
+
+Framer Motion's shorthand properties (`x`, `y`, `scale`) are NOT hardware-accelerated. They use `requestAnimationFrame` on the main thread. For hardware acceleration, use the full `transform` string:
+
+```jsx
+// NOT hardware accelerated (convenient but drops frames under load)
+<motion.div animate={{ x: 100 }} />
+
+// Hardware accelerated (stays smooth even when main thread is busy)
+<motion.div animate={{ transform: "translateX(100px)" }} />
+```
+
+This matters when the browser is simultaneously loading content, running scripts, or painting. At Vercel, the dashboard tab animation used Shared Layout Animations and dropped frames during page loads. Switching to CSS animations (off main thread) fixed it.
+
+### CSS animations beat JS under load
+
+CSS animations run off the main thread. When the browser is busy loading a new page, Framer Motion animations (using `requestAnimationFrame`) drop frames. CSS animations remain smooth. Use CSS for predetermined animations; JS for dynamic, interruptible ones.
+
+### Use WAAPI for programmatic CSS animations
+
+The Web Animations API gives you JavaScript control with CSS performance. Hardware-accelerated, interruptible, and no library needed.
+
+```js
+element.animate([{ clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0 0)' }], {
+  duration: 1000,
+  fill: 'forwards',
+  easing: 'cubic-bezier(0.77, 0, 0.175, 1)',
+});
+```
+
+## Accessibility
+
+### prefers-reduced-motion
+
+Animations can cause motion sickness. Reduced motion means fewer and gentler animations, not zero. Keep opacity and color transitions that aid comprehension. Remove movement and position animations.
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  .element {
+    animation: fade 0.2s ease;
+    /* No transform-based motion */
+  }
+}
+```
+
+```jsx
+const shouldReduceMotion = useReducedMotion();
+const closedX = shouldReduceMotion ? 0 : '-100%';
+```
+
+### Touch device hover states
+
+```css
+@media (hover: hover) and (pointer: fine) {
+  .element:hover {
+    transform: scale(1.05);
+  }
+}
+```
+
+Touch devices trigger hover on tap, causing false positives. Gate hover animations behind this media query.
+
+## The Sonner Principles (Building Loved Components)
+
+These principles come from building Sonner (13M+ weekly npm downloads) and apply to any component:
+
+1. **Developer experience is key.** No hooks, no context, no complex setup. Insert `<Toaster />` once, call `toast()` from anywhere. The less friction to adopt, the more people will use it.
+
+2. **Good defaults matter more than options.** Ship beautiful out of the box. Most users never customize. The default easing, timing, and visual design should be excellent.
+
+3. **Naming creates identity.** "Sonner" (French for "to ring") feels more elegant than "react-toast". Sacrifice discoverability for memorability when appropriate.
+
+4. **Handle edge cases invisibly.** Pause toast timers when the tab is hidden. Fill gaps between stacked toasts with pseudo-elements to maintain hover state. Capture pointer events during drag. Users never notice these, and that is exactly right.
+
+5. **Use transitions, not keyframes, for dynamic UI.** Toasts are added rapidly. Keyframes restart from zero on interruption. Transitions retarget smoothly.
+
+6. **Build a great documentation site.** Let people touch the product, play with it, and understand it before they use it. Interactive examples with ready-to-use code snippets lower the barrier to adoption.
+
+### Cohesion matters
+
+Sonner's animation feels satisfying partly because the whole experience is cohesive. The easing and duration fit the vibe of the library. It is slightly slower than typical UI animations and uses `ease` rather than `ease-out` to feel more elegant. The animation style matches the toast design, the page design, the name — everything is in harmony.
+
+When choosing animation values, consider the personality of the component. A playful component can be bouncier. A professional dashboard should be crisp and fast. Match the motion to the mood.
+
+### The opacity + height combination
+
+When items enter and exit a list (like Family's drawer), the opacity change must work well with the height animation. This is often trial and error. There is no formula — you adjust until it feels right.
+
+### Review your work the next day
+
+Review animations with fresh eyes. You notice imperfections the next day that you missed during development. Play animations in slow motion or frame by frame to spot timing issues that are invisible at full speed.
+
+### Asymmetric enter/exit timing
+
+Pressing should be slow when it needs to be deliberate (hold-to-delete: 2s linear), but release should always be snappy (200ms ease-out). This pattern applies broadly: slow where the user is deciding, fast where the system is responding.
+
+```css
+/* Release: fast */
+.overlay {
+  transition: clip-path 200ms ease-out;
+}
+
+/* Press: slow and deliberate */
+.button:active .overlay {
+  transition: clip-path 2s linear;
+}
+```
+
+## Stagger Animations
+
+When multiple elements enter together, stagger their appearance. Each element animates in with a small delay after the previous one. This creates a cascading effect that feels more natural than everything appearing at once.
+
+```css
+.item {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: fadeIn 300ms ease-out forwards;
+}
+
+.item:nth-child(1) {
+  animation-delay: 0ms;
+}
+.item:nth-child(2) {
+  animation-delay: 50ms;
+}
+.item:nth-child(3) {
+  animation-delay: 100ms;
+}
+.item:nth-child(4) {
+  animation-delay: 150ms;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+```
+
+Keep stagger delays short (30-80ms between items). Long delays make the interface feel slow. Stagger is decorative — never block interaction while stagger animations are playing.
+
+## Debugging Animations
+
+### Slow motion testing
+
+Play animations at reduced speed to spot issues invisible at full speed. Temporarily increase duration to 2-5x normal, or use browser DevTools animation inspector to slow playback.
+
+Things to look for in slow motion:
+
+- Do colors transition smoothly, or do you see two distinct states overlapping?
+- Does the easing feel right, or does it start/stop abruptly?
+- Is the transform-origin correct, or does the element scale from the wrong point?
+- Are multiple animated properties (opacity, transform, color) in sync?
+
+### Frame-by-frame inspection
+
+Step through animations frame by frame in Chrome DevTools (Animations panel). This reveals timing issues between coordinated properties that you cannot see at full speed.
+
+### Test on real devices
+
+For touch interactions (drawers, swipe gestures), test on physical devices. Connect your phone via USB, visit your local dev server by IP address, and use Safari's remote devtools. The Xcode Simulator is an alternative but real hardware is better for gesture testing.
+
+## Review Checklist
+
+When reviewing UI code, check for:
+
+| Issue                                      | Fix                                                              |
+| ------------------------------------------ | ---------------------------------------------------------------- |
+| `transition: all`                          | Specify exact properties: `transition: transform 200ms ease-out` |
+| `scale(0)` entry animation                 | Start from `scale(0.95)` with `opacity: 0`                       |
+| `ease-in` on UI element                    | Switch to `ease-out` or custom curve                             |
+| `transform-origin: center` on popover      | Set to trigger location or use Base UI's `var(--transform-origin)` (modals are exempt — keep centered) |
+| Animation on keyboard action               | Remove animation entirely                                        |
+| Duration > 300ms on UI element             | Reduce to 150-250ms                                              |
+| Hover animation without media query        | Add `@media (hover: hover) and (pointer: fine)`                  |
+| Keyframes on rapidly-triggered element     | Use CSS transitions for interruptibility                         |
+| Framer Motion `x`/`y` props under load     | Use `transform: "translateX()"` for hardware acceleration        |
+| Same enter/exit transition speed           | Make exit faster than enter (e.g., enter 2s, exit 200ms)         |
+| Elements all appear at once                | Add stagger delay (30-80ms between items)                        |
+
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 14:24:47Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Check branch and list UI components
+
+`git status --short && git branch --show-current && ls src/components src/components/hero src/app && wc -l src/components/hero/*.tsx src/components/*.tsx 2>/dev/null | tail -30`
+
+```text
+ M .specstory/history/2026-10-29_11-38-34Z-im-plannng-to-add.md
+fix/drop-ponytail-gitlink
+src/app:
+favicon.ico
+globals.css
+layout.tsx
+page.tsx
+
+src/components:
+chapters
+hero
+layout
+motion
+photobooth
+providers
+scene
+sections
+
+src/components/hero:
+CanvasItem.tsx
+DeskHero.tsx
+FreeformCanvas.tsx
+RibbonScene.tsx
+WorkRecord.tsx
+desk
+   30 src/components/hero/CanvasItem.tsx
+  564 src/components/hero/DeskHero.tsx
+  222 src/components/hero/FreeformCanvas.tsx
+   55 src/components/hero/RibbonScene.tsx
+  210 src/components/hero/WorkRecord.tsx
+ 1081 total
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:24:51Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Show page composition and DeskHero
+
+`git log --oneline -3 && cat src/app/page.tsx && ls src/components/*/ && cat src/components/hero/DeskHero.tsx`
+
+```text
+f160ab5 Stop tracking the ponytail clone
+2c265a1 Merge pull request #3 from Jiin-dom/codex/experience-folder
+d3d47b9 experience section folder
+import { IntroChapter } from "@/components/chapters/IntroChapter";
+import { FeaturesChapter } from "@/components/chapters/FeaturesChapter";
+import { ProductChapter } from "@/components/chapters/ProductChapter";
+import { ContactChapter } from "@/components/chapters/ContactChapter";
+
+export default function Home() {
+  return (
+    <>
+      <IntroChapter />
+      <FeaturesChapter />
+      <ProductChapter />
+      <ContactChapter />
+    </>
+  );
+}
+src/components/chapters/:
+ContactChapter.tsx
+FeaturesChapter.tsx
+IntroChapter.tsx
+ProductChapter.tsx
+
+src/components/hero/:
+CanvasItem.tsx
+DeskHero.tsx
+FreeformCanvas.tsx
+RibbonScene.tsx
+WorkRecord.tsx
+desk
+
+src/components/layout/:
+Footer.tsx
+MobileNav.tsx
+Nav.tsx
+
+src/components/motion/:
+Reveal.tsx
+
+src/components/photobooth/:
+Photobooth.tsx
+print.ts
+
+src/components/providers/:
+SmoothScroll.tsx
+
+src/components/scene/:
+DeskScene.tsx
+
+src/components/sections/:
+About.tsx
+Contact.tsx
+Projects.tsx
+Quote.tsx
+TechStack.tsx
+Timeline.tsx
+WhatIDo.tsx
+"use client";
+
+import dynamic from "next/dynamic";
+import Image from "next/image";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { useReducedMotion } from "motion/react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Briefcase, ChevronDown, Fish, Flashlight, LayoutGrid, Moon, MousePointer2, Shuffle, Sun, X } from "lucide-react";
+import { projects, site } from "@/lib/content";
+import { projectSkills, skillGroups, skills } from "@/lib/skills";
+import { speciesOf } from "@/components/hero/desk/species";
+import { PAPER, type SheetOrigin } from "@/components/hero/desk/experience";
+import { WorkRecord } from "@/components/hero/WorkRecord";
+import { useScrollFade } from "@/hooks/useScrollFade";
+import { deskItemMap } from "@/components/hero/desk/items";
+import type { DeskCommand, PaperBridge } from "@/components/hero/desk/DeskCanvas";
+import type { ViewName } from "@/components/hero/desk/world";
+
+const VIEWS: { id: ViewName; label: string }[] = [
+  { id: "top", label: "Top" },
+  { id: "front", label: "Front" },
+  { id: "angle", label: "Angle" },
+];
+
+const DeskCanvas = dynamic(() => import("@/components/hero/desk/DeskCanvas").then((m) => m.DeskCanvas), {
+  ssr: false,
+});
+
+const loadBooth = () => import("@/components/photobooth/Photobooth").then((m) => m.Photobooth);
+const Photobooth = dynamic(loadBooth, { ssr: false });
+
+/* time for the desk Instax to flash and feed its print before the booth opens */
+const EJECT_MS = 1100;
+
+const NONE: readonly number[] = [];
+
+const DARK_QUERY = "(prefers-color-scheme: dark)";
+
+function subscribeDark(onChange: () => void) {
+  const mq = window.matchMedia(DARK_QUERY);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
+
+/* Night follows the system theme until the visitor flips the lamp themselves. */
+function useNight() {
+  const systemDark = useSyncExternalStore(
+    subscribeDark,
+    () => window.matchMedia(DARK_QUERY).matches,
+    () => false,
+  );
+  const [override, setOverride] = useState<boolean | null>(null);
+  const night = override ?? systemDark;
+  return [night, () => setOverride(!night)] as const;
+}
+
+export function DeskHero() {
+  const reduce = useReducedMotion() ?? false;
+  const root = useRef<HTMLElement>(null);
+  const [inView, setInView] = useState(true);
+  const [ready, setReady] = useState(false);
+  const [load, setLoad] = useState(8);
+  const [showLoader, setShowLoader] = useState(true);
+  const [focusId, setFocusId] = useState<string | null>(null);
+  const [command, setCommand] = useState<DeskCommand | null>(null);
+  const [view, setView] = useState<ViewName>("top");
+  const [night, toggleNight] = useNight();
+  const [flashWanted, setFlashWanted] = useState(false);
+  /* the flashlight only works after dark; turning the lights on puts it down */
+  const flashOn = night && flashWanted;
+  const toggleFlash = useCallback(() => {
+    if (night) setFlashWanted((v) => !v);
+    else setFocusId("flashlight");
+  }, [night]);
+
+  const [printing, setPrinting] = useState(false);
+  const [boothOpen, setBoothOpen] = useState(false);
+  const openBooth = useCallback(() => setPrinting(true), []);
+  const closeBooth = useCallback(() => {
+    setBoothOpen(false);
+    setPrinting(false);
+  }, []);
+
+  useEffect(() => {
+    if (!printing || boothOpen) return;
+    const t = window.setTimeout(() => setBoothOpen(true), reduce ? 0 : EJECT_MS);
+    return () => window.clearTimeout(t);
+  }, [printing, boothOpen, reduce]);
+
+  useEffect(() => {
+    if (!night || boothOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLElement && e.target.closest("input, textarea")) return;
+      if (e.key === "f" || e.key === "F") setFlashWanted((v) => !v);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [night, boothOpen]);
+
+  useEffect(() => {
+    if (focusId === "instax") void loadBooth();
+  }, [focusId]);
+
+  const [openProject, setOpenProject] = useState<number | null>(null);
+  const [hoverProject, setHoverProject] = useState<number | null>(null);
+  const [activeSkill, setActiveSkill] = useState<number | null>(null);
+  const [hoverSkill, setHoverSkill] = useState<number | null>(null);
+  /* the aquarium on the L return has its own close-up view; the field guide lives there */
+  const tankOpen = view === "tank";
+  const [viewBeforeTank, setViewBeforeTank] = useState<ViewName>("top");
+  const tankTrigger = useRef<HTMLButtonElement>(null);
+  /* a book in hand calls its fish to the front glass */
+  const handProject = openProject ?? hoverProject;
+  const featuredSkills = useMemo(() => (handProject === null ? NONE : projectSkills[handProject]), [handProject]);
+  /*
+   * The work record: the folder's cover swings open (3D) and the page lifts off
+   * from exactly where its sheet sits on screen (HTML), so only one sheet ever moves.
+   */
+  const [sheet, setSheet] = useState<"closed" | "open" | "closing">("closed");
+  const [sheetOrigin, setSheetOrigin] = useState<SheetOrigin | null>(null);
+  const paperBridge = useRef<PaperBridge | null>(null);
+  const onPaperBridge = useCallback((bridge: PaperBridge | null) => {
+    paperBridge.current = bridge;
+  }, []);
+  const experienceTrigger = useRef<HTMLButtonElement>(null);
+  const focusReturn = useRef<HTMLElement | null>(null);
+  const experienceOpen = sheet !== "closed";
+  const experienceActive = experienceOpen;
+
+  const openExperience = useCallback(() => {
+    const active = document.activeElement;
+    /* hand focus back only to whatever had it; a click on the 3D folder had none */
+    focusReturn.current = active instanceof HTMLElement && active !== document.body ? active : null;
+    setOpenProject(null);
+    setSheetOrigin(paperBridge.current?.origin() ?? null);
+    setSheet((s) => (s === "closed" ? "open" : s));
+  }, []);
+
+  const closeExperience = useCallback(() => {
+    setSheet((s) => (s === "open" && !reduce ? "closing" : "closed"));
+  }, [reduce]);
+
+  const experienceExited = useCallback(() => setSheet((s) => (s === "closing" ? "closed" : s)), []);
+
+  useEffect(() => {
+    if (!experienceOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeExperience();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      focusReturn.current?.focus({ preventScroll: true });
+    };
+  }, [experienceOpen, closeExperience]);
+
+  /* the hero's size, to place the page exactly where the 3D sheet lands */
+  const [hero, setHero] = useState({ w: 0, h: 0 });
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setHero({ w: e.contentRect.width, h: e.contentRect.height }));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const sheetRects = useMemo(() => {
+    /* an A4 page: 80% of the height, or 90% of the width on tall screens, nudged up a little */
+    const ratio = PAPER.h / PAPER.w;
+    const h = Math.min(0.8 * hero.h, 0.9 * hero.w * ratio);
+    const w = h / ratio;
+    const landed = { top: hero.h / 2 - h / 2 - 0.05 * h, left: (hero.w - w) / 2, width: w, height: h };
+    /* phones unfold the page to nearly full screen; an A4 at phone width is too small to read */
+    const phone = hero.w < 768;
+    const reading = phone ? { top: 72, left: 12, width: hero.w - 24, height: hero.h - 84 } : landed;
+    return { landed, reading };
+  }, [hero]);
+
+
+  useEffect(() => {
+    if (openProject === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenProject(null);
+      if (e.key === "ArrowRight") setOpenProject((i) => (i === null ? i : (i + 1) % projects.length));
+      if (e.key === "ArrowLeft") setOpenProject((i) => (i === null ? i : (i + projects.length - 1) % projects.length));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openProject]);
+
+  const openTank = useCallback(() => {
+    closeExperience();
+    setOpenProject(null);
+    setFocusId(null);
+    if (view !== "tank") setViewBeforeTank(view);
+    setView("tank");
+  }, [closeExperience, view]);
+
+  const closeTank = useCallback(() => {
+    setActiveSkill(null);
+    setHoverSkill(null);
+    setView(viewBeforeTank);
+    tankTrigger.current?.focus();
+  }, [viewBeforeTank]);
+
+  useEffect(() => {
+    if (!tankOpen || openProject !== null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (activeSkill !== null) setActiveSkill(null);
+      else closeTank();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [tankOpen, openProject, activeSkill, closeTank]);
+
+  /* the Skills nav link, and a #skills deep link, fly straight to the tank */
+  useEffect(() => {
+    const go = () => {
+      root.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+      openTank();
+    };
+    window.addEventListener("desk:skills", go);
+    return () => window.removeEventListener("desk:skills", go);
+  }, [openTank, reduce]);
+
+  useEffect(() => {
+    if (ready && window.location.hash === "#skills") window.dispatchEvent(new Event("desk:skills"));
+  }, [ready]);
+
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const onReady = useCallback(() => setReady(true), []);
+  const onProgress = useCallback((p: number) => setLoad((n) => Math.max(n, p)), []);
+
+  useEffect(() => {
+    if (ready) return;
+    document.documentElement.classList.add("desk-loading");
+    return () => document.documentElement.classList.remove("desk-loading");
+  }, [ready]);
+
+  useEffect(() => {
+    if (!ready) return;
+    const t = window.setTimeout(() => setShowLoader(false), 700);
+    return () => window.clearTimeout(t);
+  }, [ready]);
+  const send = (type: DeskCommand["type"]) => setCommand((c) => ({ type, n: (c?.n ?? 0) + 1 }));
+  const focus =
+    hoverProject !== null
+      ? { label: projects[hoverProject].title, note: "From the project shelf — click to open the case file.", href: undefined }
+      : focusId
+        ? deskItemMap[focusId]
+        : null;
+  const reading = openProject !== null ? projects[openProject] : null;
+
+  return (
+    <section id="intro" ref={root} data-night={night ? "" : undefined} className="desk-hero relative h-[100svh] min-h-[600px] overflow-hidden" aria-label="Intro — an interactive desk">
+      {/* ── 3D desk ── */}
+      <div className={`absolute inset-0 transition-opacity duration-1000 ${ready ? "opacity-100" : "opacity-0"}`} aria-hidden>
+        <DeskCanvas
+          active={inView && !boothOpen}
+          reduced={reduce}
+          command={command}
+          view={view}
+          night={night}
+          onToggleNight={toggleNight}
+          flashOn={flashOn}
+          onToggleFlash={toggleFlash}
+          projects={projects}
+          openProject={openProject}
+          onOpenProject={setOpenProject}
+          experienceOpen={experienceOpen}
+          onOpenExperience={openExperience}
+          onCloseExperience={closeExperience}
+          onPaperBridge={onPaperBridge}
+          onHoverProject={setHoverProject}
+          skills={skills}
+          activeSkill={activeSkill}
+          featuredSkills={featuredSkills}
+          labelledSkill={hoverSkill ?? activeSkill}
+          onSelectSkill={setActiveSkill}
+          onHoverSkill={setHoverSkill}
+          onFocusItem={setFocusId}
+          onReady={onReady}
+          onProgress={onProgress}
+          printing={printing}
+          onOpenBooth={openBooth}
+        />
+      </div>
+      <div className="desk-vignette pointer-events-none absolute inset-0" aria-hidden />
+
+      {showLoader ? (
+        <div className="desk-loader" data-lenis-prevent data-ready={ready ? "" : undefined} aria-busy={!ready} aria-live="polite">
+          <p className="desk-loader__kicker">{site.shortName}</p>
+          <p className="desk-loader__mark">The desk</p>
+          <div className="desk-loader__bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(load)} aria-label="Loading the desk">
+            <span style={{ width: `${ready ? 100 : load}%` }} />
+          </div>
+        </div>
+      ) : null}
+
+      {/* ── Type + UI, layered over the desk like print on a photo ── */}
+      <div className="desk-ui pointer-events-none absolute inset-0 z-20" data-reading={reading || experienceActive || tankOpen ? "" : undefined}>
+        <header className="desk-title">
+          <p className="desk-kicker">Designs interfaces. Ships systems.</p>
+          <h1 className="desk-wordmark">
+            Jeanne
+            <span className="desk-wordmark__script">Dominique Paloma</span>
+            <span className="sr-only"> — {site.role}</span>
+          </h1>
+        </header>
+
+        <div className="desk-lede">
+          <p>
+            <mark>I design</mark> and ship interfaces that feel as solid as the systems behind them.
+          </p>
+          <a href={`mailto:${site.email}`} className="pointer-events-auto btn btn-cream">
+            Say hello <ArrowUpRight className="h-4 w-4" aria-hidden />
+          </a>
+        </div>
+
+        {/* desktop: each child is placed on its own; phones stack them into one bottom dock */}
+        <div className="desk-dock">
+          <div className="desk-glass desk-caption" aria-live="polite" data-show={focus ? "" : undefined}>
+            {focus && (
+              <>
+                <p className="desk-caption__eyebrow">On the desk</p>
+                <p className="desk-caption__title">{focus.label}</p>
+                <p className="desk-caption__note">{focus.note}</p>
+                {focus.href && (
+                  <a className="pointer-events-auto desk-caption__link" href={focus.href}>
+                    Write to me <ArrowUpRight aria-hidden />
+                  </a>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="pointer-events-auto desk-views" role="group" aria-label="Camera angle">
+            {VIEWS.map((v) => (
+              <button key={v.id} type="button" aria-pressed={view === v.id} onClick={() => setView(v.id)}>
+                {v.label}
+              </button>
+            ))}
+            <button type="button" className="desk-views__mode" aria-pressed={night} onClick={toggleNight} aria-label={night ? "Switch to day" : "Switch to night"}>
+              {night ? <Sun aria-hidden /> : <Moon aria-hidden />}
+            </button>
+            {night && (
+              <button type="button" className="desk-views__mode" aria-pressed={flashOn} onClick={toggleFlash} aria-label={flashOn ? "Put the flashlight down" : "Pick up the flashlight"} title="Flashlight (F)">
+                <Flashlight aria-hidden />
+              </button>
+            )}
+          </div>
+
+          <aside className="desk-glass desk-card">
+            <p className="desk-card__head">
+              Full-stack developer <br /> with a strong focus <br /> on UI and UX.
+            </p>
+            <hr className="dot-rule" />
+            <p className="desk-card__body">
+              Everything on this desk moves. Drag it, hold + scroll to rotate, double-click to turn.
+            </p>
+            <div className="desk-card__actions pointer-events-auto mt-4 flex flex-wrap justify-end gap-2">
+              <a href="#features" className="desk-chip desk-chip--explore">
+                <ArrowDown aria-hidden /> Explore
+              </a>
+              <button type="button" className="desk-chip" onClick={() => send("tidy")}>
+                <LayoutGrid aria-hidden /> Tidy
+              </button>
+              <button ref={experienceTrigger} type="button" className="desk-chip" onClick={openExperience}>
+                <Briefcase aria-hidden /> Experience
+              </button>
+              <button ref={tankTrigger} type="button" className="desk-chip" onClick={openTank}>
+                <Fish aria-hidden /> Skills
+              </button>
+              <button type="button" className="desk-chip" onClick={() => send("scatter")}>
+                <Shuffle aria-hidden /> Scatter
+              </button>
+            </div>
+          </aside>
+        </div>
+
+        <a href={site.resume} target="_blank" rel="noopener noreferrer" className="pointer-events-auto desk-side-tab">
+          <span aria-hidden>●</span> Résumé ↗
+        </a>
+
+        <p className="desk-scroll">
+          <span className="desk-scroll__icon">
+            <MousePointer2 aria-hidden />
+          </span>
+          Scroll to zoom
+        </p>
+      </div>
+
+      {reading && openProject !== null && (
+        <div className="desk-reader desk-glass" role="dialog" aria-label={`${reading.title} — case file`}>
+          <p className="desk-reader__count">
+            Project {String(openProject + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}
+          </p>
+          <p className="desk-reader__title">{reading.title}</p>
+          <div className="desk-reader__actions">
+            <button type="button" className="desk-chip" aria-label="Previous project" onClick={() => setOpenProject((openProject + projects.length - 1) % projects.length)}>
+              <ArrowLeft aria-hidden />
+            </button>
+            <button type="button" className="desk-chip" aria-label="Next project" onClick={() => setOpenProject((openProject + 1) % projects.length)}>
+              <ArrowRight aria-hidden />
+            </button>
+            <a className="desk-chip" href={reading.href} target="_blank" rel="noopener noreferrer">
+              GitHub <ArrowUpRight aria-hidden />
+            </a>
+            <button type="button" className="desk-chip" onClick={() => setOpenProject(null)}>
+              <X aria-hidden /> Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {(sheet === "open" || sheet === "closing") && (
+        <WorkRecord
+          origin={sheetOrigin}
+          landed={sheetRects.landed}
+          reading={sheetRects.reading}
+          closing={sheet === "closing"}
+          reduced={reduce}
+          onOut={(out) => paperBridge.current?.setOut(out)}
+          onClose={closeExperience}
+          onExited={experienceExited}
+        />
+      )}
+
+      {tankOpen && (
+        <FieldGuide
+          active={activeSkill}
+          hovered={hoverSkill}
+          hidden={reading !== null}
+          onSelect={setActiveSkill}
+          onHover={setHoverSkill}
+          onOpenProject={setOpenProject}
+          onClose={closeTank}
+        />
+      )}
+
+      {boothOpen && <Photobooth onClose={closeBooth} />}
+    </section>
+  );
+}
+
+/*
+ * The field guide: every skill at a glance, grouped by layer, beside the tank.
+ * Rows and fish point at each other: hovering either tags the fish, picking a
+ * row brings that fish to the front glass and lists the projects it swims through.
+ */
+function FieldGuide({
+  active,
+  hovered,
+  hidden,
+  onSelect,
+  onHover,
+  onOpenProject,
+  onClose,
+}: {
+  active: number | null;
+  hovered: number | null;
+  hidden: boolean;
+  onSelect: (i: number | null) => void;
+  onHover: (i: number | null) => void;
+  onOpenProject: (i: number) => void;
+  onClose: () => void;
+}) {
+  /* no scrollbar: the list fades out at whichever edge still has more to show */
+  const { ref: listRef, onScroll, fade, more } = useScrollFade<HTMLDivElement>();
+
+  return (
+    <section className="desk-tank desk-glass" data-hidden={hidden ? "" : undefined} aria-labelledby="desk-tank-title">
+      <div className="desk-tank__head">
+        <p className="desk-tank__kicker">Field guide · {String(skills.length).padStart(2, "0")} species</p>
+        <button type="button" className="desk-chip" onClick={onClose}>
+          <ArrowLeft aria-hidden /> Desk
+        </button>
+      </div>
+      <h2 id="desk-tank-title" className="desk-tank__title">The stack, alive</h2>
+      <p className="desk-tank__lede">Each fish is a tool I build with. Pick one to see the projects it swims through.</p>
+
+      <div
+        ref={listRef}
+        className="desk-tank__scroll scroll-fade"
+        {...fade}
+        onScroll={onScroll}
+        data-lenis-prevent
+      >
+        {skillGroups.map((group) => (
+          <div key={group} className="desk-tank__group">
+            <h3 className="desk-tank__group-name">{group}</h3>
+            <ul className="desk-tank__list">
+              {skills.map((s, i) => {
+                if (s.group !== group) return null;
+                const sp = speciesOf(s.name);
+                const open = active === i;
+                const n = s.projects.length;
+                return (
+                  <li key={s.name} data-open={open ? "" : undefined}>
+                    <button
+                      type="button"
+                      className="desk-tank__row"
+                      aria-expanded={open}
+                      data-hover={hovered === i ? "" : undefined}
+                      onClick={() => onSelect(open ? null : i)}
+                      onPointerEnter={() => onHover(i)}
+                      onPointerLeave={() => onHover(null)}
+                      onFocus={() => onHover(i)}
+                      onBlur={() => onHover(null)}
+                    >
+                      <span className="desk-tank__swatch" style={{ "--fish": sp.side, "--fin": sp.fin } as CSSProperties} aria-hidden />
+                      <Image src={s.icon} alt="" width={22} height={22} className="desk-tank__icon" />
+                      <span className="desk-tank__name">
+                        {s.name}
+                        <span className="desk-tank__species">{sp.common}</span>
+                      </span>
+                      <span className="desk-tank__uses" aria-label={`Used in ${n} of ${projects.length} projects`}>
+                        {projects.map((_, k) => (
+                          <span key={k} data-on={k < n ? "" : undefined} />
+                        ))}
+                      </span>
+                    </button>
+                    {open && (
+                      <div className="desk-tank__detail">
+                        {n === 0 ? (
+                          <p>No project on the shelf uses it yet.</p>
+                        ) : (
+                          <>
+                            <p>
+                              Swims through {n} of {projects.length} projects:
+                            </p>
+                            <ul>
+                              {s.projects.map((p) => (
+                                <li key={p}>
+                                  <button type="button" className="desk-tank__project" onClick={() => onOpenProject(p)}>
+                                    {projects[p].title} <ArrowUpRight aria-hidden />
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
+      {more && <ChevronDown className="desk-tank__more" aria-hidden />}
+    </section>
+  );
+}
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:25:00Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+List scratchpad scripts and check dev server
+
+`cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad && ls; curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000`
+
+```text
+Exit code 7
+dev.log
+guide.tsx
+guide_scroll.py
+hero_edit.py
+hero_exp.py
+hero_flight.py
+hero_sheet.py
+paper.ts
+paper2.ts
+paper3.ts
+sheet.css
+shot
+tank.css
+wr_body.tsx
+wr_flight.py
+000
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:25:04Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+List screenshot tooling
+
+`cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && ls | head -30`
+
+```text
+after-Angle.png
+after-Front.png
+before-Angle.png
+before-Front.png
+before-Top.png
+c-back-150.png
+c-back-350.png
+c-back-600.png
+c-book.png
+c-fly-120.png
+c-fly-260.png
+c-fly-420.png
+c-fly-620.png
+c-fly-900.png
+click.js
+d-1-tank.png
+d-2-hover.png
+d-3-select.png
+dup.js
+dup.png
+e-0-desk.png
+e-1-mid.png
+e-2-open.png
+e-3-guide.png
+e-4-guide-mid.png
+exp.js
+f-0-desk.png
+f-1-mid.png
+f-2-open.png
+f-3-guide.png
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:25:05Z)**_
+
+Auditing the hero UI: starting the dev server and capturing screenshots.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:25:09Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Start dev server and view screenshot script
+
+`(npm run dev > /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/dev.log 2>&1 &) ; cat /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot/exp.js | head -60`
+
+```text
+const { chromium } = require("playwright-core");
+(async () => {
+  const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  const W = +(process.env.W || 1440), H = +(process.env.H || 900), P = process.env.P || "e";
+  const page = await browser.newPage({ viewport: { width: W, height: H } });
+  page.on("pageerror", (e) => console.log("PAGEERROR", e.message));
+  page.on("console", (m) => { if (m.type() === "error" && !m.text().includes("X4122")) console.log("CONSOLE", m.text().slice(0, 400)); });
+  await page.goto("http://localhost:3000", { waitUntil: "load", timeout: 180000 });
+  await page.waitForSelector(".desk-loader", { timeout: 60000 });
+  await page.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+  await page.waitForTimeout(2500);
+  await page.screenshot({ path: `${P}-0-desk.png` });
+  const click = (t) => page.evaluate((t) => [...document.querySelectorAll(".desk-card button")].find((b) => b.textContent.trim().startsWith(t)).click(), t);
+  await click("Experience");
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: `${P}-1-mid.png` });
+  await page.waitForTimeout(2500);
+  await page.screenshot({ path: `${P}-2-open.png` });
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(3000);
+  await click("Skills");
+  await page.waitForTimeout(4500);
+  await page.screenshot({ path: `${P}-3-guide.png` });
+  await page.evaluate(() => { const el = document.querySelector(".desk-tank__scroll"); el.scrollTop = 200; });
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: `${P}-4-guide-mid.png` });
+  await browser.close();
+})();
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:26:40Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Capture desktop audit screenshots
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && cat > audit.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  const W = +(process.env.W || 1440), H = +(process.env.H || 900), P = process.env.P || "a";
+  const page = await browser.newPage({ viewport: { width: W, height: H } });
+  page.on("pageerror", (e) => console.log("PAGEERROR", e.message));
+  await page.goto("http://localhost:3000", { waitUntil: "load", timeout: 240000 });
+  await page.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+  await page.waitForTimeout(2500);
+  await page.screenshot({ path: `${P}-0-desk.png` });
+  const click = (t) => page.evaluate((t) => [...document.querySelectorAll(".desk-card button, .desk-card a")].find((b) => b.textContent.trim().startsWith(t))?.click(), t);
+  await click("Skills");
+  await page.waitForTimeout(4500);
+  await page.screenshot({ path: `${P}-1-tank.png` });
+  await page.evaluate(() => document.querySelector(".desk-tank__row")?.click());
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: `${P}-2-tank-sel.png` });
+  await page.evaluate(() => document.querySelector(".desk-tank__project")?.click());
+  await page.waitForTimeout(3000);
+  await page.screenshot({ path: `${P}-3-project.png` });
+  await page.keyboard.press("Escape"); await page.waitForTimeout(500);
+  await page.keyboard.press("Escape"); await page.waitForTimeout(500);
+  await page.keyboard.press("Escape"); await page.waitForTimeout(3000);
+  const total = await page.evaluate(() => document.documentElement.scrollHeight);
+  let i = 0;
+  for (let y = H; y < total && i < 14; y += H, i++) {
+    await page.evaluate((y) => window.scrollTo(0, y), y);
+    await page.waitForTimeout(1600);
+    await page.screenshot({ path: `${P}-s${String(i).padStart(2, "0")}.png` });
+  }
+  console.log("total", total);
+  await browser.close();
+})();
+EOF
+for i in $(seq 1 60); do curl -s -o /dev/null http://localhost:3000 && break; sleep 2; done; node audit.js 2>&1 | tail -5
+```
+
+```text
+total 7241
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:26:43Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\a-0-desk.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:26:44Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\a-2-tank-sel.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:26:45Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\a-3-project.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:27:08Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Tile scroll screenshots into grids
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && ls a-s*; python -c "
+from PIL import Image
+import glob
+fs=sorted(glob.glob('a-s*.png'))
+ims=[Image.open(f).resize((720,450)) for f in fs]
+for k in range(0,len(ims),4):
+  g=Image.new('RGB',(1440,900))
+  for j,im in enumerate(ims[k:k+4]): g.paste(im,((j%2)*720,(j//2)*450))
+  g.save(f'grid{k//4}.png')
+print(len(fs))
+"
+```
+
+```text
+a-s00.png
+a-s01.png
+a-s02.png
+a-s03.png
+a-s04.png
+a-s05.png
+a-s06.png
+a-s07.png
+8
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:27:11Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\grid0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:27:12Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\grid1.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:27:33Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read intro and features chapters
+
+`wc -l src/components/chapters/*.tsx src/components/layout/*.tsx && cat src/components/chapters/IntroChapter.tsx src/components/chapters/FeaturesChapter.tsx`
+
+```text
+   80 src/components/chapters/ContactChapter.tsx
+  104 src/components/chapters/FeaturesChapter.tsx
+    1 src/components/chapters/IntroChapter.tsx
+  167 src/components/chapters/ProductChapter.tsx
+   22 src/components/layout/Footer.tsx
+   89 src/components/layout/MobileNav.tsx
+   51 src/components/layout/Nav.tsx
+  514 total
+export { DeskHero as IntroChapter } from "@/components/hero/DeskHero";
+"use client";
+
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useReducedMotion } from "motion/react";
+import { DeskScene } from "@/components/scene/DeskScene";
+import { featurePanels } from "@/lib/chapters";
+import { techStack } from "@/lib/content";
+
+gsap.registerPlugin(ScrollTrigger);
+
+export function FeaturesChapter() {
+  const root = useRef<HTMLElement>(null);
+  const reduce = useReducedMotion();
+
+  useEffect(() => {
+    if (reduce || !root.current) return;
+
+    const ctx = gsap.context(() => {
+      const steps = gsap.utils.toArray<HTMLElement>(".feature-step");
+      steps.forEach((step, i) => {
+        if (i === steps.length - 1) return;
+        ScrollTrigger.create({
+          trigger: step,
+          start: "top top",
+          endTrigger: steps[steps.length - 1],
+          end: "top top",
+          pin: true,
+          pinSpacing: false,
+        });
+        gsap.to(step.querySelector(".feature-glass"), {
+          opacity: 0.2,
+          y: -28,
+          ease: "none",
+          scrollTrigger: {
+            trigger: steps[i + 1],
+            start: "top bottom",
+            end: "top top",
+            scrub: true,
+          },
+        });
+      });
+    }, root);
+
+    return () => ctx.revert();
+  }, [reduce]);
+
+  return (
+    <section id="features" ref={root} className="relative bg-desk text-cream" aria-label="Features">
+      <div className="sticky top-0 z-0 h-[100dvh] -mb-[100dvh]">
+        <DeskScene mode="features" />
+        <div className="absolute inset-0 bg-ink/40" />
+      </div>
+
+      <div className="relative z-10">
+        <div className="section-pad flex min-h-[80vh] items-end pb-16 pt-28">
+          <div className="section-inner max-w-3xl">
+            <h2 className="display text-[clamp(2.6rem,8vw,5.5rem)] text-cream">
+              isn&apos;t just a portfolio.
+            </h2>
+            <p className="mt-5 max-w-[48ch] text-lg leading-relaxed text-cream/80">
+              It&apos;s the result of shipping real product surfaces — from React frontends to Spring
+              Boot services — where experience and architecture move together.
+            </p>
+          </div>
+        </div>
+
+        {featurePanels.map((panel, index) => (
+          <div
+            key={panel.title}
+            className="feature-step sticky top-0 flex min-h-[100dvh] items-end section-pad pb-8 pt-[calc(var(--nav-h)+1rem)] md:items-stretch md:py-16"
+          >
+            <div className="feature-glass glass-dark flex w-full max-w-md flex-col justify-between rounded-sm p-6 md:p-9">
+              <div>
+                <p className="mono-label text-cream">{panel.kicker}</p>
+                <hr className="dot-rule text-cream" />
+                <p className="text-sm leading-relaxed text-cream/80">{panel.body}</p>
+              </div>
+              <div className="mt-8 md:mt-10">
+                <h3 className="display text-[clamp(1.7rem,3.5vw,2.6rem)] uppercase text-cream">
+                  {panel.title}
+                </h3>
+                <p className="mt-4 font-mono text-xs tracking-wide text-cream/60">{panel.aside}</p>
+                {index === 1 ? (
+                  <ul className="mt-6 flex flex-wrap gap-2">
+                    {techStack.slice(0, 6).map((tech) => (
+                      <li
+                        key={tech.name}
+                        className="rounded-full border border-cream/20 px-3 py-1 text-[0.65rem] uppercase tracking-wider text-cream/80"
+                      >
+                        {tech.name}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:27:35Z)**_
+
+Screens captured. Reading remaining sections for sub-texts.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:27:37Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read product, contact chapters and panel data
+
+`cat src/components/chapters/ProductChapter.tsx src/components/chapters/ContactChapter.tsx && grep -n "featurePanels" -A40 src/lib/chapters.ts | head -60`
+
+```text
+"use client";
+
+import Image from "next/image";
+import { useState, startTransition } from "react";
+import { ArrowUpRight } from "lucide-react";
+import { projects, education, experience } from "@/lib/content";
+
+const tiers = projects.slice(0, 3).map((project, i) => ({
+  ...project,
+  tier: i === 0 ? "JD" : i === 1 ? "JD Pro" : "JD Pro Max",
+  stackLabel: i === 0 ? "Single surface" : i === 1 ? "Double depth" : "Full system",
+}));
+
+export function ProductChapter() {
+  const [active, setActive] = useState(0);
+  const current = tiers[active] ?? tiers[0];
+
+  return (
+    <section id="product" className="relative overflow-hidden bg-cream-soft text-ink">
+      <div className="section-pad section-inner py-24 md:py-28">
+        <div className="grid gap-6 md:grid-cols-2 md:items-end">
+          <h2 className="display max-w-[14ch] text-[clamp(2.2rem,5.5vw,4rem)] uppercase">
+            People hire for craft like this
+          </h2>
+          <p className="max-w-[40ch] justify-self-end text-sm leading-relaxed text-ink-soft md:text-right md:text-base">
+            Do not take my word for it — open the source, watch the demo, and see what ships.
+          </p>
+        </div>
+
+        <div className="relative mx-auto mt-16 flex max-w-3xl flex-col items-center">
+          <div className="relative aspect-square w-full max-w-md overflow-hidden rounded-full border-[14px] border-cork bg-cork shadow-[0_40px_100px_var(--shadow)]">
+            <div className="absolute inset-[8%] overflow-hidden rounded-full bg-desk">
+              <Image
+                src={current.image}
+                alt={`${current.title} preview`}
+                fill
+                className="object-cover"
+                sizes="(max-width: 480px) 75vw, 420px"
+              />
+            </div>
+          </div>
+          <p className="mt-8 text-center font-mono text-xs tracking-[0.16em] uppercase text-ink-soft">
+            {current.tier} · {current.stackLabel}
+          </p>
+        </div>
+
+        <div className="mt-14">
+          <p className="mono-label text-ink-soft">Choose your own</p>
+          <div className="mt-4 flex flex-wrap gap-2 border-b border-line pb-4">
+            {tiers.map((tier, i) => (
+              <button
+                key={tier.slug}
+                type="button"
+                className={`btn !min-h-10 !px-4 !text-[0.65rem] ${
+                  active === i ? "btn-ink" : "btn-ghost-ink"
+                }`}
+                onClick={() => startTransition(() => setActive(i))}
+                aria-pressed={active === i}
+              >
+                {tier.tier}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-8 grid gap-8 lg:grid-cols-12">
+            <div className="lg:col-span-7">
+              <p className="mono-label text-signal">New</p>
+              <h3 className="mt-2 text-3xl font-semibold tracking-tight">{current.title}</h3>
+              <p className="mt-4 max-w-[52ch] text-base leading-relaxed text-ink-soft">
+                {current.description}
+              </p>
+              <ul className="mt-5 flex flex-wrap gap-2">
+                {current.tools.map((tool) => (
+                  <li
+                    key={tool}
+                    className="rounded-full border border-line bg-cream px-3 py-1 text-xs font-medium"
+                  >
+                    {tool}
+                  </li>
+                ))}
+              </ul>
+              <a
+                href={current.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-ink mt-8 w-fit"
+              >
+                Source code
+                <ArrowUpRight className="h-4 w-4" aria-hidden />
+              </a>
+            </div>
+
+            <div className="grid gap-8 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-1">
+              <div>
+                <p className="mono-label text-ink-soft">Experience</p>
+                <ul className="mt-3 space-y-3">
+                  {experience.map((row) => (
+                    <li key={row.title}>
+                      <p className="font-mono text-[0.65rem] uppercase tracking-wider text-ink-soft">
+                        {row.year}
+                      </p>
+                      <p className="font-semibold">{row.title}</p>
+                      <p className="text-sm text-ink-soft">{row.place}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="mono-label text-ink-soft">Education</p>
+                <ul className="mt-3 space-y-3">
+                  {education.slice(0, 2).map((row) => (
+                    <li key={`${row.title}-${row.place}`}>
+                      <p className="font-mono text-[0.65rem] uppercase tracking-wider text-ink-soft">
+                        {row.year}
+                      </p>
+                      <p className="font-semibold">{row.title}</p>
+                      <p className="text-sm text-ink-soft">{row.place}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-20 border-t border-line pt-12">
+          <p className="mono-label text-ink-soft">All selected work</p>
+          <ul className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+            {projects.map((project, i) => (
+              <li key={project.slug}>
+                <a
+                  href={project.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group glass-light flex gap-4 rounded-md p-3 transition-transform hover:-translate-y-0.5"
+                >
+                  <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-sm bg-desk">
+                    <Image
+                      src={project.image}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      sizes="112px"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1 py-1">
+                    <p className="font-mono text-[0.6rem] uppercase tracking-wider text-ink-soft">
+                      0{i + 1}
+                    </p>
+                    <p className="truncate font-semibold tracking-tight">{project.title}</p>
+                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-ink-soft">
+                      {project.description}
+                    </p>
+                  </div>
+                  <ArrowUpRight
+                    className="mt-1 h-4 w-4 shrink-0 text-ink-soft transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-signal"
+                    aria-hidden
+                  />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+"use client";
+
+import { ArrowUpRight } from "lucide-react";
+import { Reveal } from "@/components/motion/Reveal";
+import { site } from "@/lib/content";
+
+const channels = [
+  { label: "GitHub", href: site.links.github },
+  { label: "LinkedIn", href: site.links.linkedin },
+  { label: "Facebook", href: site.links.facebook },
+  { label: "YouTube", href: site.links.youtube },
+] as const;
+
+export function ContactChapter() {
+  return (
+    <section id="contact" className="relative overflow-hidden bg-cream text-ink">
+      <div className="section-pad section-inner py-28 md:py-36">
+        <Reveal>
+          <h2 className="display max-w-[18ch] text-[clamp(2rem,5.5vw,4.25rem)]">
+            We caught your attention with craft. If this portfolio lands, imagine what we can ship for
+            your product.
+          </h2>
+        </Reveal>
+
+        <Reveal delay={0.06}>
+          <a
+            href={`mailto:${site.email}`}
+            className="mt-12 block break-all text-[clamp(1.2rem,3.2vw,2.4rem)] font-semibold tracking-tight text-mat transition-opacity hover:opacity-75"
+          >
+            {site.email}
+          </a>
+        </Reveal>
+
+        <div className="mt-16 grid gap-10 border-t border-line pt-10 lg:grid-cols-[1.2fr_auto] lg:items-end">
+          <Reveal delay={0.08}>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {channels.map((channel) => (
+                <li key={channel.label}>
+                  <a
+                    href={channel.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center justify-between rounded-md border border-line bg-cream-soft px-5 py-4 transition-colors hover:border-mat/40"
+                  >
+                    <span className="text-lg font-semibold tracking-tight">{channel.label}</span>
+                    <ArrowUpRight
+                      className="h-5 w-5 text-ink-soft transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-signal"
+                      aria-hidden
+                    />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+
+          <Reveal delay={0.12} className="flex flex-col gap-4">
+            <div>
+              <p className="mono-label text-ink-soft">Phone</p>
+              <a
+                href={`tel:${site.phone.replace(/\s+/g, "")}`}
+                className="mt-2 block text-xl font-semibold tracking-tight hover:text-signal"
+              >
+                {site.phone}
+              </a>
+            </div>
+            <a
+              href={site.resume}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-ink w-fit"
+            >
+              Open resume
+              <ArrowUpRight className="h-4 w-4" aria-hidden />
+            </a>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+18:export const featurePanels = [
+19-  {
+20-    kicker: "Rise above mediocrity",
+21-    title: "Interfaces that elevate",
+22-    body: "Layout, type, and motion engineered so the product feels considered before a single API call lands.",
+23-    aside: "Δh ≈ craft",
+24-  },
+25-  {
+26-    kicker: "Handles extremes with ease",
+27-    title: "Full-stack stability",
+28-    body: "React surfaces wired to Spring Boot services and MySQL — one coherent stack, one owner through ship.",
+29-    aside: "React · Spring · MySQL",
+30-  },
+31-  {
+32-    kicker: "Precision grip, zero drama",
+33-    title: "Shipped end to end",
+34-    body: "Auth, payments, OAuth, and admin flows built to stay maintainable after launch — not just demo-ready.",
+35-    aside: "JWT · PayPal · OAuth",
+36-  },
+37-] as const;
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:27:56Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Inspect desk item notes, nav, related CSS
+
+`grep -n "note\|label" src/components/hero/desk/items.ts | head -40; cat src/components/layout/Nav.tsx | head -51; grep -n "desk-kicker\|desk-card__body\|desk-caption__eyebrow\|desk-caption__note\|desk-tank__kicker\|desk-tank__lede\|desk-tank__species\|desk-tank__detail\|desk-tank__head\|desk-tank__title" src/app/globals.css`
+
+```text
+5:  label: string;
+6:  note: string;
+24:  { id: "mat", label: "Cutting mat", note: "Self-healing, A2. Where every layout gets measured twice and cut once.", w: 7.6, d: 5.2, h: 0.06, heavy: true, fx: 0.4, fz: 0.04, rot: -0.04, m: { fx: 0.15, fz: 0.0 } },
+25:  { id: "experience", label: "Work folder", note: "Click to pull out my work record.", w: 1.55, d: 2.3, h: 0.12, fx: -0.07, fz: 0.05, rot: -0.12, m: { fx: 0.0, fz: 0.02 } },
+26:  { id: "tablet", label: "iPad", note: "Where the layouts get tested at real size.", w: 3.0, d: 2.2, h: 0.09, fx: 0.72, fz: -0.02, rot: 0.1, m: { fx: 0.5, fz: -0.42 } },
+27:  { id: "note", label: "Sticky note", note: "Everything on this desk moves. Try it.", w: 1.2, d: 1.2, h: 0.013, fx: 0.22, fz: -0.66, rot: 0.06, m: { fx: -0.55, fz: -0.5 } },
+28:  { id: "phone", label: "Nothing Phone", note: "Face down. Glyphs on, notifications off.", w: 0.96, d: 1.98, h: 0.13, fx: 0.5, fz: 0.52, rot: -0.25, m: { fx: 0.6, fz: 0.36 } },
+29:  { id: "pencil", label: "Apple Pencil", note: "Sketch first. Code second.", w: 1.95, d: 0.1, h: 0.09, fx: 0.84, fz: 0.05, rot: -1.0, m: { fx: 0.75, fz: -0.72 } },
+30:  { id: "polaroid-me", label: site.name, note: site.role, w: 1.5, d: 1.82, h: 0.026, fx: -0.66, fz: -0.22, rot: 0.14, m: { fx: -0.6, fz: -0.28 } },
+31:  { id: "polaroid-sunset", label: "Polaroid", note: "Golden hour, shot on film.", w: 1.5, d: 1.82, h: 0.026, fx: -0.9, fz: 0.78, rot: -0.22, m: { fx: -0.75, fz: 0.3 } },
+32:  { id: "pen", label: "Fountain pen", note: "For the notes that never become tickets.", w: 2.4, d: 0.16, h: 0.16, fx: -0.38, fz: 0.72, rot: 0.95, m: { fx: -0.25, fz: 0.72 } },
+34:  { id: "ruler", label: "Steel ruler", note: "Spacing is a system, not a vibe.", w: 3.4, d: 0.34, h: 0.025, fx: -0.12, fz: 0.68, rot: 0.22, m: { fx: -0.6, fz: 0.6 } },
+35:  { id: "camera", label: "Rangefinder", note: "Analog, on purpose.", w: 2.4, d: 1.5, h: 1.3, fx: -0.12, fz: 0.68, rot: 0.22, m: { fx: -0.6, fz: 0.6 } },
+36:  { id: "mouse", label: "Mouse", note: "Pointer events, handled.", w: 0.62, d: 1.0, h: 0.31, fx: 1.02, fz: -0.18, rot: 0.25, m: { fx: 0.9, fz: 0.7 } },
+37:  { id: "card", label: "Business card", note: site.email, href: `mailto:${site.email}`, w: 1.75, d: 1.0, h: 0.017, fx: -0.62, fz: 0.3, rot: -0.1, m: { fx: -0.6, fz: -0.72 } },
+38:  { id: "clip-a", label: "Paper clip", note: "Holds things together. Like good architecture.", w: 0.8, d: 0.2, h: 0.022, fx: -1.0, fz: -0.85, rot: 0.6, m: { fx: 0.05, fz: -0.82 } },
+39:  { id: "clip-b", label: "Paper clip", note: "Holds things together. Like good architecture.", w: 0.8, d: 0.2, h: 0.022, fx: -0.86, fz: -0.72, rot: 2.1, m: { fx: 0.22, fz: -0.74 } },
+47:  lamp: { id: "lamp", label: "Desk lamp", note: "Click to switch it on. Late-night mode." },
+48:  flashlight: { id: "flashlight", label: "Flashlight", note: "Best after dark — pick it up and point it anywhere." },
+49:  instax: { id: "instax", label: "Instax Mini", note: "Click it to open the photobooth. Prints come out the top." },
+50:} as Record<string, Pick<DeskItem, "id" | "label" | "note" | "href">>;
+"use client";
+
+import { Fragment } from "react";
+import { site } from "@/lib/content";
+import { chapters, openSkills, skillsLink } from "@/lib/chapters";
+import { useActiveChapter } from "@/hooks/useActiveChapter";
+import { MobileNav } from "./MobileNav";
+
+export function Nav() {
+  const active = useActiveChapter();
+  const darkText = active === "product" || active === "contact";
+
+  return (
+    <header className="pointer-events-none fixed inset-x-0 top-0 z-[60]" style={{ height: "var(--nav-h)" }}>
+      <div className="section-pad mx-auto flex h-full max-w-[var(--max)] items-center justify-between gap-6">
+        <a
+          href="#intro"
+          className={`pointer-events-auto text-[0.8rem] font-semibold tracking-[0.18em] uppercase transition-colors ${
+            darkText ? "text-ink" : "text-cream"
+          }`}
+          aria-label={`${site.shortName} home`}
+        >
+          {site.shortName.replace(" ", "\u00A0")}
+        </a>
+
+        <nav className="pointer-events-auto hidden items-center gap-9 md:flex" aria-label="Chapters">
+          {chapters.map((chapter, i) => (
+            <Fragment key={chapter.id}>
+              <a
+                href={chapter.href}
+                className={`chapter-link ${darkText ? "chapter-link-dark" : ""}`}
+                aria-current={active === chapter.id ? "page" : undefined}
+              >
+                {chapter.label}
+              </a>
+              {i === 0 && (
+                <a href={skillsLink.href} className={`chapter-link ${darkText ? "chapter-link-dark" : ""}`} onClick={openSkills}>
+                  {skillsLink.label}
+                </a>
+              )}
+            </Fragment>
+          ))}
+        </nav>
+
+        <div className="pointer-events-auto md:hidden">
+          <MobileNav active={active} dark={darkText} />
+        </div>
+      </div>
+    </header>
+  );
+}
+459:.desk-kicker {
+540:.desk-card__body {
+605:.desk-caption__eyebrow {
+621:.desk-caption__note {
+733:.desk-tank__head {
+740:.desk-tank__kicker {
+749:.desk-tank__title {
+757:.desk-tank__lede {
+851:.desk-tank__species {
+878:.desk-tank__detail {
+892:.desk-tank__detail p {
+896:.desk-tank__detail ul {
+1269:  .desk-tank__detail,
+1292:  .desk-tank__title {
+1297:  .desk-tank__detail {
+1566:  .desk-card__body {
+1647:  .desk-kicker {
+1657:  .desk-card__body {
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:28:03Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read CSS for elements being trimmed
+
+`sed -n 455,470p src/app/globals.css; sed -n 530,560p src/app/globals.css; sed -n 595,640p src/app/globals.css; sed -n 725,770p src/app/globals.css; sed -n 845,905p src/app/globals.css; sed -n 1260,1300p src/app/globals.css; sed -n 1560,1570p src/app/globals.css; sed -n 1640,1662p src/app/globals.css`
+
+```text
+  left: var(--page-pad);
+  top: calc(var(--nav-h) + 0.5rem);
+}
+
+.desk-kicker {
+  margin: 0 0 0.4rem 0.35em;
+  font-size: clamp(0.78rem, 1.15vw, 1.05rem);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-transform: uppercase;
+}
+
+.desk-wordmark {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+
+.desk-card__head {
+  margin: 0;
+  font-size: clamp(1.1rem, 1.6vw, 1.5rem);
+  font-weight: 650;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.desk-card__body {
+  margin: 0;
+  text-align: right;
+  font-size: 0.98rem;
+  line-height: 1.4;
+  color: rgb(255 240 220 / 0.85);
+}
+
+.desk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid rgb(255 240 220 / 0.3);
+  border-radius: 999px;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition:
+    opacity 220ms var(--ease-out),
+    transform 220ms var(--ease-out);
+}
+
+.desk-caption[data-show] {
+  opacity: 1;
+  transform: none;
+}
+
+.desk-caption__eyebrow {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.desk-caption__title {
+  margin: 0.35rem 0 0.2rem;
+  font-size: 1.2rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.desk-caption__note {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.35;
+  color: rgb(255 240 220 / 0.82);
+}
+
+.desk-caption__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-bottom: 1px dotted currentColor;
+}
+
+/* ── Field guide: the skills panel beside the aquarium close-up ── */
+
+@keyframes tank-guide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+
+.desk-tank__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.desk-tank__kicker {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.desk-tank__title {
+  margin: 0.9rem 0 0.3rem;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.desk-tank__lede {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: rgb(255 240 220 / 0.8);
+}
+
+.desk-tank__group {
+  margin-top: 1.1rem;
+}
+
+.desk-tank__group-name {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.desk-tank__species {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+/* projects using the skill, out of the whole shelf */
+.desk-tank__uses {
+  display: flex;
+  gap: 3px;
+}
+
+.desk-tank__uses > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 240 220 / 0.45);
+}
+
+.desk-tank__uses > span[data-on] {
+  background: var(--desk-cream);
+  border-color: var(--desk-cream);
+}
+
+.desk-tank__detail {
+  padding: 0.15rem 0.5rem 0.8rem 3.6rem;
+  font-size: 0.82rem;
+  color: rgb(255 240 220 / 0.82);
+  animation: tank-detail-in 240ms var(--ease-out) both;
+}
+
+@keyframes tank-detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.desk-tank__detail p {
+  margin: 0 0 0.35rem;
+}
+
+.desk-tank__detail ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-tank__project {
+  font-size: 0.52rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-tank,
+  .desk-tank__detail,
+  .desk-tank__more,
+  .desk-sheet,
+  .desk-sheet-backdrop,
+  .desk-sheet__more {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* phones: the guide becomes a bottom sheet under the tank */
+@media (max-width: 767px) {
+  .desk-tank {
+    top: auto;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    width: auto;
+    max-height: 50svh;
+    padding: 1rem 0.9rem 1.2rem;
+    animation-name: tank-sheet-in;
+  }
+
+  .desk-tank__title {
+    margin-top: 0.6rem;
+    font-size: 1.35rem;
+  }
+
+  .desk-tank__detail {
+    padding-left: 0.5rem;
+  }
+}
+      opacity: 0;
+    }
+  }
+
+  .desk-lede,
+  .desk-scroll,
+  .desk-card__body {
+    display: none;
+  }
+
+  /* one dock at the bottom: caption floats above it, the desk stays clear in the middle */
+    min-height: 0;
+  }
+
+  .desk-title {
+    top: calc(var(--nav-h) - 0.25rem);
+  }
+
+  .desk-kicker {
+    font-size: 0.7rem;
+  }
+
+  .desk-wordmark {
+    font-size: min(15.5vw, 22svh);
+  }
+
+  .desk-lede,
+  .desk-scroll,
+  .desk-card__body {
+    display: none;
+  }
+
+  .desk-card {
+    bottom: 0.9rem;
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:28:12Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Find uses of item notes
+
+`grep -rn "\.note\b\|focus\.note\|deskItemMap\[" src --include=*.tsx --include=*.ts | grep -v "items.ts" | head`
+
+```text
+src/components/hero/desk/DeskCanvas.tsx:74:      return <Model.StickyNote map={t.note} />;
+src/components/hero/DeskHero.tsx:259:        ? deskItemMap[focusId]
+src/components/hero/DeskHero.tsx:336:                <p className="desk-caption__note">{focus.note}</p>
+src/components/photobooth/Photobooth.tsx:239:        <p className="booth-hint">{FORMATS.find((f) => f.id === format)?.note}</p>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:28:35Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Apply sub-text trimming edits
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad && cat > trim.py <<'EOF'
+import re
+R = r"C:\Portfolio\src"
+def edit(path, pairs):
+    p = R + path
+    s = open(p, encoding="utf8").read()
+    for a, b in pairs:
+        assert s.count(a) == 1, (path, a[:60])
+        s = s.replace(a, b)
+    open(p, "w", encoding="utf8").write(s)
+
+edit(r"\components\hero\DeskHero.tsx", [
+  ('''      ? { label: projects[hoverProject].title, note: "From the project shelf — click to open the case file.", href: undefined }''',
+   '''      ? { label: projects[hoverProject].title, href: undefined }'''),
+  ('''          labelledSkill={hoverSkill ?? activeSkill}''',
+   '''          labelledSkill={reading ? null : (hoverSkill ?? activeSkill)}'''),
+  ('''          <p className="desk-kicker">Designs interfaces. Ships systems.</p>
+''', ''),
+  ('''                <p className="desk-caption__eyebrow">On the desk</p>
+                <p className="desk-caption__title">{focus.label}</p>
+                <p className="desk-caption__note">{focus.note}</p>
+''', '''                <p className="desk-caption__title">{focus.label}</p>
+'''),
+  ('''            <hr className="dot-rule" />
+            <p className="desk-card__body">
+              Everything on this desk moves. Drag it, hold + scroll to rotate, double-click to turn.
+            </p>
+''', ''),
+  ('''      <div className="desk-tank__head">
+        <p className="desk-tank__kicker">Field guide · {String(skills.length).padStart(2, "0")} species</p>
+        <button type="button" className="desk-chip" onClick={onClose}>
+          <ArrowLeft aria-hidden /> Desk
+        </button>
+      </div>
+      <h2 id="desk-tank-title" className="desk-tank__title">The stack, alive</h2>
+      <p className="desk-tank__lede">Each fish is a tool I build with. Pick one to see the projects it swims through.</p>
+''', '''      <div className="desk-tank__head">
+        <h2 id="desk-tank-title" className="desk-tank__title">Skills</h2>
+        <button type="button" className="desk-chip" onClick={onClose}>
+          <ArrowLeft aria-hidden /> Desk
+        </button>
+      </div>
+'''),
+  ('''                      <span className="desk-tank__name">
+                        {s.name}
+                        <span className="desk-tank__species">{sp.common}</span>
+                      </span>''', '''                      <span className="desk-tank__name">{s.name}</span>'''),
+  ('''                      aria-expanded={open}''', '''                      aria-expanded={n > 0 ? open : undefined}'''),
+  ('''                    {open && (
+                      <div className="desk-tank__detail">
+                        {n === 0 ? (
+                          <p>No project on the shelf uses it yet.</p>
+                        ) : (
+                          <>
+                            <p>
+                              Swims through {n} of {projects.length} projects:
+                            </p>
+                            <ul>
+                              {s.projects.map((p) => (
+                                <li key={p}>
+                                  <button type="button" className="desk-tank__project" onClick={() => onOpenProject(p)}>
+                                    {projects[p].title} <ArrowUpRight aria-hidden />
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </>
+                        )}
+                      </div>
+                    )}''', '''                    {open && n > 0 && (
+                      <ul className="desk-tank__detail">
+                        {s.projects.map((p) => (
+                          <li key={p}>
+                            <button type="button" className="desk-tank__project" onClick={() => onOpenProject(p)}>
+                              {projects[p].title} <ArrowUpRight aria-hidden />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}'''),
+])
+
+edit(r"\components\chapters\FeaturesChapter.tsx", [
+  ('''              <div>
+                <p className="mono-label text-cream">{panel.kicker}</p>
+                <hr className="dot-rule text-cream" />
+                <p className="text-sm leading-relaxed text-cream/80">{panel.body}</p>
+              </div>''', '''              <p className="text-sm leading-relaxed text-cream/80">{panel.body}</p>'''),
+  ('''                <p className="mt-4 font-mono text-xs tracking-wide text-cream/60">{panel.aside}</p>
+''', ''),
+])
+
+p = R + r"\lib\chapters.ts"
+s = open(p, encoding="utf8").read()
+s2 = re.sub(r'\n    (kicker|aside): "[^"]*",', "", s)
+assert s2.count("kicker") == s.count("kicker") - 3, "kicker"
+open(p, "w", encoding="utf8").write(s2)
+
+edit(r"\components\chapters\ProductChapter.tsx", [
+  ('''const tiers = projects.slice(0, 3).map((project, i) => ({
+  ...project,
+  tier: i === 0 ? "JD" : i === 1 ? "JD Pro" : "JD Pro Max",
+  stackLabel: i === 0 ? "Single surface" : i === 1 ? "Double depth" : "Full system",
+}));
+''', '''const featured = projects.slice(0, 3);
+'''),
+  ('''  const current = tiers[active] ?? tiers[0];''', '''  const current = featured[active] ?? featured[0];'''),
+  ('''        <div className="grid gap-6 md:grid-cols-2 md:items-end">
+          <h2 className="display max-w-[14ch] text-[clamp(2.2rem,5.5vw,4rem)] uppercase">
+            People hire for craft like this
+          </h2>
+          <p className="max-w-[40ch] justify-self-end text-sm leading-relaxed text-ink-soft md:text-right md:text-base">
+            Do not take my word for it — open the source, watch the demo, and see what ships.
+          </p>
+        </div>''', '''        <h2 className="display max-w-[14ch] text-[clamp(2.2rem,5.5vw,4rem)] uppercase">
+          People hire for craft like this
+        </h2>'''),
+  ('''          <p className="mt-8 text-center font-mono text-xs tracking-[0.16em] uppercase text-ink-soft">
+            {current.tier} · {current.stackLabel}
+          </p>
+''', ''),
+  ('''          <p className="mono-label text-ink-soft">Choose your own</p>
+          <div className="mt-4 flex''', '''          <div className="flex'''),
+  ('''            {tiers.map((tier, i) => (
+              <button
+                key={tier.slug}''', '''            {featured.map((project, i) => (
+              <button
+                key={project.slug}'''),
+  ('''                {tier.tier}
+''', '''                {project.title}
+'''),
+  ('''              <p className="mono-label text-signal">New</p>
+              <h3 className="mt-2 text-3xl''', '''              <h3 className="text-3xl'''),
+])
+
+p = R + r"\components\hero\desk\items.ts"
+s = open(p, encoding="utf8").read()
+n0 = s.count("note")
+s = re.sub(r' note: (?:"[^"]*"|site\.\w+),', "", s)
+s = s.replace("  note: string;\n", "")
+s = s.replace('"id" | "label" | "note" | "href"', '"id" | "label" | "href"')
+open(p, "w", encoding="utf8").write(s)
+print("notes left:", s.count("note"), "of", n0)
+EOF
+python trim.py
+```
+
+```text
+Exit code 2
+/usr/bin/bash: -c: line 141: unexpected EOF while looking for matching `''
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:28:39Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Confirm nothing applied
+
+`git diff --stat`
+
+```text
+warning: in the working copy of '.specstory/history/2026-10-29_11-38-34Z-im-plannng-to-add.md', LF will be replaced by CRLF the next time Git touches it
+ .../2026-10-29_11-38-34Z-im-plannng-to-add.md      | 2695 ++++++++++++++++++++
+ 1 file changed, 2695 insertions(+)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:28:41Z)**_
+
+Applying the trim edits now (script via file write).
+
+_**Agent (claude-opus-5-5 2026-10-29 14:28:59Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```python
+import re
+R = r"C:\Portfolio\src"
+
+
+def edit(path, pairs):
+    p = R + path
+    s = open(p, encoding="utf8").read()
+    for a, b in pairs:
+        assert s.count(a) == 1, (path, a[:60])
+        s = s.replace(a, b)
+    open(p, "w", encoding="utf8").write(s)
+
+
+edit(r"\components\hero\DeskHero.tsx", [
+  ('''      ? { label: projects[hoverProject].title, note: "From the project shelf — click to open the case file.", href: undefined }''',
+   '''      ? { label: projects[hoverProject].title, href: undefined }'''),
+  ('''          labelledSkill={hoverSkill ?? activeSkill}''',
+   '''          labelledSkill={reading ? null : (hoverSkill ?? activeSkill)}'''),
+  ('''          <p className="desk-kicker">Designs interfaces. Ships systems.</p>
+''', ''),
+  ('''                <p className="desk-caption__eyebrow">On the desk</p>
+                <p className="desk-caption__title">{focus.label}</p>
+                <p className="desk-caption__note">{focus.note}</p>
+''', '''                <p className="desk-caption__title">{focus.label}</p>
+'''),
+  ('''            <hr className="dot-rule" />
+            <p className="desk-card__body">
+              Everything on this desk moves. Drag it, hold + scroll to rotate, double-click to turn.
+            </p>
+''', ''),
+  ('''      <div className="desk-tank__head">
+        <p className="desk-tank__kicker">Field guide · {String(skills.length).padStart(2, "0")} species</p>
+        <button type="button" className="desk-chip" onClick={onClose}>
+          <ArrowLeft aria-hidden /> Desk
+        </button>
+      </div>
+      <h2 id="desk-tank-title" className="desk-tank__title">The stack, alive</h2>
+      <p className="desk-tank__lede">Each fish is a tool I build with. Pick one to see the projects it swims through.</p>
+''', '''      <div className="desk-tank__head">
+        <h2 id="desk-tank-title" className="desk-tank__title">Skills</h2>
+        <button type="button" className="desk-chip" onClick={onClose}>
+          <ArrowLeft aria-hidden /> Desk
+        </button>
+      </div>
+'''),
+  ('''                      <span className="desk-tank__name">
+                        {s.name}
+                        <span className="desk-tank__species">{sp.common}</span>
+                      </span>''', '''                      <span className="desk-tank__name">{s.name}</span>'''),
+  ('''                      aria-expanded={open}''', '''                      aria-expanded={n > 0 ? open : undefined}'''),
+  ('''                    {open && (
+                      <div className="desk-tank__detail">
+                        {n === 0 ? (
+                          <p>No project on the shelf uses it yet.</p>
+                        ) : (
+                          <>
+                            <p>
+                              Swims through {n} of {projects.length} projects:
+                            </p>
+                            <ul>
+                              {s.projects.map((p) => (
+                                <li key={p}>
+                                  <button type="button" className="desk-tank__project" onClick={() => onOpenProject(p)}>
+                                    {projects[p].title} <ArrowUpRight aria-hidden />
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </>
+                        )}
+                      </div>
+                    )}''', '''                    {open && n > 0 && (
+                      <ul className="desk-tank__detail">
+                        {s.projects.map((p) => (
+                          <li key={p}>
+                            <button type="button" className="desk-tank__project" onClick={() => onOpenProject(p)}>
+                              {projects[p].title} <ArrowUpRight aria-hidden />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}'''),
+])
+
+edit(r"\components\chapters\FeaturesChapter.tsx", [
+  ('''              <div>
+                <p className="mono-label text-cream">{panel.kicker}</p>
+                <hr className="dot-rule text-cream" />
+                <p className="text-sm leading-relaxed text-cream/80">{panel.body}</p>
+              </div>''', '''              <p className="text-sm leading-relaxed text-cream/80">{panel.body}</p>'''),
+  ('''                <p className="mt-4 font-mono text-xs tracking-wide text-cream/60">{panel.aside}</p>
+''', ''),
+])
+
+p = R + r"\lib\chapters.ts"
+s = open(p, encoding="utf8").read()
+s2 = re.sub(r'\n    (kicker|aside): "[^"]*",', "", s)
+assert s2.count("kicker") == s.count("kicker") - 3, "kicker"
+open(p, "w", encoding="utf8").write(s2)
+
+edit(r"\components\chapters\ProductChapter.tsx", [
+  ('''const tiers = projects.slice(0, 3).map((project, i) => ({
+  ...project,
+  tier: i === 0 ? "JD" : i === 1 ? "JD Pro" : "JD Pro Max",
+  stackLabel: i === 0 ? "Single surface" : i === 1 ? "Double depth" : "Full system",
+}));
+''', '''const featured = projects.slice(0, 3);
+'''),
+  ('''  const current = tiers[active] ?? tiers[0];''', '''  const current = featured[active] ?? featured[0];'''),
+  ('''        <div className="grid gap-6 md:grid-cols-2 md:items-end">
+          <h2 className="display max-w-[14ch] text-[clamp(2.2rem,5.5vw,4rem)] uppercase">
+            People hire for craft like this
+          </h2>
+          <p className="max-w-[40ch] justify-self-end text-sm leading-relaxed text-ink-soft md:text-right md:text-base">
+            Do not take my word for it — open the source, watch the demo, and see what ships.
+          </p>
+        </div>''', '''        <h2 className="display max-w-[14ch] text-[clamp(2.2rem,5.5vw,4rem)] uppercase">
+          People hire for craft like this
+        </h2>'''),
+  ('''          <p className="mt-8 text-center font-mono text-xs tracking-[0.16em] uppercase text-ink-soft">
+            {current.tier} · {current.stackLabel}
+          </p>
+''', ''),
+  ('''          <p className="mono-label text-ink-soft">Choose your own</p>
+          <div className="mt-4 flex''', '''          <div className="flex'''),
+  ('''            {tiers.map((tier, i) => (
+              <button
+                key={tier.slug}''', '''            {featured.map((project, i) => (
+              <button
+                key={project.slug}'''),
+  ('''                {tier.tier}
+''', '''                {project.title}
+'''),
+  ('''              <p className="mono-label text-signal">New</p>
+              <h3 className="mt-2 text-3xl''', '''              <h3 className="text-3xl'''),
+])
+
+p = R + r"\components\hero\desk\items.ts"
+s = open(p, encoding="utf8").read()
+n0 = s.count("note")
+s = re.sub(r' note: (?:"[^"]*"|site\.\w+),', "", s)
+s = s.replace("  note: string;\n", "")
+s = s.replace('"id" | "label" | "note" | "href"', '"id" | "label" | "href"')
+open(p, "w", encoding="utf8").write(s)
+print("notes left:", s.count("note"), "of", n0)
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\trim.py (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:29:02Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Run trim script, check leftover notes
+
+`python /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/trim.py && grep -n "note" src/components/hero/desk/items.ts`
+
+```text
+notes left: 5 of 23
+26:  { id: "note", label: "Sticky note", w: 1.2, d: 1.2, h: 0.013, fx: 0.22, fz: -0.66, rot: 0.06, m: { fx: -0.55, fz: -0.5 } },
+46:  lamp: { id: "lamp", label: "Desk lamp", note: "Click to switch it on. Late-night mode." },
+47:  flashlight: { id: "flashlight", label: "Flashlight", note: "Best after dark — pick it up and point it anywhere." },
+48:  instax: { id: "instax", label: "Instax Mini", note: "Click it to open the photobooth. Prints come out the top." },
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:29:08Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Strip remaining notes and check imports
+
+`sed -i -E 's/, note: "[^"]*" \}/ }/' src/components/hero/desk/items.ts && sed -n 1,12p src/components/hero/desk/items.ts && sed -n 44,48p src/components/hero/desk/items.ts && grep -n "site\b\|import" src/components/hero/desk/items.ts | head`
+
+```text
+import { site } from "@/lib/content";
+
+export type DeskItem = {
+  id: string;
+  label: string;
+  href?: string;
+  /* footprint (x, z) and height in world units */
+  w: number;
+  d: number;
+  h: number;
+  /* heavy items slide along the desk instead of lifting, and carry what sits on them */
+  heavy?: boolean;
+export const deskItemMap = {
+  ...Object.fromEntries(deskItems.map((i) => [i.id, i])),
+  lamp: { id: "lamp", label: "Desk lamp" },
+  flashlight: { id: "flashlight", label: "Flashlight" },
+  instax: { id: "instax", label: "Instax Mini" },
+1:import { site } from "@/lib/content";
+29:  { id: "polaroid-me", label: site.name, w: 1.5, d: 1.82, h: 0.026, fx: -0.66, fz: -0.22, rot: 0.14, m: { fx: -0.6, fz: -0.28 } },
+36:  { id: "card", label: "Business card", href: `mailto:${site.email}`, w: 1.75, d: 1.0, h: 0.017, fx: -0.62, fz: 0.3, rot: -0.1, m: { fx: -0.6, fz: -0.72 } },
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:29:20Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```python
+import re
+p = r"C:\Portfolio\src\app\globals.css"
+s = open(p, encoding="utf8").read()
+
+
+def drop_rule(sel):
+    """remove every top-level-or-nested block whose selector is exactly `sel`"""
+    global s
+    pat = re.compile(r"\n[ \t]*" + re.escape(sel) + r" \{[^{}]*\}\n")
+    s, n = pat.subn("\n", s)
+    assert n >= 1, sel
+    return n
+
+
+for sel in [".desk-kicker", ".desk-caption__eyebrow", ".desk-caption__note", ".desk-tank__kicker", ".desk-tank__lede", ".desk-tank__species", ".desk-tank__detail p"]:
+    drop_rule(sel)
+
+# .desk-card__body: its own rule, and the shared "hide on phones" lists
+drop_rule(".desk-card__body")
+n = s.count(""".desk-lede,
+  .desk-scroll,
+  .desk-card__body {""")
+assert n == 2, n
+s = s.replace(""".desk-lede,
+  .desk-scroll,
+  .desk-card__body {""", """.desk-lede,
+  .desk-scroll {""")
+
+
+def r(a, b):
+    global s
+    assert s.count(a) == 1, a[:60]
+    s = s.replace(a, b)
+
+
+r(""".desk-caption__title {
+  margin: 0.35rem 0 0.2rem;""", """.desk-caption__title {
+  margin: 0;""")
+r(""".desk-tank__title {
+  margin: 0.9rem 0 0.3rem;""", """.desk-tank__title {
+  margin: 0;""")
+r("""  .desk-tank__title {
+    margin-top: 0.6rem;
+    font-size: 1.35rem;""", """  .desk-tank__title {
+    font-size: 1.35rem;""")
+# the detail is now the project list itself
+r(""".desk-tank__detail {
+  padding: 0.15rem 0.5rem 0.8rem 3.6rem;
+  font-size: 0.82rem;
+  color: rgb(255 240 220 / 0.82);
+  animation: tank-detail-in 240ms var(--ease-out) both;
+}""", """.desk-tank__detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.15rem 0.5rem 0.8rem 3.6rem;
+  list-style: none;
+  animation: tank-detail-in 200ms var(--ease-out) both;
+}""")
+r(""".desk-tank__detail ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+""", "")
+open(p, "w", encoding="utf8").write(s)
+print("ok")
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\trim_css.py (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:30:36Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Run CSS trim, typecheck, lint
+
+`python /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/trim_css.py && grep -n "desk-kicker\|card__body\|caption__note\|caption__eyebrow\|tank__kicker\|tank__lede\|tank__species\|desk-tank__name\|desk-tank__row {" -A0 src/app/globals.css src -r | head; npx tsc --noEmit 2>&1 | tail -5; npx eslint src 2>&1 | tail -8`
+
+```text
+Traceback (most recent call last):
+  File "C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\trim_css.py", line 23, in <module>
+    assert n == 2, n
+           ^^^^^^
+AssertionError: 0
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:31:02Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Fix script order, rerun, typecheck, lint
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad && python - <<'EOF'
+p="trim_css.py"
+s=open(p).read()
+a='''# .desk-card__body: its own rule, and the shared "hide on phones" lists
+drop_rule(".desk-card__body")
+'''
+s=s.replace(a,'')
+s=s.replace('''    .desk-scroll {""")
+''','''    .desk-scroll {""")
+drop_rule(".desk-card__body")
+''')
+# move the list fix before the drop loop
+i=s.index('n = s.count(""".desk-lede,'); j=s.index('drop_rule(".desk-card__body")\n')+len('drop_rule(".desk-card__body")\n')
+block=s[i:j]; s=s[:i]+s[j:]
+k=s.index('for sel in')
+s=s[:k]+block+"\n"+s[k:]
+open(p,"w").write(s)
+EOF
+cd /c/Portfolio && python /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/trim_css.py && grep -rn "desk-kicker\|card__body\|caption__note\|caption__eyebrow\|tank__kicker\|tank__lede\|tank__species" src | head; npx tsc --noEmit 2>&1 | tail -5; npx eslint src 2>&1 | tail -8
+```
+
+```text
+Traceback (most recent call last):
+  File "<stdin>", line 12, in <module>
+ValueError: substring not found
+Traceback (most recent call last):
+  File "C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\trim_css.py", line 23, in <module>
+    assert n == 2, n
+           ^^^^^^
+AssertionError: 0
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:31:04Z)**_
+
+Script patching got tangled; rewriting the CSS step cleanly.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:31:12Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```python
+import re
+p = r"C:\Portfolio\src\app\globals.css"
+s = open(p, encoding="utf8").read()
+
+
+def r(a, b, count=1):
+    global s
+    assert s.count(a) == count, (a[:60], s.count(a))
+    s = s.replace(a, b)
+
+
+# the phone "hide" lists first, so the rule drop below only sees the standalone rule
+r(""".desk-lede,
+  .desk-scroll,
+  .desk-card__body {""", """.desk-lede,
+  .desk-scroll {""", 2)
+
+
+def drop_rule(sel):
+    global s
+    pat = re.compile(r"\n[ \t]*" + re.escape(sel) + r" \{[^{}]*\}\n")
+    s, n = pat.subn("\n", s)
+    assert n >= 1, sel
+
+
+for sel in [".desk-kicker", ".desk-card__body", ".desk-caption__eyebrow", ".desk-caption__note", ".desk-tank__kicker", ".desk-tank__lede", ".desk-tank__species", ".desk-tank__detail p"]:
+    drop_rule(sel)
+
+r(""".desk-caption__title {
+  margin: 0.35rem 0 0.2rem;""", """.desk-caption__title {
+  margin: 0;""")
+r(""".desk-tank__title {
+  margin: 0.9rem 0 0.3rem;""", """.desk-tank__title {
+  margin: 0;""")
+r("""  .desk-tank__title {
+    margin-top: 0.6rem;
+    font-size: 1.35rem;""", """  .desk-tank__title {
+    font-size: 1.35rem;""")
+# the detail is now the project list itself
+r(""".desk-tank__detail {
+  padding: 0.15rem 0.5rem 0.8rem 3.6rem;
+  font-size: 0.82rem;
+  color: rgb(255 240 220 / 0.82);
+  animation: tank-detail-in 240ms var(--ease-out) both;
+}""", """.desk-tank__detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.15rem 0.5rem 0.8rem 3.6rem;
+  list-style: none;
+  animation: tank-detail-in 200ms var(--ease-out) both;
+}""")
+r(""".desk-tank__detail ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+""", "")
+open(p, "w", encoding="utf8").write(s)
+print("ok")
+
+```
+
+```text
+The file C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\trim_css.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:31:30Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Run CSS trim, typecheck, lint
+
+`python /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/trim_css.py && grep -rn "desk-kicker\|card__body\|caption__note\|caption__eyebrow\|tank__kicker\|tank__lede\|tank__species" src | head; npx tsc --noEmit 2>&1 | tail -5; npx eslint src 2>&1 | tail -8`
+
+```text
+ok
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:31:33Z)**_
+
+Clean build. Re-shooting to verify.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:32:18Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Capture after screenshots
+
+`cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && P=b node audit.js 2>&1 | tail -3`
+
+```text
+total 7161
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:32:21Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\b-0-desk.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:32:22Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\b-2-tank-sel.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:32:24Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\b-3-project.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:32:38Z)**_
+
+Fish label in the tank still carries the species name. Trimming that too.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:32:38Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ path `./src` pattern `common|tank-label`
+
+```text
+src\app\globals.css:1183:.tank-label {
+src\app\globals.css:1200:.tank-label span {
+src\components\hero\desk\aquarium.tsx:388:      .replace("#include <common>", "#include <common>\nuniform float uPhase, uAmp, uHead, uLen, uK;")
+src\components\hero\desk\aquarium.tsx:855:      .replace("#include <common>", "#include <common>\nattribute float aH;\nattribute float aPhase;\nuniform float uTime;")
+src\components\hero\desk\aquarium.tsx:1181:              <p className="tank-label">
+src\components\hero\desk\aquarium.tsx:1183:                <span>{species[labelled].common}</span>
+src\components\hero\desk\species.ts:11:  common: string;
+src\components\hero\desk\species.ts:34:    common: "Red wag platy",
+src\components\hero\desk\species.ts:41:    common: "Dwarf gourami",
+src\components\hero\desk\species.ts:48:    common: "Electric yellow cichlid",
+src\components\hero\desk\species.ts:55:    common: "Neon tetra",
+src\components\hero\desk\species.ts:62:    common: "Betta",
+src\components\hero\desk\species.ts:69:    common: "Comet goldfish",
+src\components\hero\desk\species.ts:76:    common: "Green tiger barb",
+src\components\hero\desk\species.ts:83:    common: "Green swordtail",
+src\components\hero\desk\species.ts:90:    common: "Angelfish",
+src\components\hero\desk\species.ts:97:    common: "Blue discus",
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:32:41Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./src/components/hero/desk/aquarium.tsx`
+
+```text
+1178	        <group ref={label}>
+1179	          {labelled !== null && (
+1180	            <Html center zIndexRange={[15, 10]} pointerEvents="none">
+1181	              <p className="tank-label">
+1182	                {skills[labelled].name}
+1183	                <span>{species[labelled].common}</span>
+1184	              </p>
+1185	            </Html>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:32:43Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./src/app/globals.css`
+
+```text
+1183	.tank-label {
+1184	  display: flex;
+1185	  flex-direction: column;
+1186	  align-items: center;
+1187	  margin: 0;
+1188	  padding: 0.3rem 0.65rem;
+1189	  border-radius: 0.5rem;
+1190	  background: rgb(20 14 10 / 0.72);
+1191	  color: var(--desk-cream);
+1192	  font-size: 0.8rem;
+1193	  font-weight: 600;
+1194	  white-space: nowrap;
+1195	  backdrop-filter: blur(8px);
+1196	  -webkit-backdrop-filter: blur(8px);
+1197	  pointer-events: none;
+1198	}
+1199	
+1200	.tank-label span {
+1201	  font-family: var(--font-mono);
+1202	  font-size: 0.52rem;
+1203	  font-weight: 400;
+1204	  letter-spacing: 0.1em;
+1205	  text-transform: uppercase;
+1206	  opacity: 0.7;
+1207	}
+1208	
+1209	@media (prefers-reduced-motion: reduce) {
+1210	  .desk-tank,
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:32:50Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file c:\Portfolio\src\components\hero\desk\aquarium.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:32:51Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file c:\Portfolio\src\app\globals.css has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:32:52Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file c:\Portfolio\src\app\globals.css has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:33:17Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Typecheck and lint
+
+`npx tsc --noEmit 2>&1 | tail -5; npx eslint src 2>&1 | tail -8`
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:33:36Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Screenshot product section
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && cat > prod.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const b = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe" });
+  const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  await p.goto("http://localhost:3000/#product", { waitUntil: "load", timeout: 240000 });
+  await p.waitForTimeout(6000);
+  await p.evaluate(() => document.querySelector("#product").scrollIntoView());
+  await p.waitForTimeout(2000);
+  await p.screenshot({ path: "b-product.png" });
+  await p.evaluate(() => window.scrollBy(0, 700));
+  await p.waitForTimeout(1500);
+  await p.screenshot({ path: "b-product2.png" });
+  await b.close();
+})();
+EOF
+node prod.js
+```
+
+```text
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:33:39Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\b-product2.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:33:58Z)**_
+
+I cut the sub-texts and fixed one bug. The other improvements I found are listed below and not done yet. tsc and eslint pass, and I checked the result in screenshots of the desk, the tank and the Product section. Nothing is committed. The edits are sitting on `fix/drop-ponytail-gitlink`, so move them to their own branch before committing.
+
+**Done**
+
+| Before | After | Why |
+| --- | --- | --- |
+| Hero kicker "Designs interfaces. Ships systems." | Removed | The lede below says the same thing |
+| Desk card text "Everything on this desk moves. Drag it…" plus a divider | Card is now the role line and the chips | The sticky note already says "drag me", and moving things teaches the rest |
+| Hover caption: "On the desk" label + witty note per item | Item name only (business card keeps its email link) | A pointer cursor is enough to show something is clickable |
+| Notes stored on desk items (`items.ts`) | Field deleted | Nothing uses them any more |
+| Skills panel: "Field guide · 10 species" + "The stack, alive" + a one-line intro | Title "Skills" with the Desk button on the same row | The fish and the list explain themselves |
+| Species name under each skill row and in the fish tag | Skill name only | Fish trivia that pushes out the real information |
+| "Swims through 3 of 5 projects:" above the project links | Just the project links | The dots and the links already show the count |
+| Bootstrap row opens to "No project on the shelf uses it yet." | Opens nothing, but still calls its fish to the front | No empty state needed |
+| Features panels: catchphrase label ("Rise above mediocrity") + `Δh ≈ craft` line | Title and body only | Filler text |
+| Product: "Do not take my word for it…" line | Removed | The source-code button says it |
+| Product: buttons "JD / JD Pro / JD Pro Max", plus "Choose your own", the tier caption and a "New" label | Buttons show the project titles | The tier names gave no clue what clicking would show |
+| **Bug:** the fish name tag stayed on screen over an open project book | Tag hides while a book is open | It covered the book text |
+
+**Not done yet, worth fixing**
+
+| Before | After | Why |
+| --- | --- | --- |
+| Hero sentence and "Say hello" sit on top of the iPad | Move them off the busy objects, or put them on a darker card | White text on a bright screen is hard to read |
+| Nav still marks INTRO as active while the tank is open | Mark SKILLS as active in the tank view | The nav should show where you are |
+| "Scroll to zoom" stays visible forever | Hide it after the first zoom | Once learned, it is clutter |
+| Skill dots (●●●○○) have no visible legend | Accept it, or use a "3/5" count | They are only partly self-explanatory, but I kept them because they compare skills at a glance |
+| Features panels pin and fade over each other | Hide the outgoing panel fully, or stop overlapping them | The screenshots show two titles stacked and unreadable |
+| Product header text crowds the fixed nav | Add top padding equal to the nav height | Text collides with the nav while scrolling |
+| Desk chips have no press feedback | `:active { transform: scale(0.97) }` with a 160ms ease-out | Pressable things should respond to the press |
+| Experience and education appear twice: in the folder and in Product | Keep them only in the folder | Duplicate information |
+
+Want any of the "not done" fixes applied?
+
+---
+
+_**User (2026-10-29 14:40:37Z)**_
+
+apply the fixes for the not done also /caveman
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 14:40:53Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Locate CSS rules and nav state code
+
+`grep -n "\.desk-lede\|\.desk-scroll\|\.desk-chip\b\|\.desk-chip:\|\.desk-chip {\|desk-chip:hover\|desk-ui\[data-reading\]" src/app/globals.css; cat src/lib/chapters.ts | head -17; cat src/hooks/useActiveChapter.ts; grep -n "active" src/components/layout/MobileNav.tsx`
+
+```text
+445:.desk-hero[data-night] .desk-lede mark {
+486:.desk-lede {
+493:.desk-lede p {
+501:.desk-lede mark {
+534:.desk-chip {
+555:.desk-chip:active {
+559:.desk-chip svg,
+561:.desk-scroll svg {
+567:  .desk-chip:hover {
+1261:.desk-scroll {
+1276:.desk-scroll__icon {
+1294:.desk-ui[data-reading] > *,
+1295:.desk-ui[data-reading] .desk-dock > * {
+1300:.desk-chip--explore {
+1469:.desk-reader .desk-chip svg {
+1493:  .desk-lede,
+1494:  .desk-scroll {
+1541:  .desk-chip--explore {
+1580:  .desk-lede,
+1581:  .desk-scroll {
+1606:  .desk-chip--explore {
+export const chapters = [
+  { id: "intro", href: "#intro", label: "Intro" },
+  { id: "features", href: "#features", label: "Features" },
+  { id: "product", href: "#product", label: "Product" },
+  { id: "contact", href: "#contact", label: "Contact" },
+] as const;
+
+/* not a page section: it flies the desk camera to the aquarium on the L return */
+export const skillsLink = { href: "#skills", label: "Skills" } as const;
+
+export const openSkills = (e: { preventDefault(): void }) => {
+  e.preventDefault();
+  window.dispatchEvent(new Event("desk:skills"));
+};
+
+export type ChapterId = (typeof chapters)[number]["id"];
+
+"use client";
+
+import { useEffect, useState } from "react";
+import type { ChapterId } from "@/lib/chapters";
+
+const sectionIds: ChapterId[] = ["intro", "features", "product", "contact"];
+
+export function useActiveChapter() {
+  const [active, setActive] = useState<ChapterId>("intro");
+
+  useEffect(() => {
+    const sections = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter(Boolean) as HTMLElement[];
+
+    if (!sections.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible?.target.id) {
+          setActive(visible.target.id as ChapterId);
+        }
+      },
+      { rootMargin: "-40% 0px -40% 0px", threshold: [0, 0.2, 0.45, 0.7, 1] },
+    );
+
+    sections.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  return active;
+}
+10:  active: ChapterId;
+14:export function MobileNav({ active, dark }: Props) {
+55:                  aria-current={active === link.id ? "page" : undefined}
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:40:56Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read lede, chip, scroll CSS and mobile nav links
+
+`sed -n 480,575p src/app/globals.css; sed -n 1255,1300p src/app/globals.css; sed -n 40,75p src/components/layout/MobileNav.tsx`
+
+```text
+  font-size: 0.32em;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+
+.desk-lede {
+  position: absolute;
+  right: calc(var(--page-pad) + 3rem);
+  top: 44%;
+  width: min(36rem, 38vw);
+}
+
+.desk-lede p {
+  margin: 0 0 1.4rem;
+  font-size: clamp(1.15rem, 1.9vw, 1.95rem);
+  font-weight: 500;
+  line-height: 1.32;
+  letter-spacing: -0.02em;
+}
+
+.desk-lede mark {
+  background: var(--signal);
+  color: var(--desk-cream);
+  padding: 0 0.08em;
+}
+
+.desk-glass {
+  background: var(--desk-glass);
+  border: 1px solid rgb(255 240 220 / 0.14);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  box-shadow: 0 24px 60px rgb(40 20 8 / 0.25);
+  text-shadow: none;
+}
+
+.desk-card {
+  position: absolute;
+  left: var(--page-pad);
+  bottom: 1.75rem;
+  width: min(330px, 80vw);
+  padding: 1.3rem 1.4rem 1.2rem;
+}
+
+.desk-card__head {
+  margin: 0;
+  font-size: clamp(1.1rem, 1.6vw, 1.5rem);
+  font-weight: 650;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+
+.desk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid rgb(255 240 220 / 0.3);
+  border-radius: 999px;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--desk-cream);
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 140ms var(--ease-out);
+}
+
+.desk-chip:active {
+  transform: scale(0.96);
+}
+
+.desk-chip svg,
+.desk-caption__link svg,
+.desk-scroll svg {
+  width: 12px;
+  height: 12px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .desk-chip:hover {
+    background: var(--desk-cream);
+    color: var(--ink);
+  }
+}
+
+.desk-caption {
+  position: absolute;
+  right: calc(var(--page-pad) + 3rem);
+}
+
+.desk-side-tab span {
+  font-size: 0.5rem;
+}
+
+.desk-scroll {
+  margin: 0;
+  position: absolute;
+  left: 50%;
+  bottom: 2rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.desk-scroll__icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px dotted currentColor;
+  border-radius: 999px;
+}
+
+.desk-dock {
+  display: contents;
+}
+
+.desk-ui > *,
+.desk-dock > * {
+  transition: opacity 400ms var(--ease-out);
+}
+
+.desk-ui[data-reading] > *,
+.desk-ui[data-reading] .desk-dock > * {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.desk-chip--explore {
+        {open ? (
+          <motion.div
+            id="mobile-menu"
+            className="glass-dark fixed inset-x-4 top-[calc(var(--nav-h)+0.5rem)] z-40 rounded-md p-6"
+            initial={reduce ? false : { opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22, ease: ease.out }}
+          >
+            <nav className="flex flex-col gap-5" aria-label="Mobile chapters">
+              {chapters.map((link, i) => (
+                <motion.a
+                  key={link.id}
+                  href={link.href}
+                  className="chapter-link text-sm tracking-[0.12em]"
+                  aria-current={active === link.id ? "page" : undefined}
+                  onClick={() => setOpen(false)}
+                  initial={reduce ? false : { opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.2, delay: i * 0.04, ease: ease.out }}
+                >
+                  {link.label}
+                </motion.a>
+              ))}
+              <a
+                href={skillsLink.href}
+                className="chapter-link text-sm tracking-[0.12em]"
+                onClick={(e) => {
+                  setOpen(false);
+                  openSkills(e);
+                }}
+              >
+                {skillsLink.label}
+              </a>
+              <a
+                href={site.resume}
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:41:09Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Confirm edit anchors
+
+`grep -n "opacity: 0.2" src/components/chapters/FeaturesChapter.tsx; grep -n '<header className="pointer-events-none' src/components/layout/Nav.tsx; grep -n "mt-8 grid gap-8 lg:grid-cols-12\|lg:col-span-7\|lg:col-span-5" src/components/chapters/ProductChapter.tsx`
+
+```text
+33:          opacity: 0.2,
+14:    <header className="pointer-events-none fixed inset-x-0 top-0 z-[60]" style={{ height: "var(--nav-h)" }}>
+52:          <div className="mt-8 grid gap-8 lg:grid-cols-12">
+53:            <div className="lg:col-span-7">
+79:            <div className="grid gap-8 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-1">
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:41:10Z)**_
+
+Applying all edits.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:41:29Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```python
+import re
+R = "C:\\Portfolio\\src"
+
+
+def edit(path, pairs):
+    p = R + path
+    s = open(p, encoding="utf8").read()
+    for a, b in pairs:
+        assert s.count(a) == 1, (path, a[:70])
+        s = s.replace(a, b)
+    open(p, "w", encoding="utf8").write(s)
+
+
+# 1. tank view shared with the nav
+edit("\\lib\\chapters.ts", [
+  ('''export type ChapterId''', '''/* whether the desk camera is at the aquarium, so the nav can mark Skills as current */
+let tankOpen = false;
+const tankListeners = new Set<() => void>();
+export const tankView = {
+  get: () => tankOpen,
+  set(open: boolean) {
+    if (open === tankOpen) return;
+    tankOpen = open;
+    tankListeners.forEach((l) => l());
+  },
+  subscribe(listener: () => void) {
+    tankListeners.add(listener);
+    return () => {
+      tankListeners.delete(listener);
+    };
+  },
+};
+
+export type ChapterId'''),
+])
+
+edit("\\hooks\\useActiveChapter.ts", [
+  ('''import { useEffect, useState } from "react";
+import type { ChapterId } from "@/lib/chapters";''', '''import { useEffect, useState, useSyncExternalStore } from "react";
+import { tankView, type ChapterId } from "@/lib/chapters";'''),
+  ('''export function useActiveChapter() {''', '''/* true while the desk camera is at the aquarium */
+export function useTankOpen() {
+  return useSyncExternalStore(tankView.subscribe, tankView.get, () => false);
+}
+
+export function useActiveChapter() {'''),
+])
+
+edit("\\components\\layout\\Nav.tsx", [
+  ('''import { useActiveChapter } from "@/hooks/useActiveChapter";''', '''import { useActiveChapter, useTankOpen } from "@/hooks/useActiveChapter";'''),
+  ('''  const active = useActiveChapter();
+  const darkText = active === "product" || active === "contact";
+''', '''  const active = useActiveChapter();
+  const tank = useTankOpen();
+  const darkText = active === "product" || active === "contact";
+'''),
+  ('''    <header className="pointer-events-none fixed inset-x-0 top-0 z-[60]" style={{ height: "var(--nav-h)" }}>''',
+   '''    <header
+      className={`pointer-events-none fixed inset-x-0 top-0 z-[60] transition-colors duration-300 ${
+        darkText ? "bg-cream/85 backdrop-blur-md" : "bg-transparent"
+      }`}
+      style={{ height: "var(--nav-h)" }}
+    >'''),
+  ('''                aria-current={active === chapter.id ? "page" : undefined}''', '''                aria-current={active === chapter.id && !(tank && chapter.id === "intro") ? "page" : undefined}'''),
+  ('''                <a href={skillsLink.href} className={`chapter-link ${darkText ? "chapter-link-dark" : ""}`} onClick={openSkills}>''',
+   '''                <a
+                  href={skillsLink.href}
+                  className={`chapter-link ${darkText ? "chapter-link-dark" : ""}`}
+                  aria-current={tank ? "page" : undefined}
+                  onClick={openSkills}
+                >'''),
+])
+
+edit("\\components\\layout\\MobileNav.tsx", [
+  ('''                  aria-current={active === link.id ? "page" : undefined}''', '''                  aria-current={active === link.id && !(tank && link.id === "intro") ? "page" : undefined}'''),
+  ('''                className="chapter-link text-sm tracking-[0.12em]"
+                onClick={(e) => {''', '''                className="chapter-link text-sm tracking-[0.12em]"
+                aria-current={tank ? "page" : undefined}
+                onClick={(e) => {'''),
+])
+
+# 2. hero: publish the tank view, hide the zoom hint after the first zoom, lede on glass
+edit("\\components\\hero\\DeskHero.tsx", [
+  ('''import { useScrollFade } from "@/hooks/useScrollFade";''', '''import { useScrollFade } from "@/hooks/useScrollFade";
+import { tankView } from "@/lib/chapters";'''),
+  ('''  const closeTank = useCallback(() => {''', '''  useEffect(() => {
+    tankView.set(tankOpen);
+    return () => tankView.set(false);
+  }, [tankOpen]);
+
+  /* the zoom hint has done its job once the visitor has zoomed */
+  const [zoomed, setZoomed] = useState(false);
+  useEffect(() => {
+    const el = root.current;
+    if (!el || zoomed || !ready) return;
+    const onWheel = () => setZoomed(true);
+    el.addEventListener("wheel", onWheel, { passive: true, once: true });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [zoomed, ready]);
+
+  const closeTank = useCallback(() => {'''),
+  ('''        <div className="desk-lede">''', '''        <div className="desk-lede desk-glass">'''),
+  ('''        <p className="desk-scroll">''', '''        <p className="desk-scroll" data-done={zoomed ? "" : undefined}>'''),
+])
+
+# 3. features: the outgoing panel leaves fully instead of ghosting under the next
+edit("\\components\\chapters\\FeaturesChapter.tsx", [
+  ('''          opacity: 0.2,
+          y: -28,''', '''          opacity: 0,
+          y: -40,'''),
+])
+
+# 4. product: the work record lives in the desk folder; this section is the work
+p = R + "\\components\\chapters\\ProductChapter.tsx"
+s = open(p, encoding="utf8").read()
+s = s.replace('import { projects, education, experience } from "@/lib/content";', 'import { projects } from "@/lib/content";')
+a = s.index('          <div className="mt-8 grid gap-8 lg:grid-cols-12">')
+b = s.index('            <div className="grid gap-8 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-1">')
+# end of the experience/education column, then the grid's closing div
+c = s.index('          </div>\n        </div>\n\n        <div className="mt-20', b)
+head = s[a:b].replace('''          <div className="mt-8 grid gap-8 lg:grid-cols-12">
+            <div className="lg:col-span-7">''', '''          <div className="mt-8">''')
+# drop one level of indentation inside the kept block, and its now-extra closing div
+lines = head.split("\n")
+out = [lines[0]] + [l[2:] if l.startswith("  ") else l for l in lines[1:]]
+head = "\n".join(out).rstrip()
+assert head.endswith("</div>"), head[-40:]
+s = s[:a] + head + "\n" + s[c + len("          </div>\n"):]
+open(p, "w", encoding="utf8").write(s)
+print("ok")
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\fixes.py (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:41:32Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Apply fixes and check product markup
+
+`python /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/fixes.py && sed -n 45,85p src/components/chapters/ProductChapter.tsx; grep -n "active\b\|Props\|function MobileNav\|import" src/components/layout/MobileNav.tsx | head`
+
+```text
+ok
+                aria-pressed={active === i}
+              >
+                {project.title}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-8">
+            <h3 className="text-3xl font-semibold tracking-tight">{current.title}</h3>
+            <p className="mt-4 max-w-[52ch] text-base leading-relaxed text-ink-soft">
+              {current.description}
+            </p>
+            <ul className="mt-5 flex flex-wrap gap-2">
+              {current.tools.map((tool) => (
+                <li
+                  key={tool}
+                  className="rounded-full border border-line bg-cream px-3 py-1 text-xs font-medium"
+                >
+                  {tool}
+                </li>
+              ))}
+            </ul>
+            <a
+              href={current.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-ink mt-8 w-fit"
+            >
+              Source code
+              <ArrowUpRight className="h-4 w-4" aria-hidden />
+            </a>
+          </div>
+        </div>
+
+        <div className="mt-20 border-t border-line pt-12">
+          <p className="mono-label text-ink-soft">All selected work</p>
+          <ul className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+            {projects.map((project, i) => (
+              <li key={project.slug}>
+                <a
+                  href={project.href}
+3:import { useEffect, useState } from "react";
+4:import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+5:import { site } from "@/lib/content";
+6:import { chapters, openSkills, skillsLink, type ChapterId } from "@/lib/chapters";
+7:import { ease } from "@/lib/easings";
+9:type Props = {
+10:  active: ChapterId;
+14:export function MobileNav({ active, dark }: Props) {
+55:                  aria-current={active === link.id && !(tank && link.id === "intro") ? "page" : undefined}
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:41:34Z)**_
+
+Wiring `tank` into MobileNav, then CSS.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:41:35Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Show MobileNav component start
+
+`sed -n 14,17p src/components/layout/MobileNav.tsx`
+
+```text
+export function MobileNav({ active, dark }: Props) {
+  const [open, setOpen] = useState(false);
+  const reduce = useReducedMotion();
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:41:44Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\layout\MobileNav.tsx has been updated successfully. (note: the file had been modified on disk since you last read it — the edit applied cleanly, but the file contains other changes not in your context. Read it before edits that depend on surrounding content.)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:41:45Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\layout\MobileNav.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:41:46Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\app\globals.css has been updated successfully. (note: the file had been modified on disk since you last read it — the edit applied cleanly, but the file contains other changes not in your context. Read it before edits that depend on surrounding content.)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:41:47Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\app\globals.css has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:42:11Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Typecheck and lint
+
+`npx tsc --noEmit 2>&1 | tail -5; npx eslint src 2>&1 | tail -8`
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:42:13Z)**_
+
+Clean. Verifying visually.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:42:51Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Verify hint, nav state, features, product
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && cat > v2.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const b = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  p.on("pageerror", (e) => console.log("PAGEERROR", e.message));
+  await p.goto("http://localhost:3000", { waitUntil: "load", timeout: 240000 });
+  await p.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+  await p.waitForTimeout(2500);
+  await p.screenshot({ path: "c-0-desk.png" });
+  await p.mouse.move(700, 450); await p.mouse.wheel(0, -200); await p.waitForTimeout(1200);
+  console.log("hint hidden:", await p.evaluate(() => getComputedStyle(document.querySelector(".desk-scroll")).opacity));
+  await p.evaluate(() => [...document.querySelectorAll(".desk-card button")].find((x) => x.textContent.includes("Skills")).click());
+  await p.waitForTimeout(4000);
+  console.log("current:", await p.evaluate(() => [...document.querySelectorAll('nav[aria-label="Chapters"] [aria-current]')].map((a) => a.textContent)));
+  await p.keyboard.press("Escape"); await p.waitForTimeout(2500);
+  console.log("current after:", await p.evaluate(() => [...document.querySelectorAll('nav[aria-label="Chapters"] [aria-current]')].map((a) => a.textContent)));
+  const feat = await p.evaluate(() => document.querySelector("#features").offsetTop);
+  for (const f of [1.6, 2.5]) { await p.evaluate((y) => window.scrollTo(0, y), feat + 900 * f); await p.waitForTimeout(1500); await p.screenshot({ path: `c-feat-${f}.png` }); }
+  await p.evaluate(() => window.scrollTo(0, document.querySelector("#product").offsetTop + 500)); await p.waitForTimeout(1500);
+  await p.screenshot({ path: "c-product.png" });
+  await b.close();
+})();
+EOF
+node v2.js
+```
+
+```text
+hint hidden: 1
+current: [ 'Skills' ]
+current after: [ 'Intro' ]
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:42:55Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Find wheel handling in canvas
+
+`grep -n "wheel" -i src/components/hero/desk/DeskCanvas.tsx | head`
+
+```text
+206:  /* Two-finger pinch zooms on touch screens, like the wheel on desktop */
+234:   * The wheel zooms the camera while the desk fills the window. Capture on
+240:    const onWheel = (e: WheelEvent) => {
+247:    window.addEventListener("wheel", onWheel, { capture: true, passive: false });
+248:    return () => window.removeEventListener("wheel", onWheel, { capture: true });
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:42:57Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Portfolio\src\components\hero\desk\DeskCanvas.tsx`
+
+```text
+232	
+233	  /*
+234	   * The wheel zooms the camera while the desk fills the window. Capture on
+235	   * window runs before Lenis, so the page itself stays put; the other
+236	   * chapters are reached from the nav instead.
+237	   */
+238	  useEffect(() => {
+239	    const hero = gl.domElement.closest("section");
+240	    const onWheel = (e: WheelEvent) => {
+241	      if (world.grabbing || openProject !== null || experienceOpen || view === "tank") return;
+242	      if (!hero || window.scrollY > 4 || !hero.contains(e.target as Node)) return;
+243	      e.preventDefault();
+244	      e.stopPropagation();
+245	      world.zoomBy(e.deltaY);
+246	    };
+247	    window.addEventListener("wheel", onWheel, { capture: true, passive: false });
+248	    return () => window.removeEventListener("wheel", onWheel, { capture: true });
+249	  }, [gl, world, openProject, experienceOpen, view]);
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:42:59Z)**_
+
+Canvas stops wheel propagation at window capture. Moving the hint listener there too.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:43:05Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\hero\DeskHero.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:43:50Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Recheck types, lint, rerun verification
+
+`npx tsc --noEmit 2>&1 | tail -3; npx eslint src/components/hero/DeskHero.tsx; cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && node v2.js`
+
+```text
+hint hidden: 0
+current: [ 'Skills' ]
+current after: [ 'Intro' ]
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:43:52Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\c-0-desk.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:43:54Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\c-feat-1.6.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:43:55Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\c-product.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:44:01Z)**_
+
+Three tweaks: darker lede glass, features fade finishes before overlap, recheck.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:44:04Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\app\globals.css has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:44:05Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Locate features fade range
+
+`grep -n 'start: "top bottom",' -A1 src/components/chapters/FeaturesChapter.tsx`
+
+```text
+38:            start: "top bottom",
+39-            end: "top top",
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:44:10Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\chapters\FeaturesChapter.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:44:41Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Rerun verification screenshots
+
+`cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && node v2.js`
+
+```text
+hint hidden: 0
+current: [ 'Skills' ]
+current after: [ 'Intro' ]
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:44:44Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\c-0-desk.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:44:45Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\c-feat-1.6.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:44:46Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\c-feat-2.5.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:44:49Z)**_
+
+Features ghosting is fixed. The lede background is losing to `.desk-glass` on specificity, so I'm raising it.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:44:54Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\app\globals.css has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:45:45Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Rerun screenshots, typecheck, lint
+
+`cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && node v2.js && cd /c/Portfolio && npx tsc --noEmit && npx eslint src && echo LINT_OK`
+
+```text
+hint hidden: 0
+current: [ 'Skills' ]
+current after: [ 'Intro' ]
+LINT_OK
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:45:47Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\c-0-desk.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:45:56Z)**_
+
+I applied the fixes from the "not done" list, except two: the press effect already existed and the dots are unchanged. tsc and eslint pass, and I checked each change in headless Chrome.
+
+| Before | After |
+| --- | --- |
+| Hero sentence sat on bare text over the bright iPad | It now sits on a dark glass panel and reads cleanly ([globals.css](src/app/globals.css)) |
+| Nav marked INTRO as current inside the tank | SKILLS is marked current on desktop and in the phone menu. INTRO comes back on leaving. I added a small shared store in [chapters.ts](src/lib/chapters.ts) and a `useTankOpen` hook in [useActiveChapter.ts](src/hooks/useActiveChapter.ts) |
+| "Scroll to zoom" stayed on screen forever | It hides after the first zoom on the hero |
+| Features panels stacked as ghosts | The outgoing panel fades out completely before the next one arrives ([FeaturesChapter.tsx](src/components/chapters/FeaturesChapter.tsx)) |
+| The nav sat over cream content on the light sections | The nav gets a frosted cream background on Product and Contact ([Nav.tsx](src/components/layout/Nav.tsx)) |
+| Experience and education repeated in the Product section | Removed. They now live only in the desk folder ([ProductChapter.tsx](src/components/chapters/ProductChapter.tsx)) |
+
+- **Press effect on desk chips:** it already existed (`.desk-chip:active { scale(0.96) }`), so I changed nothing. My earlier note listing it as missing was wrong.
+- **Skill dots:** I kept them as they are, because they let you compare skills at a glance.
+- **Product layout:** with the experience column gone, the project details now take the left side and the right side is empty. I can centre them or add the project image there if you want.
+
+Nothing is committed. All of today's UI edits are on `fix/drop-ponytail-gitlink`, mixed in with the ponytail fix. Move them to their own branch before committing:
+```
+git switch -c ui/trim-and-polish
+```
+
+---
+
+_**User (2026-10-29 14:49:59Z)**_
+
+the jd paloma in the navv should go back to the home, replace the intro with home as well
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 14:50:07Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Find intro references in nav code
+
+`grep -n "intro\|Intro" src/components/layout/*.tsx src/lib/chapters.ts src/components/layout/Footer.tsx; sed -n 20,40p src/components/layout/MobileNav.tsx`
+
+```text
+src/components/layout/MobileNav.tsx:57:                  aria-current={active === link.id && !(tank && link.id === "intro") ? "page" : undefined}
+src/components/layout/Nav.tsx:23:          href="#intro"
+src/components/layout/Nav.tsx:38:                aria-current={active === chapter.id && !(tank && chapter.id === "intro") ? "page" : undefined}
+src/lib/chapters.ts:2:  { id: "intro", href: "#intro", label: "Intro" },
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  return (
+    <div>
+      <button
+        type="button"
+        className={`btn !min-h-9 !px-3 !py-2 !text-[0.62rem] ${
+          dark ? "btn-ghost-ink" : "btn-ghost-cream"
+        }`}
+        aria-expanded={open}
+        aria-controls="mobile-menu"
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? "Close" : "Menu"}
+      </button>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:50:19Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```python
+R = "C:\\Portfolio\\src"
+
+
+def edit(path, pairs):
+    p = R + path
+    s = open(p, encoding="utf8").read()
+    for a, b in pairs:
+        assert s.count(a) == 1, (path, a[:70])
+        s = s.replace(a, b)
+    open(p, "w", encoding="utf8").write(s)
+
+
+edit("\\lib\\chapters.ts", [
+  ('''  { id: "intro", href: "#intro", label: "Intro" },''', '''  { id: "intro", href: "#intro", label: "Home" },'''),
+  ('''export const openSkills''', '''/* home: the link scrolls to the top, and the desk puts away whatever is open */
+export const goHome = () => {
+  window.dispatchEvent(new Event("desk:home"));
+};
+
+export const openSkills'''),
+])
+
+edit("\\components\\layout\\Nav.tsx", [
+  ('''import { chapters, openSkills, skillsLink } from "@/lib/chapters";''', '''import { chapters, goHome, openSkills, skillsLink } from "@/lib/chapters";'''),
+  ('''          href="#intro"
+''', '''          href="#intro"
+          onClick={goHome}
+'''),
+  ('''                aria-current={active === chapter.id && !(tank && chapter.id === "intro") ? "page" : undefined}
+''', '''                aria-current={active === chapter.id && !(tank && chapter.id === "intro") ? "page" : undefined}
+                onClick={chapter.id === "intro" ? goHome : undefined}
+'''),
+])
+
+edit("\\components\\layout\\MobileNav.tsx", [
+  ('''import { chapters, openSkills, skillsLink, type ChapterId } from "@/lib/chapters";''', '''import { chapters, goHome, openSkills, skillsLink, type ChapterId } from "@/lib/chapters";'''),
+  ('''                  onClick={() => setOpen(false)}''', '''                  onClick={() => {
+                    setOpen(false);
+                    if (link.id === "intro") goHome();
+                  }}'''),
+])
+
+edit("\\components\\hero\\DeskHero.tsx", [
+  ('''  useEffect(() => {
+    if (ready && window.location.hash === "#skills")''', '''  /* Home (nav or logo) puts everything away and returns to the desk */
+  useEffect(() => {
+    const home = () => {
+      closeExperience();
+      setOpenProject(null);
+      setFocusId(null);
+      setActiveSkill(null);
+      setHoverSkill(null);
+      if (tankOpen) setView(viewBeforeTank);
+    };
+    window.addEventListener("desk:home", home);
+    return () => window.removeEventListener("desk:home", home);
+  }, [closeExperience, tankOpen, viewBeforeTank]);
+
+  useEffect(() => {
+    if (ready && window.location.hash === "#skills")'''),
+])
+print("ok")
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\home.py (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:50:42Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Apply home changes, typecheck, lint
+
+`python /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/home.py && grep -n "onClick" src/components/layout/MobileNav.tsx | head -3 && npx tsc --noEmit && npx eslint src && echo OK`
+
+```text
+ok
+36:        onClick={() => setOpen((v) => !v)}
+58:                  onClick={() => {
+73:                onClick={(e) => {
+OK
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:50:43Z)**_
+
+Quick check in the browser: open the tank, then click the logo.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:50:53Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Verify Home link and logo behavior
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && cat > home.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const b = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  await p.goto("http://localhost:3000", { waitUntil: "load", timeout: 240000 });
+  await p.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+  await p.waitForTimeout(2000);
+  const nav = () => p.evaluate(() => [...document.querySelectorAll('nav[aria-label="Chapters"] a')].map((a) => a.textContent + (a.getAttribute("aria-current") ? "*" : "")));
+  console.log("links:", await nav());
+  await p.evaluate(() => [...document.querySelectorAll(".desk-card button")].find((x) => x.textContent.includes("Skills")).click());
+  await p.waitForTimeout(3500);
+  console.log("tank:", !!(await p.$(".desk-tank")), await nav());
+  await p.click('a[aria-label$="home"]');
+  await p.waitForTimeout(3500);
+  console.log("after logo:", !!(await p.$(".desk-tank")), await nav());
+  await p.evaluate(() => window.scrollTo(0, 3000)); await p.waitForTimeout(1500);
+  await p.click('nav[aria-label="Chapters"] a[href="#intro"]'); await p.waitForTimeout(3000);
+  console.log("scrollY after Home:", await p.evaluate(() => window.scrollY), await nav());
+  await b.close();
+})();
+EOF
+node home.js
+```
+
+```text
+Exit code 1
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/
+Call log:
+  - navigating to "http://localhost:3000/", waiting until "load"**
+
+    at C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\home.js:5:11 {
+  name: 'Error'
+}
+
+Node.js v22.22.3
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:50:54Z)**_
+
+Dev server died. Restarting it.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:51:34Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Restart dev server and rerun check
+
+`tail -5 /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/dev.log; (npm run dev > /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/dev.log 2>&1 &); for i in $(seq 1 60); do curl -s -o /dev/null http://localhost:3000 && break; sleep 2; done; cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && node home.js`
+
+```text
+(209,39-65): warning X4122: sum of 1 and -1.49272e-017 cannot be represented accurately in double precision
+(210,87-113): warning X4122: sum of 1 and -1.49272e-017 cannot be represented accurately in double precision
+(209,39-65): warning X4122: sum of 1 and -1.66644e-018 cannot be represented accurately in double precision
+(210,87-113): warning X4122: sum of 1 and -1.66644e-018 cannot be represented accurately in double precision (../../C:/Portfolio/src/components/hero/desk/DeskCanvas.tsx:133:73)
+[?25h
+links: [ 'Home*', 'Skills', 'Features', 'Product', 'Contact' ]
+tank: true [ 'Home', 'Skills*', 'Features', 'Product', 'Contact' ]
+after logo: false [ 'Home*', 'Skills', 'Features', 'Product', 'Contact' ]
+scrollY after Home: 0 [ 'Home*', 'Skills', 'Features', 'Product', 'Contact' ]
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:51:38Z)**_
+
+"Intro" now reads "Home" in the desktop nav and the phone menu. Clicking "JD PALOMA" or Home goes back to the desk. That also closes the aquarium, the work folder, any open project book and the hover caption.
+
+I checked it in the browser. From the aquarium, clicking the logo returned to the desk and Home was highlighted again. Clicking Home from the Features section scrolled back to the top. tsc and eslint pass.
+
+- Changes are in [chapters.ts](src/lib/chapters.ts), [Nav.tsx](src/components/layout/Nav.tsx), [MobileNav.tsx](src/components/layout/MobileNav.tsx) and [DeskHero.tsx](src/components/hero/DeskHero.tsx).
+- The section is still `#intro` in the code. Only the visible label changed, so existing links keep working.
+
+Nothing is committed yet. These edits are still on `fix/drop-ponytail-gitlink` with the earlier UI work.
+
+---
+
+_**User (2026-10-29 14:56:46Z)**_
+
+the light mode is too bright and white. it should be similar to orzyo.ai https://oryzo.ai/ 
+there shadow also moves like its shadows of leaves
+
+/caveman find and use necessary skillls to achieve this
+
+---
+
+_**User (2026-10-29 14:56:46Z)**_
+
+[Image: source: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\images\3.png]
+
+[Image: source: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\images\4.png]
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 14:56:57Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Find lighting setup
+
+`ls src/components/hero/desk/ && grep -n "Light\|toneMapping\|exposure\|Environment\|night" src/components/hero/desk/DeskCanvas.tsx | head -60`
+
+```text
+DeskCanvas.tsx
+FitModel.tsx
+aquarium.tsx
+constants.ts
+experience.tsx
+flashlight.tsx
+items.ts
+lighting.tsx
+models.tsx
+room.tsx
+species.ts
+textures.ts
+wall.tsx
+world.ts
+4:import { Environment, Lightformer, PerformanceMonitor, useGLTF, useProgress, useTexture } from "@react-three/drei";
+11:import { Lighting } from "./lighting";
+35:  night: boolean;
+64:  night: boolean,
+72:      return <Model.Tablet map={night ? t.tabletNight : t.tablet} />;
+76:      return <Model.NothingPhone map={t.nothing} glow={night ? 0.55 : 0} />;
+153:function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, experienceOpen, onOpenExperience, onCloseExperience, onPaperBridge, onHoverProject, skills, activeSkill, featuredSkills, labelledSkill, onSelectSkill, onHoverSkill, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active">) {
+269:        night={night}
+283:        night={night}
+298:        night={night}
+349:              {renderModel(item.id, tex, night, paper, { open: experienceOpen, reduced, onOpen: onOpenExperience })}
+405:      <Lighting night={props.night} reduced={props.reduced} />
+406:      <Environment resolution={256} frames={1}>
+407:        <Lightformer form="rect" intensity={2.2} position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[12, 6, 1]} />
+408:        <Lightformer form="rect" intensity={1.2} position={[-8, 3, 4]} rotation-y={Math.PI / 2.5} scale={[6, 3, 1]} color="#ffe2c4" />
+409:        <Lightformer form="ring" intensity={0.8} position={[7, 4, -5]} scale={3} />
+410:      </Environment>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:01Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read lighting component and canvas setup
+
+`cat src/components/hero/desk/lighting.tsx; sed -n 380,440p src/components/hero/desk/DeskCanvas.tsx; grep -n "desk-vignette" -A12 src/app/globals.css | head -40`
+
+```text
+"use client";
+
+import { useFrame, useThree } from "@react-three/fiber";
+import { useMemo, useState } from "react";
+import * as THREE from "three";
+
+/*
+ * Desk lamp placement. In the glTF the shade points along local -z and the
+ * bulb sits ~6.5 units up once the model is scaled to 7.5 units tall.
+ */
+const LAMP_POS = new THREE.Vector3(-7.8, 0, -3.3);
+const LAMP_AIM = new THREE.Vector3(1.6, 0, 0.6);
+const BULB_LOCAL = new THREE.Vector3(0.13, 6.5, -1.6);
+
+export const LAMP = (() => {
+  const dx = LAMP_AIM.x - LAMP_POS.x;
+  const dz = LAMP_AIM.z - LAMP_POS.z;
+  const yaw = Math.atan2(-dx, -dz);
+  const bulb = BULB_LOCAL.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw).add(LAMP_POS);
+  return { pos: LAMP_POS, yaw, bulb, aim: LAMP_AIM };
+})();
+
+const DAY = {
+  hemiSky: new THREE.Color("#ffe6c8"),
+  hemiGround: new THREE.Color("#6a4226"),
+  hemi: 1.05,
+  sunColor: new THREE.Color("#ffe4c4"),
+  sun: 2.8,
+  env: 1,
+};
+
+const NIGHT = {
+  hemiSky: new THREE.Color("#3c4a68"),
+  hemiGround: new THREE.Color("#1a120c"),
+  hemi: 0.12,
+  sunColor: new THREE.Color("#8ea4d6"),
+  sun: 0.22,
+  env: 0.12,
+};
+
+/* a few quick stutters when the lamp switches on, like an old bulb */
+const FLICKER = [1, 0.15, 0.9, 0.3, 1, 0.6, 1];
+
+/* Mutable light rig, stepped every frame. */
+class LightRig {
+  hemi: THREE.HemisphereLight | null = null;
+  sun: THREE.DirectionalLight | null = null;
+  spot: THREE.SpotLight | null = null;
+  glow: THREE.PointLight | null = null;
+  bulbMat: THREE.MeshStandardMaterial | null = null;
+  private mix = 0;
+  private lamp = 0;
+  private onAt = -1;
+  private clock = 0;
+
+  attach(kind: "hemi" | "sun" | "glow", light: THREE.Light | null) {
+    if (kind === "hemi") this.hemi = light as THREE.HemisphereLight | null;
+    if (kind === "sun") this.sun = light as THREE.DirectionalLight | null;
+    if (kind === "glow") this.glow = light as THREE.PointLight | null;
+  }
+
+  /* the spot's target lives outside the scene graph, so keep its matrix fresh */
+  attachSpot(spot: THREE.SpotLight | null) {
+    this.spot = spot;
+    if (!spot) return;
+    spot.target.position.copy(LAMP.aim);
+    spot.target.updateMatrixWorld();
+  }
+
+  findBulb(scene: THREE.Scene) {
+    if (this.bulbMat) return;
+    scene.getObjectByName("desk-lamp")?.traverse((o) => {
+      const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
+      if (m && m.name?.endsWith("_light")) {
+        m.emissive = new THREE.Color("#ffb46b");
+        this.bulbMat = m;
+      }
+    });
+  }
+
+  step(scene: THREE.Scene, night: boolean, reduced: boolean, delta: number) {
+    const dt = Math.min(delta, 1 / 30);
+    this.clock += dt;
+    const goal = night ? 1 : 0;
+    this.mix = reduced ? goal : THREE.MathUtils.damp(this.mix, goal, 2.4, dt);
+
+    if (night && this.onAt < 0) this.onAt = this.clock + (reduced ? 0 : 0.35);
+    if (!night) this.onAt = -1;
+    let lampGoal = 0;
+    if (night && this.clock >= this.onAt) {
+      const step = Math.floor((this.clock - this.onAt) / 0.07);
+      lampGoal = reduced ? 1 : (FLICKER[step] ?? 1);
+    }
+    this.lamp = reduced || lampGoal > this.lamp ? lampGoal : THREE.MathUtils.damp(this.lamp, lampGoal, 6, dt);
+
+    const m = this.mix;
+    if (this.hemi) {
+      this.hemi.intensity = THREE.MathUtils.lerp(DAY.hemi, NIGHT.hemi, m);
+      this.hemi.color.lerpColors(DAY.hemiSky, NIGHT.hemiSky, m);
+      this.hemi.groundColor.lerpColors(DAY.hemiGround, NIGHT.hemiGround, m);
+    }
+    if (this.sun) {
+      this.sun.intensity = THREE.MathUtils.lerp(DAY.sun, NIGHT.sun, m);
+      this.sun.color.lerpColors(DAY.sunColor, NIGHT.sunColor, m);
+    }
+    scene.environmentIntensity = THREE.MathUtils.lerp(DAY.env, NIGHT.env, m);
+    if (this.spot) {
+      this.spot.intensity = 30 * this.lamp;
+      /*
+       * Skip the lamp's shadow pass while it is dark. castShadow stays on so no
+       * shader recompiles, and the map must exist first: lit materials sample it.
+       */
+      this.spot.shadow.autoUpdate = this.lamp > 0 || this.spot.shadow.map === null;
+    }
+    if (this.glow) this.glow.intensity = 9 * this.lamp;
+    if (this.bulbMat) this.bulbMat.emissiveIntensity = 6 * this.lamp;
+  }
+}
+
+export function Lighting({ night, reduced }: { night: boolean; reduced: boolean }) {
+  const scene = useThree((s) => s.scene);
+  const [rig] = useState(() => new LightRig());
+  const shadowSize = useMemo(() => [1024, 1024] as [number, number], []);
+
+  useFrame((_, delta) => {
+    rig.findBulb(scene);
+    rig.step(scene, night, reduced, delta);
+  });
+
+  return (
+    <>
+      <hemisphereLight ref={(l) => rig.attach("hemi", l)} args={[DAY.hemiSky, DAY.hemiGround, DAY.hemi]} />
+      <directionalLight
+        ref={(l) => rig.attach("sun", l)}
+        castShadow
+        position={[-9, 20, 12]}
+        intensity={DAY.sun}
+        color={DAY.sunColor}
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-left={-26}
+        shadow-camera-right={26}
+        shadow-camera-top={26}
+        shadow-camera-bottom={-26}
+        shadow-camera-near={1}
+        shadow-camera-far={70}
+        shadow-bias={-0.0004}
+        shadow-normalBias={0.02}
+        shadow-radius={10}
+      />
+
+      {/* desk lamp: warm 2700K cone onto the objects, plus a soft glow around the shade */}
+      <spotLight
+        ref={(l) => rig.attachSpot(l)}
+        position={LAMP.bulb.toArray()}
+        color="#ffb46b"
+        intensity={0}
+        angle={0.7}
+        penumbra={0.9}
+        decay={1}
+        distance={40}
+        castShadow
+        shadow-mapSize={shadowSize}
+        shadow-bias={-0.0006}
+        shadow-normalBias={0.03}
+        shadow-radius={6}
+      />
+      <pointLight ref={(l) => rig.attach("glow", l)} position={LAMP.bulb.clone().add(new THREE.Vector3(0, 0.6, 0)).toArray()} color="#ffae5e" intensity={0} distance={9} decay={2} />
+    </>
+  );
+}
+  );
+}
+
+const MAX_DPR = 2;
+
+export function DeskCanvas({ active, ...props }: Props) {
+  /* full sharpness by default; only steps down if the device can't hold the frame rate */
+  const [ceiling] = useState(() => Math.min(window.devicePixelRatio || 1, MAX_DPR));
+  const [dpr, setDpr] = useState(ceiling);
+
+  return (
+    <Canvas
+      shadows="percentage"
+      dpr={dpr}
+      frameloop={active ? "always" : "never"}
+      camera={{ fov: 28, near: 0.5, far: 120, position: [0, 20, 9] }}
+      gl={{ antialias: true, alpha: true }}
+      style={{ touchAction: "none" }}
+    >
+      <PerformanceMonitor
+        factor={1}
+        flipflops={3}
+        onChange={({ factor }) => setDpr(Math.max(1, Math.round((1 + (ceiling - 1) * factor) * 4) / 4))}
+        onFallback={() => setDpr(1)}
+      />
+      <Lighting night={props.night} reduced={props.reduced} />
+      <Environment resolution={256} frames={1}>
+        <Lightformer form="rect" intensity={2.2} position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[12, 6, 1]} />
+        <Lightformer form="rect" intensity={1.2} position={[-8, 3, 4]} rotation-y={Math.PI / 2.5} scale={[6, 3, 1]} color="#ffe2c4" />
+        <Lightformer form="ring" intensity={0.8} position={[7, 4, -5]} scale={3} />
+      </Environment>
+
+      <WindowShadow />
+
+      <Desk {...props} />
+    </Canvas>
+  );
+}
+422:.desk-vignette {
+423-  background:
+424-    radial-gradient(ellipse 85% 75% at 55% 50%, transparent 55%, rgb(40 20 8 / 0.42) 100%),
+425-    linear-gradient(180deg, rgb(40 20 8 / 0.18), transparent 22%);
+426-  transition: opacity 1.2s var(--ease-out);
+427-}
+428-
+429-/* night: deeper room, warmer lamp-lit glass */
+430-.desk-hero {
+431-  transition: background-color 1.2s var(--ease-out);
+432-}
+433-
+434-.desk-hero[data-night] {
+--
+439:.desk-hero[data-night] .desk-vignette {
+440-  background:
+441-    radial-gradient(ellipse 70% 65% at 45% 55%, transparent 40%, rgb(8 4 2 / 0.6) 100%),
+442-    linear-gradient(180deg, rgb(8 4 2 / 0.35), transparent 25%);
+443-}
+444-
+445-.desk-hero[data-night] .desk-lede mark {
+446-  background: #c9692c;
+447-}
+448-
+449-.desk-ui {
+450-  text-shadow: 0 1px 18px rgb(40 20 8 / 0.25);
+451-}
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:05Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read existing WindowShadow
+
+`grep -n "function WindowShadow" -A60 src/components/hero/desk/*.tsx | head -90; grep -rn "toneMapping" src | head`
+
+```text
+src/components/hero/desk/DeskCanvas.tsx:361:function WindowShadow() {
+src/components/hero/desk/DeskCanvas.tsx-362-  const bars: [number, number, number, number][] = [
+src/components/hero/desk/DeskCanvas.tsx-363-    [0, 0, 0.28, 26],
+src/components/hero/desk/DeskCanvas.tsx-364-    [0, 3.4, 26, 0.28],
+src/components/hero/desk/DeskCanvas.tsx-365-  ];
+src/components/hero/desk/DeskCanvas.tsx-366-  return (
+src/components/hero/desk/DeskCanvas.tsx-367-    <group position={[-6.2, 10.5, 1.4]} rotation={[0, 0.42, 0]}>
+src/components/hero/desk/DeskCanvas.tsx-368-      {bars.map(([x, z, w, d], i) => (
+src/components/hero/desk/DeskCanvas.tsx-369-        <mesh key={i} position={[x, 0, z]} castShadow>
+src/components/hero/desk/DeskCanvas.tsx-370-          <boxGeometry args={[w, 0.1, d]} />
+src/components/hero/desk/DeskCanvas.tsx-371-          <meshBasicMaterial colorWrite={false} depthWrite={false} />
+src/components/hero/desk/DeskCanvas.tsx-372-        </mesh>
+src/components/hero/desk/DeskCanvas.tsx-373-      ))}
+src/components/hero/desk/DeskCanvas.tsx-374-      {/* window edge: everything beyond the frame is wall */}
+src/components/hero/desk/DeskCanvas.tsx-375-      <mesh position={[0, 0, -16]} castShadow>
+src/components/hero/desk/DeskCanvas.tsx-376-        <boxGeometry args={[40, 0.1, 13]} />
+src/components/hero/desk/DeskCanvas.tsx-377-        <meshBasicMaterial colorWrite={false} depthWrite={false} />
+src/components/hero/desk/DeskCanvas.tsx-378-      </mesh>
+src/components/hero/desk/DeskCanvas.tsx-379-    </group>
+src/components/hero/desk/DeskCanvas.tsx-380-  );
+src/components/hero/desk/DeskCanvas.tsx-381-}
+src/components/hero/desk/DeskCanvas.tsx-382-
+src/components/hero/desk/DeskCanvas.tsx-383-const MAX_DPR = 2;
+src/components/hero/desk/DeskCanvas.tsx-384-
+src/components/hero/desk/DeskCanvas.tsx-385-export function DeskCanvas({ active, ...props }: Props) {
+src/components/hero/desk/DeskCanvas.tsx-386-  /* full sharpness by default; only steps down if the device can't hold the frame rate */
+src/components/hero/desk/DeskCanvas.tsx-387-  const [ceiling] = useState(() => Math.min(window.devicePixelRatio || 1, MAX_DPR));
+src/components/hero/desk/DeskCanvas.tsx-388-  const [dpr, setDpr] = useState(ceiling);
+src/components/hero/desk/DeskCanvas.tsx-389-
+src/components/hero/desk/DeskCanvas.tsx-390-  return (
+src/components/hero/desk/DeskCanvas.tsx-391-    <Canvas
+src/components/hero/desk/DeskCanvas.tsx-392-      shadows="percentage"
+src/components/hero/desk/DeskCanvas.tsx-393-      dpr={dpr}
+src/components/hero/desk/DeskCanvas.tsx-394-      frameloop={active ? "always" : "never"}
+src/components/hero/desk/DeskCanvas.tsx-395-      camera={{ fov: 28, near: 0.5, far: 120, position: [0, 20, 9] }}
+src/components/hero/desk/DeskCanvas.tsx-396-      gl={{ antialias: true, alpha: true }}
+src/components/hero/desk/DeskCanvas.tsx-397-      style={{ touchAction: "none" }}
+src/components/hero/desk/DeskCanvas.tsx-398-    >
+src/components/hero/desk/DeskCanvas.tsx-399-      <PerformanceMonitor
+src/components/hero/desk/DeskCanvas.tsx-400-        factor={1}
+src/components/hero/desk/DeskCanvas.tsx-401-        flipflops={3}
+src/components/hero/desk/DeskCanvas.tsx-402-        onChange={({ factor }) => setDpr(Math.max(1, Math.round((1 + (ceiling - 1) * factor) * 4) / 4))}
+src/components/hero/desk/DeskCanvas.tsx-403-        onFallback={() => setDpr(1)}
+src/components/hero/desk/DeskCanvas.tsx-404-      />
+src/components/hero/desk/DeskCanvas.tsx-405-      <Lighting night={props.night} reduced={props.reduced} />
+src/components/hero/desk/DeskCanvas.tsx-406-      <Environment resolution={256} frames={1}>
+src/components/hero/desk/DeskCanvas.tsx-407-        <Lightformer form="rect" intensity={2.2} position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[12, 6, 1]} />
+src/components/hero/desk/DeskCanvas.tsx-408-        <Lightformer form="rect" intensity={1.2} position={[-8, 3, 4]} rotation-y={Math.PI / 2.5} scale={[6, 3, 1]} color="#ffe2c4" />
+src/components/hero/desk/DeskCanvas.tsx-409-        <Lightformer form="ring" intensity={0.8} position={[7, 4, -5]} scale={3} />
+src/components/hero/desk/DeskCanvas.tsx-410-      </Environment>
+src/components/hero/desk/DeskCanvas.tsx-411-
+src/components/hero/desk/DeskCanvas.tsx-412-      <WindowShadow />
+src/components/hero/desk/DeskCanvas.tsx-413-
+src/components/hero/desk/DeskCanvas.tsx-414-      <Desk {...props} />
+src/components/hero/desk/DeskCanvas.tsx-415-    </Canvas>
+src/components/hero/desk/DeskCanvas.tsx-416-  );
+src/components/hero/desk/DeskCanvas.tsx-417-}
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:26Z)**_
+
+Plan: (1) leaf shadows = swaying alpha-cut leaf planes that only cast the sun's shadow, (2) warmer, dimmer day light and a heavier vignette. Writing the foliage first.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:45Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```typescript
+"use client";
+
+import { useFrame } from "@react-three/fiber";
+import { useMemo, useRef } from "react";
+import * as THREE from "three";
+
+/*
+ * Dappled light: leafy branches outside the window, between the sun and the
+ * desk. They never draw (no colour, no depth); they only cast the sun's soft
+ * shadow, and sway a little so the shade moves across the desk like a breeze.
+ */
+
+/* the sun sits at (-9, 20, 12) aiming at the origin: a desk point (x, z) is shaded from height h at this offset */
+const SUN = new THREE.Vector3(-9, 20, 12).normalize();
+const overDesk = (x: number, z: number, h: number) => [x + (SUN.x / SUN.y) * h, h, z + (SUN.z / SUN.y) * h] as const;
+
+/* a small seeded random, so every visit draws the same tree */
+function rng(seed: number) {
+  let s = seed;
+  return () => {
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+function branchTexture(seed: number) {
+  const size = 1024;
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const ctx = c.getContext("2d")!;
+  const rand = rng(seed);
+  ctx.fillStyle = "#000";
+  ctx.strokeStyle = "#000";
+  ctx.lineCap = "round";
+
+  const leaf = (x: number, y: number, a: number, l: number) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(a);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(l * 0.5, -l * 0.32, l, 0);
+    ctx.quadraticCurveTo(l * 0.5, l * 0.32, 0, 0);
+    ctx.fill();
+    ctx.restore();
+  };
+
+  const branch = (x: number, y: number, a: number, len: number, w: number, depth: number) => {
+    const steps = 9;
+    let px = x;
+    let py = y;
+    let ang = a;
+    for (let i = 0; i < steps; i++) {
+      ang += (rand() - 0.5) * 0.25;
+      const nx = px + Math.cos(ang) * (len / steps);
+      const ny = py + Math.sin(ang) * (len / steps);
+      ctx.lineWidth = w * (1 - i / steps) + 1;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(nx, ny);
+      ctx.stroke();
+      /* leaves on both sides, denser towards the tip */
+      if (i > 1) {
+        for (const side of [-1, 1]) {
+          if (rand() < 0.85) leaf(nx, ny, ang + side * (0.6 + rand() * 0.6), 34 + rand() * 30);
+        }
+      }
+      if (depth > 0 && i > 2 && rand() < 0.3) branch(nx, ny, ang + (rand() < 0.5 ? -1 : 1) * (0.5 + rand() * 0.4), len * 0.5, w * 0.5, depth - 1);
+      px = nx;
+      py = ny;
+    }
+    leaf(px, py, ang, 44);
+  };
+
+  /* boughs reach in from one edge, so the shade falls in from beyond the frame */
+  for (let i = 0; i < 3; i++) {
+    branch(0, size * (0.2 + i * 0.3 + rand() * 0.1), -0.2 + rand() * 0.4, size * (0.75 + rand() * 0.2), 14, 2);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.NoColorSpace;
+  return tex;
+}
+
+/* where each bough sits: desk point it shades, height, size, turn, sway phase */
+const BOUGHS = [
+  { at: [-9, -4.5], h: 11, size: 12, rot: 0.3, phase: 0 },
+  { at: [-6, 3.5], h: 13, size: 11, rot: -0.5, phase: 1.7 },
+  { at: [4, -6], h: 12, size: 10, rot: 2.4, phase: 3.1 },
+] as const;
+
+export function Foliage({ reduced }: { reduced: boolean }) {
+  const groups = useRef<(THREE.Group | null)[]>([]);
+  const parts = useMemo(
+    () =>
+      BOUGHS.map((b, i) => {
+        const map = branchTexture(7 + i * 131);
+        return {
+          ...b,
+          pos: overDesk(b.at[0], b.at[1], b.h),
+          depth: new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, alphaMap: map, alphaTest: 0.5, side: THREE.DoubleSide }),
+          alpha: map,
+        };
+      }),
+    [],
+  );
+
+  useFrame(({ clock }) => {
+    if (reduced) return;
+    const t = clock.elapsedTime;
+    parts.forEach((p, i) => {
+      const g = groups.current[i];
+      if (!g) return;
+      /* a slow lean with a quicker flutter on top, never quite repeating */
+      const gust = Math.sin(t * 0.35 + p.phase) * 0.5 + 0.5;
+      g.rotation.y = p.rot + Math.sin(t * 0.6 + p.phase) * 0.035 + Math.sin(t * 1.9 + p.phase * 2) * 0.012 * gust;
+      g.position.x = p.pos[0] + Math.sin(t * 0.45 + p.phase) * 0.18;
+      g.position.z = p.pos[2] + Math.sin(t * 0.7 + p.phase * 1.3) * 0.12 * (0.4 + gust);
+    });
+  });
+
+  return (
+    <>
+      {parts.map((p, i) => (
+        <group key={i} ref={(g) => void (groups.current[i] = g)} position={p.pos as unknown as THREE.Vector3Tuple} rotation-y={p.rot}>
+          <mesh rotation-x={-Math.PI / 2} castShadow customDepthMaterial={p.depth}>
+            <planeGeometry args={[p.size, p.size]} />
+            <meshBasicMaterial colorWrite={false} depthWrite={false} alphaMap={p.alpha} alphaTest={0.5} transparent />
+          </mesh>
+        </group>
+      ))}
+    </>
+  );
+}
+
+```
+
+```text
+File created successfully at: C:\Portfolio\src\components\hero\desk\foliage.tsx (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:49Z)**_
+
+alphaMap reads the green channel, so the leaves have to be white on black. Fixing that.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:53Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\hero\desk\foliage.tsx has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:54Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\hero\desk\DeskCanvas.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:55Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\hero\desk\DeskCanvas.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:56Z)**_
+
+Now dimmer, warmer day light and a heavier day vignette.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:58:07Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\hero\desk\lighting.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:58:08Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\app\globals.css has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:58:50Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Typecheck, lint, screenshot leaf shadows
+
+```bash
+npx tsc --noEmit && npx eslint src/components/hero/desk && echo OK; cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && cat > leaf.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const b = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  p.on("pageerror", (e) => console.log("PAGEERROR", e.message));
+  p.on("console", (m) => { if (m.type() === "error" && !m.text().includes("X4122")) console.log("CONSOLE", m.text().slice(0, 300)); });
+  await p.goto("http://localhost:3000", { waitUntil: "load", timeout: 240000 });
+  await p.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+  await p.waitForTimeout(2500);
+  await p.screenshot({ path: "l-0.png" });
+  await p.waitForTimeout(2500);
+  await p.screenshot({ path: "l-1.png" });
+  await b.close();
+})();
+EOF
+node leaf.js
+```
+
+```text
+OK
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:58:53Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:58:58Z)**_
+
+Day light is warmer and dimmer now, but the leaf shadows don't show. Making the leaf planes visible for one shot to debug.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:59:26Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Temporarily show leaf planes and screenshot
+
+`sed -i 's|<meshBasicMaterial colorWrite={false} depthWrite={false} alphaMap={p.alpha} alphaTest={0.5} transparent />|<meshBasicMaterial color="red" alphaMap={p.alpha} alphaTest={0.5} transparent />|' src/components/hero/desk/foliage.tsx && grep -n 'color="red"' src/components/hero/desk/foliage.tsx && cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js`
+
+```text
+130:            <meshBasicMaterial color="red" alphaMap={p.alpha} alphaTest={0.5} transparent />
+Shell cwd was reset to c:\Portfolio
+[This command modified 1 file you've previously read: src\components\hero\desk\foliage.tsx. Call Read before editing.]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:59:28Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:59:42Z)**_
+
+Only a red sliver shows: the planes sit off-frame and the shadow is too weak to see. Moving the boughs over the visible desk and making the sun dominate the fill light.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:59:43Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Portfolio\src\components\hero\desk\foliage.tsx`
+
+```text
+88	const BOUGHS = [
+89	  { at: [-9, -4.5], h: 11, size: 12, rot: 0.3, phase: 0 },
+90	  { at: [-6, 3.5], h: 13, size: 11, rot: -0.5, phase: 1.7 },
+91	  { at: [4, -6], h: 12, size: 10, rot: 2.4, phase: 3.1 },
+92	] as const;
+93	
+94	export function Foliage({ reduced }: { reduced: boolean }) {
+95	  const groups = useRef<(THREE.Group | null)[]>([]);
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:59:52Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\hero\desk\foliage.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:59:53Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\hero\desk\lighting.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:00:17Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Screenshot with repositioned boughs
+
+`cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js`
+
+```text
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:00:20Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:00:24Z)**_
+
+The planes and alpha cut-out work, but the boughs are too sparse. Making the foliage denser and hiding the planes again.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:00:30Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Densify foliage and restore invisible planes
+
+`sed -i 's|<meshBasicMaterial color="red" alphaMap={p.alpha} alphaTest={0.5} transparent />|<meshBasicMaterial colorWrite={false} depthWrite={false} />|' src/components/hero/desk/foliage.tsx && sed -i 's|if (rand() < 0.85) leaf(nx, ny, ang + side \* (0.6 + rand() \* 0.6), 34 + rand() \* 30);|leaf(nx, ny, ang + side * (0.5 + rand() * 0.7), 60 + rand() * 45);\n          if (rand() < 0.6) leaf(nx, ny, ang + side * (1.1 + rand() * 0.5), 45 + rand() * 35);|' src/components/hero/desk/foliage.tsx && sed -i 's|depth > 0 \&\& i > 2 \&\& rand() < 0.3|depth > 0 \&\& i > 1 \&\& rand() < 0.45|; s|for (let i = 0; i < 3; i++) {|for (let i = 0; i < 5; i++) {|; s|branch(0, size \* (0.2 + i \* 0.3 + rand() \* 0.1)|branch(0, size * (0.1 + i * 0.2 + rand() * 0.08)|' src/components/hero/desk/foliage.tsx && grep -n "leaf(nx\|depth > 0\|i < 5\|0.1 + i\|colorWrite" src/components/hero/desk/foliage.tsx`
+
+```text
+68:          leaf(nx, ny, ang + side * (0.5 + rand() * 0.7), 60 + rand() * 45);
+69:          if (rand() < 0.6) leaf(nx, ny, ang + side * (1.1 + rand() * 0.5), 45 + rand() * 35);
+72:      if (depth > 0 && i > 1 && rand() < 0.45) branch(nx, ny, ang + (rand() < 0.5 ? -1 : 1) * (0.5 + rand() * 0.4), len * 0.5, w * 0.5, depth - 1);
+80:  for (let i = 0; i < 5; i++) {
+81:    branch(0, size * (0.1 + i * 0.2 + rand() * 0.08), -0.2 + rand() * 0.4, size * (0.75 + rand() * 0.2), 14, 2);
+131:            <meshBasicMaterial colorWrite={false} depthWrite={false} />
+[This command modified 1 file you've previously read: src\components\hero\desk\foliage.tsx. Call Read before editing.]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:00:58Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Screenshot leaf shadows
+
+`cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js`
+
+```text
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:01:00Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:01:04Z)**_
+
+Leaf shade now shows on the wood, the mat and the folder. Checking that it moves, then lint.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:01:28Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Confirm shadow motion, typecheck, lint
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && python -c "
+from PIL import Image, ImageChops
+a=Image.open('l-0.png').convert('L'); b=Image.open('l-1.png').convert('L')
+d=ImageChops.difference(a,b); print('mean diff', sum(d.getdata())/(d.width*d.height))
+"; cd /c/Portfolio && npx tsc --noEmit && npx eslint src && echo OK
+```
+
+```text
+<string>:4: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  d=ImageChops.difference(a,b); print('mean diff', sum(d.getdata())/(d.width*d.height))
+mean diff 0.0020609567901234568
+OK
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:01:32Z)**_
+
+The frames are identical, so the shadow isn't moving. Checking whether shadow-map updates are frozen somewhere.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:01:33Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ path `C:\Portfolio\src\components\hero\desk` pattern `autoUpdate|needsUpdate = true|shadowMap`
+
+```text
+src\components\hero\desk\lighting.tsx:114:      this.spot.shadow.autoUpdate = this.lamp > 0 || this.spot.shadow.map === null;
+src\components\hero\desk\room.tsx:29:        c.needsUpdate = true;
+src\components\hero\desk\flashlight.tsx:210:      this.spot.shadow.autoUpdate = this.spot.intensity > 0 || this.spot.shadow.map === null;
+src\components\hero\desk\aquarium.tsx:958:    mesh.instanceMatrix.needsUpdate = true;
+src\components\hero\desk\wall.tsx:83:    m.instanceMatrix.needsUpdate = true;
+src\components\hero\desk\wall.tsx:84:    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:02:05Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Retest motion with motion allowed
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sed -i 's|const p = await b.newPage({ viewport: { width: 1440, height: 900 } });|const p = await b.newPage({ viewport: { width: 1440, height: 900 }, reducedMotion: "no-preference" });\n  await p.emulateMedia({ reducedMotion: "no-preference" });|' leaf.js && node -e "
+" && node leaf.js && python -c "
+from PIL import Image, ImageChops
+a=Image.open('l-0.png').convert('L'); b=Image.open('l-1.png').convert('L')
+d=ImageChops.difference(a,b); import statistics; print('mean diff', sum(d.get_flattened_data())/(d.width*d.height), d.getbbox())
+"
+```
+
+```text
+mean diff 0.0026419753086419752 (1208, 272, 1326, 299)
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:02:07Z)**_
+
+Only the badge changed, so the canvas isn't redrawing when idle. Checking for a render-on-demand gate.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:02:08Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ path `C:\Portfolio\src\components\hero` pattern `frameloop|invalidate|setFrameloop|demand`
+
+```text
+src\components\hero\desk\DeskCanvas.tsx:395:      frameloop={active ? "always" : "never"}
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:02:44Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Test with exaggerated sway
+
+```bash
+sed -i 's|Math.sin(t \* 0.6 + p.phase) \* 0.035|Math.sin(t * 0.6 + p.phase) * 0.6|' src/components/hero/desk/foliage.tsx && grep -c "\* 0.6 +" src/components/hero/desk/foliage.tsx; cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js && python -c "
+from PIL import Image, ImageChops
+a=Image.open('l-0.png').convert('L'); b=Image.open('l-1.png').convert('L')
+d=ImageChops.difference(a,b); print('mean diff', sum(d.get_flattened_data())/(d.width*d.height), d.getbbox())
+"
+```
+
+```text
+1
+mean diff 0.0029776234567901235 (1210, 274, 1326, 299)
+Shell cwd was reset to c:\Portfolio
+[This command modified 1 file you've previously read: src\components\hero\desk\foliage.tsx. Call Read before editing.]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:02:49Z)**_
+
+Still frozen even with a big sway. Checking whether the whole canvas is static in headless (fish test).
+
+_**Agent (claude-opus-5-5 2026-10-29 15:03:15Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Measure rAF rate and frame change
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && cat > fishmove.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const b = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  await p.goto("http://localhost:3000", { waitUntil: "load", timeout: 240000 });
+  await p.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+  await p.waitForTimeout(2000);
+  const fps = await p.evaluate(() => new Promise((r) => { let n = 0; const t0 = performance.now(); const f = () => { n++; if (performance.now() - t0 < 1000) requestAnimationFrame(f); else r(n); }; requestAnimationFrame(f); }));
+  console.log("rAF/s", fps);
+  await p.screenshot({ path: "m-0.png" });
+  await p.mouse.move(300, 300); await p.waitForTimeout(1500); await p.mouse.move(310, 310);
+  await p.screenshot({ path: "m-1.png" });
+  await b.close();
+})();
+EOF
+node fishmove.js && python -c "
+from PIL import Image, ImageChops
+a=Image.open('m-0.png').convert('L'); b=Image.open('m-1.png').convert('L')
+d=ImageChops.difference(a,b); print('mean diff', sum(d.get_flattened_data())/(d.width*d.height), d.getbbox())
+"
+```
+
+```text
+rAF/s 103
+mean diff 1.1157993827160493 (32, 210, 1403, 900)
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:03:17Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\m-1.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:03:21Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ path `C:\Portfolio\src` pattern `shadowMap|shadow\.autoUpdate|matrixAutoUpdate|matrixWorldAutoUpdate`
+
+```text
+src\components\hero\desk\flashlight.tsx:210:      this.spot.shadow.autoUpdate = this.spot.intensity > 0 || this.spot.shadow.map === null;
+src\components\hero\desk\lighting.tsx:114:      this.spot.shadow.autoUpdate = this.lamp > 0 || this.spot.shadow.map === null;
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:03:26Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Portfolio\src\components\hero\desk\foliage.tsx`
+
+```text
+94	
+95	export function Foliage({ reduced }: { reduced: boolean }) {
+96	  const groups = useRef<(THREE.Group | null)[]>([]);
+97	  const parts = useMemo(
+98	    () =>
+99	      BOUGHS.map((b, i) => {
+100	        const map = branchTexture(7 + i * 131);
+101	        return {
+102	          ...b,
+103	          pos: overDesk(b.at[0], b.at[1], b.h),
+104	          depth: new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, alphaMap: map, alphaTest: 0.5, side: THREE.DoubleSide }),
+105	          alpha: map,
+106	        };
+107	      }),
+108	    [],
+109	  );
+110	
+111	  useFrame(({ clock }) => {
+112	    if (reduced) return;
+113	    const t = clock.elapsedTime;
+114	    parts.forEach((p, i) => {
+115	      const g = groups.current[i];
+116	      if (!g) return;
+117	      /* a slow lean with a quicker flutter on top, never quite repeating */
+118	      const gust = Math.sin(t * 0.35 + p.phase) * 0.5 + 0.5;
+119	      g.rotation.y = p.rot + Math.sin(t * 0.6 + p.phase) * 0.6 + Math.sin(t * 1.9 + p.phase * 2) * 0.012 * gust;
+120	      g.position.x = p.pos[0] + Math.sin(t * 0.45 + p.phase) * 0.18;
+121	      g.position.z = p.pos[2] + Math.sin(t * 0.7 + p.phase * 1.3) * 0.12 * (0.4 + gust);
+122	    });
+123	  });
+124	
+125	  return (
+126	    <>
+127	      {parts.map((p, i) => (
+128	        <group key={i} ref={(g) => void (groups.current[i] = g)} position={p.pos as unknown as THREE.Vector3Tuple} rotation-y={p.rot}>
+129	          <mesh rotation-x={-Math.PI / 2} castShadow customDepthMaterial={p.depth}>
+130	            <planeGeometry args={[p.size, p.size]} />
+131	            <meshBasicMaterial colorWrite={false} depthWrite={false} />
+132	          </mesh>
+133	        </group>
+134	      ))}
+135	    </>
+136	  );
+137	}
+138
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:04:01Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Debug: visible planes, check movement
+
+```bash
+sed -i 's|<meshBasicMaterial colorWrite={false} depthWrite={false} />|<meshBasicMaterial color="red" alphaMap={p.alpha} alphaTest={0.5} transparent />|' src/components/hero/desk/foliage.tsx && cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js && python -c "
+from PIL import Image, ImageChops
+a=Image.open('l-0.png').convert('L'); b=Image.open('l-1.png').convert('L')
+d=ImageChops.difference(a,b); print('mean diff', sum(d.get_flattened_data())/(d.width*d.height), d.getbbox())
+"
+```
+
+```text
+mean diff 13.99186188271605 (0, 0, 1440, 900)
+Shell cwd was reset to c:\Portfolio
+[This command modified 1 file you've previously read: src\components\hero\desk\foliage.tsx. Call Read before editing.]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:04:04Z)**_
+
+The planes move, so the sun's shadow map must be frozen. Looking for drei's BakeShadows.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:04:05Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ path `C:\Portfolio\src` pattern `BakeShadows|SoftShadows|AccumulativeShadows|ContactShadows`
+
+```text
+No matches found
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:04:24Z)**_
+
+Planes move but the shade seems static. Running a controlled A/B with Foliage removed, to confirm the streaks really come from it.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:04:51Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Screenshot without Foliage for A/B
+
+`sed -i 's|<meshBasicMaterial color="red" alphaMap={p.alpha} alphaTest={0.5} transparent />|<meshBasicMaterial colorWrite={false} depthWrite={false} />|' src/components/hero/desk/foliage.tsx && sed -i 's|      <Foliage reduced={props.reduced} />|      {/* <Foliage reduced={props.reduced} /> */}|' src/components/hero/desk/DeskCanvas.tsx && cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js && cp l-0.png nofol.png`
+
+```text
+Shell cwd was reset to c:\Portfolio
+[This command modified 2 files you've previously read: src\components\hero\desk\DeskCanvas.tsx, src\components\hero\desk\foliage.tsx. Call Read before editing.]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:04:54Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\nofol.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:04:59Z)**_
+
+The streaks are just the window-bar shadow, so the foliage casts nothing. Checking how three r186 builds the shadow depth material.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:05:01Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read three getDepthMaterial source
+
+`grep -n "function getDepthMaterial" -A50 node_modules/three/src/renderers/webgl/WebGLShadowMap.js | head -70`
+
+```text
+429:	function getDepthMaterial( object, material, light, type ) {
+430-
+431-		let result = null;
+432-
+433-		const customMaterial = ( light.isPointLight === true ) ? object.customDistanceMaterial : object.customDepthMaterial;
+434-
+435-		if ( customMaterial !== undefined ) {
+436-
+437-			result = customMaterial;
+438-
+439-		} else {
+440-
+441-			result = ( light.isPointLight === true ) ? _distanceMaterial : _depthMaterial;
+442-
+443-			if ( ( renderer.localClippingEnabled && material.clipShadows === true && Array.isArray( material.clippingPlanes ) && material.clippingPlanes.length !== 0 ) ||
+444-				( material.displacementMap && material.displacementScale !== 0 ) ||
+445-				( material.alphaMap && material.alphaTest > 0 ) ||
+446-				( material.map && material.alphaTest > 0 ) ||
+447-				( material.alphaToCoverage === true ) ) {
+448-
+449-				// in this case we need a unique material instance reflecting the
+450-				// appropriate state
+451-
+452-				const keyA = result.uuid, keyB = material.uuid;
+453-
+454-				let materialsForVariant = _materialCache[ keyA ];
+455-
+456-				if ( materialsForVariant === undefined ) {
+457-
+458-					materialsForVariant = {};
+459-					_materialCache[ keyA ] = materialsForVariant;
+460-
+461-				}
+462-
+463-				let cachedMaterial = materialsForVariant[ keyB ];
+464-
+465-				if ( cachedMaterial === undefined ) {
+466-
+467-					cachedMaterial = result.clone();
+468-					materialsForVariant[ keyB ] = cachedMaterial;
+469-					material.addEventListener( 'dispose', onMaterialDispose );
+470-
+471-				}
+472-
+473-				result = cachedMaterial;
+474-
+475-			}
+476-
+477-		}
+478-
+479-		result.visible = material.visible;
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:05:05Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read rest of depth material logic
+
+`sed -n 479,520p node_modules/three/src/renderers/webgl/WebGLShadowMap.js; grep -n "renderObject( object, camera, shadowCamera" -A30 node_modules/three/src/renderers/webgl/WebGLShadowMap.js | grep -n "castShadow\|visible\|frustum" `
+
+```text
+		result.visible = material.visible;
+		result.wireframe = material.wireframe;
+
+		if ( type === VSMShadowMap ) {
+
+			result.side = ( material.shadowSide !== null ) ? material.shadowSide : material.side;
+
+		} else {
+
+			result.side = ( material.shadowSide !== null ) ? material.shadowSide : shadowSide[ material.side ];
+
+		}
+
+		result.alphaMap = material.alphaMap;
+		result.alphaTest = ( material.alphaToCoverage === true ) ? 0.5 : material.alphaTest; // approximate alphaToCoverage by using a fixed alphaTest value
+		result.map = material.map;
+
+		result.clipShadows = material.clipShadows;
+		result.clippingPlanes = material.clippingPlanes;
+		result.clipIntersection = material.clipIntersection;
+
+		result.displacementMap = material.displacementMap;
+		result.displacementScale = material.displacementScale;
+		result.displacementBias = material.displacementBias;
+
+		result.wireframeLinewidth = material.wireframeLinewidth;
+		result.linewidth = material.linewidth;
+
+		if ( light.isPointLight === true && result.isMeshDistanceMaterial === true ) {
+
+			const materialProperties = renderer.properties.get( result );
+			materialProperties.light = light;
+
+		}
+
+		return result;
+
+	}
+
+	function renderObject( object, camera, shadowCamera, light, type ) {
+
+		if ( object.visible === false ) return;
+3:520-		if ( object.visible === false ) return;
+5:522-		const visible = object.layers.test( camera.layers );
+7:524-		if ( visible && ( object.isMesh || object.isLine || object.isPoints ) ) {
+9:526-			if ( ( object.castShadow || ( object.receiveShadow && type === VSMShadowMap ) ) && ( ! object.frustumCulled || object.intersectsFrustum( _frustum ) ) ) {
+25:542-						if ( groupMaterial && groupMaterial.visible ) {
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:05:12Z)**_
+
+<think><details><summary>Thought Process</summary>
+Found it: in three r186 the shadow pass copies `alphaMap`, `alphaTest`, and `side` from the mesh's own material, overriding the custom depth material and culling the front-facing plane. I'll fix this by setting alpha and DoubleSide directly on the mesh material.
+
+</details></think>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:05:43Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Fix shadow material, restore Foliage, retest
+
+```bash
+python - <<'EOF'
+p = r"C:\Portfolio\src\components\hero\desk\foliage.tsx"
+s = open(p, encoding="utf8").read()
+pairs = [
+ ('''        const map = branchTexture(7 + i * 131);
+        return {
+          ...b,
+          pos: overDesk(b.at[0], b.at[1], b.h),
+          depth: new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, alphaMap: map, alphaTest: 0.5, side: THREE.DoubleSide }),
+          alpha: map,
+        };''', '''        return { ...b, pos: overDesk(b.at[0], b.at[1], b.h), alpha: branchTexture(7 + i * 131) };'''),
+ ('''          <mesh rotation-x={-Math.PI / 2} castShadow customDepthMaterial={p.depth}>
+            <planeGeometry args={[p.size, p.size]} />
+            <meshBasicMaterial colorWrite={false} depthWrite={false} />''', '''          <mesh rotation-x={-Math.PI / 2} castShadow>
+            <planeGeometry args={[p.size, p.size]} />
+            {/* the shadow pass takes its cut-out and sides from this material, so they live here */}
+            <meshBasicMaterial colorWrite={false} depthWrite={false} alphaMap={p.alpha} alphaTest={0.5} side={THREE.DoubleSide} />'''),
+ ('''Math.sin(t * 0.6 + p.phase) * 0.6 +''', '''Math.sin(t * 0.6 + p.phase) * 0.035 +'''),
+]
+for a, b in pairs:
+    assert s.count(a) == 1, a[:50]
+    s = s.replace(a, b)
+open(p, "w", encoding="utf8").write(s)
+d = r"C:\Portfolio\src\components\hero\desk\DeskCanvas.tsx"
+s = open(d, encoding="utf8").read()
+a = "      {/* <Foliage reduced={props.reduced} /> */}"
+assert s.count(a) == 1
+open(d, "w", encoding="utf8").write(s.replace(a, "      <Foliage reduced={props.reduced} />"))
+print("ok")
+EOF
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js && python -c "
+from PIL import Image, ImageChops
+a=Image.open('l-0.png').convert('L'); b=Image.open('l-1.png').convert('L')
+d=ImageChops.difference(a,b); print('mean diff', sum(d.get_flattened_data())/(d.width*d.height), d.getbbox())
+"
+```
+
+```text
+ok
+mean diff 2.3774212962962964 (0, 0, 1440, 900)
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:05:46Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:05:50Z)**_
+
+The leaves cast now, but the canopy covers too much of the desk. Thinning it and keeping the centre in sunlight.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:06:24Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Thin foliage, lift fill light, reshoot
+
+```bash
+python - <<'EOF'
+p = r"C:\Portfolio\src\components\hero\desk\foliage.tsx"
+s = open(p, encoding="utf8").read()
+pairs = [
+ ("leaf(nx, ny, ang + side * (0.5 + rand() * 0.7), 60 + rand() * 45);", "if (rand() < 0.8) leaf(nx, ny, ang + side * (0.5 + rand() * 0.7), 44 + rand() * 34);"),
+ ("if (rand() < 0.6) leaf(nx, ny, ang + side * (1.1 + rand() * 0.5), 45 + rand() * 35);", "if (rand() < 0.25) leaf(nx, ny, ang + side * (1.1 + rand() * 0.5), 36 + rand() * 26);"),
+ ("depth > 0 && i > 1 && rand() < 0.45", "depth > 0 && i > 2 && rand() < 0.3"),
+ ("for (let i = 0; i < 5; i++) {", "for (let i = 0; i < 3; i++) {"),
+ ("branch(0, size * (0.1 + i * 0.2 + rand() * 0.08)", "branch(0, size * (0.15 + i * 0.32 + rand() * 0.08)"),
+ ("""  { at: [-6, -1], h: 8, size: 12, rot: 0.3, phase: 0 },
+  { at: [-2, 4], h: 9, size: 11, rot: -0.5, phase: 1.7 },
+  { at: [6, -3], h: 8.5, size: 11, rot: 2.6, phase: 3.1 },""", """  { at: [-9, 0], h: 8, size: 12, rot: 0.2, phase: 0 },
+  { at: [-3, 6], h: 9, size: 10, rot: -0.6, phase: 1.7 },
+  { at: [9, -4], h: 8.5, size: 11, rot: 2.8, phase: 3.1 },"""),
+]
+for a, b in pairs:
+    assert s.count(a) == 1, a[:50]
+    s = s.replace(a, b)
+open(p, "w", encoding="utf8").write(s)
+l = r"C:\Portfolio\src\components\hero\desk\lighting.tsx"
+s = open(l, encoding="utf8").read()
+for a, b in [("  hemi: 0.42,\n", "  hemi: 0.55,\n"), ("  env: 0.4,\n", "  env: 0.5,\n")]:
+    assert s.count(a) == 1, a
+    s = s.replace(a, b)
+open(l, "w", encoding="utf8").write(s)
+print("ok")
+EOF
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js
+```
+
+```text
+ok
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:06:26Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:06:29Z)**_
+
+Close to the Oryzo look: dappled shade at the edges, sunlit middle. Final checks.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:06:51Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Typecheck, lint, show changed files
+
+`npx tsc --noEmit && npx eslint src && echo OK && git status --short`
+
+```text
+OK
+ M .specstory/history/2026-10-29_11-38-34Z-im-plannng-to-add.md
+ M src/app/globals.css
+ M src/components/hero/DeskHero.tsx
+ M src/components/hero/desk/DeskCanvas.tsx
+ M src/components/hero/desk/lighting.tsx
+ M src/components/layout/MobileNav.tsx
+ M src/components/layout/Nav.tsx
+ M src/lib/chapters.ts
+?? src/components/hero/desk/foliage.tsx
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:07:00Z)**_
+
+The day view is now warm and dim like Oryzo, and leaf shadows sway slowly across the desk. I compared it in screenshots: shade sits on the wood around the polaroids and the top and right of the mat, the middle stays in sunlight, and two frames a few seconds apart differ, so it moves. tsc and eslint pass.
+
+**Light** ([lighting.tsx](src/components/hero/desk/lighting.tsx), [globals.css](src/app/globals.css))
+- The overall light and reflections are lower and the sun is golden. This took out the washed-out white look.
+- The dark edges around the hero are stronger, so it looks like a room rather than a lit box.
+
+**Leaf shadows** (new [foliage.tsx](src/components/hero/desk/foliage.tsx))
+- Three invisible leafy branches sit between the sun and the desk and only cast its soft shadow.
+- They are drawn in code, so there are no image files to load, and each visit draws the same tree.
+- They sway with a slow lean and a quicker flutter. With reduced motion turned on, they hold still.
+- At night the sun is very dim, so the leaves almost vanish and the lamp takes over.
+
+One thing to know if you touch this later: in three r186 the shadow pass takes the leaf cut-out and which side faces up from the mesh's own material, not from a separate shadow material. My first version set them on a separate shadow material, so the leaves cast nothing. The cut-out now lives on the mesh material, with a comment there.
+
+You can tune it in [foliage.tsx](src/components/hero/desk/foliage.tsx):
+- **How much shade:** the `BOUGHS` list (where each branch sits, and its size).
+- **How much leaf:** the leaf odds and sizes inside `branch()`.
+- **Darker or lighter shade:** `hemi` and `env` in `DAY` in [lighting.tsx](src/components/hero/desk/lighting.tsx).
+
+Nothing is committed. The work is on `fix/drop-ponytail-gitlink`, and `foliage.tsx` is a new file that git isn't tracking yet.
+
+---
+
+_**User (2026-10-29 15:12:15Z)**_
+
+add more leaves small leaves, visit https://oryzo.ai/ so tat you will now about the leaves shadows in the home. /caveman
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 15:12:21Z)**_
+
+Visiting oryzo.ai to study its leaf shadows.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:12:51Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Screenshot oryzo.ai twice
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && cat > oryzo.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const b = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  await p.goto("https://oryzo.ai/", { waitUntil: "load", timeout: 120000 });
+  await p.waitForTimeout(12000);
+  await p.screenshot({ path: "o-0.png" });
+  await p.waitForTimeout(3000);
+  await p.screenshot({ path: "o-1.png" });
+  await p.screenshot({ path: "o-crop.png", clip: { x: 0, y: 300, width: 720, height: 600 } });
+  await b.close();
+})();
+EOF
+node oryzo.js && python -c "
+from PIL import Image, ImageChops
+a=Image.open('o-0.png').convert('L'); b=Image.open('o-1.png').convert('L')
+d=ImageChops.difference(a,b); print('diff', sum(d.get_flattened_data())/(d.width*d.height), d.getbbox())"
+```
+
+```text
+diff 0.7813479938271605 (0, 0, 1440, 900)
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:12:54Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\o-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:12:55Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\o-crop.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:13:01Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Crop oryzo top-right shade area
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && python -c "
+from PIL import Image
+Image.open('o-0.png').crop((720,0,1440,450)).resize((1080,675)).save('o-tr.png')"
+```
+
+```text
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:13:04Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\o-tr.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:13:16Z)**_
+
+<think><details><summary>Thought Process</summary>
+I'll rework the texture to depict Oryzo's shade as clusters of small, soft leaves with low-contrast mottling and sunflecks concentrated toward the top-right, rather than a few large branches.
+
+</details></think>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:13:16Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Portfolio\src\components\hero\desk\foliage.tsx`
+
+```text
+1	"use client";
+2	
+3	import { useFrame } from "@react-three/fiber";
+4	import { useMemo, useRef } from "react";
+5	import * as THREE from "three";
+6	
+7	/*
+8	 * Dappled light: leafy branches outside the window, between the sun and the
+9	 * desk. They never draw (no colour, no depth); they only cast the sun's soft
+10	 * shadow, and sway a little so the shade moves across the desk like a breeze.
+11	 */
+12	
+13	/* the sun sits at (-9, 20, 12) aiming at the origin: a desk point (x, z) is shaded from height h at this offset */
+14	const SUN = new THREE.Vector3(-9, 20, 12).normalize();
+15	const overDesk = (x: number, z: number, h: number) => [x + (SUN.x / SUN.y) * h, h, z + (SUN.z / SUN.y) * h] as const;
+16	
+17	/* a small seeded random, so every visit draws the same tree */
+18	function rng(seed: number) {
+19	  let s = seed;
+20	  return () => {
+21	    s = (s * 16807) % 2147483647;
+22	    return (s - 1) / 2147483646;
+23	  };
+24	}
+25	
+26	function branchTexture(seed: number) {
+27	  const size = 1024;
+28	  const c = document.createElement("canvas");
+29	  c.width = c.height = size;
+30	  const ctx = c.getContext("2d")!;
+31	  const rand = rng(seed);
+32	  /* alpha maps read brightness: white is leaf, black lets the sun through */
+33	  ctx.fillStyle = "#000";
+34	  ctx.fillRect(0, 0, size, size);
+35	  ctx.fillStyle = "#fff";
+36	  ctx.strokeStyle = "#fff";
+37	  ctx.lineCap = "round";
+38	
+39	  const leaf = (x: number, y: number, a: number, l: number) => {
+40	    ctx.save();
+41	    ctx.translate(x, y);
+42	    ctx.rotate(a);
+43	    ctx.beginPath();
+44	    ctx.moveTo(0, 0);
+45	    ctx.quadraticCurveTo(l * 0.5, -l * 0.32, l, 0);
+46	    ctx.quadraticCurveTo(l * 0.5, l * 0.32, 0, 0);
+47	    ctx.fill();
+48	    ctx.restore();
+49	  };
+50	
+51	  const branch = (x: number, y: number, a: number, len: number, w: number, depth: number) => {
+52	    const steps = 9;
+53	    let px = x;
+54	    let py = y;
+55	    let ang = a;
+56	    for (let i = 0; i < steps; i++) {
+57	      ang += (rand() - 0.5) * 0.25;
+58	      const nx = px + Math.cos(ang) * (len / steps);
+59	      const ny = py + Math.sin(ang) * (len / steps);
+60	      ctx.lineWidth = w * (1 - i / steps) + 1;
+61	      ctx.beginPath();
+62	      ctx.moveTo(px, py);
+63	      ctx.lineTo(nx, ny);
+64	      ctx.stroke();
+65	      /* leaves on both sides, denser towards the tip */
+66	      if (i > 1) {
+67	        for (const side of [-1, 1]) {
+68	          if (rand() < 0.8) leaf(nx, ny, ang + side * (0.5 + rand() * 0.7), 44 + rand() * 34);
+69	          if (rand() < 0.25) leaf(nx, ny, ang + side * (1.1 + rand() * 0.5), 36 + rand() * 26);
+70	        }
+71	      }
+72	      if (depth > 0 && i > 2 && rand() < 0.3) branch(nx, ny, ang + (rand() < 0.5 ? -1 : 1) * (0.5 + rand() * 0.4), len * 0.5, w * 0.5, depth - 1);
+73	      px = nx;
+74	      py = ny;
+75	    }
+76	    leaf(px, py, ang, 44);
+77	  };
+78	
+79	  /* boughs reach in from one edge, so the shade falls in from beyond the frame */
+80	  for (let i = 0; i < 3; i++) {
+81	    branch(0, size * (0.15 + i * 0.32 + rand() * 0.08), -0.2 + rand() * 0.4, size * (0.75 + rand() * 0.2), 14, 2);
+82	  }
+83	  const tex = new THREE.CanvasTexture(c);
+84	  tex.colorSpace = THREE.NoColorSpace;
+85	  return tex;
+86	}
+87	
+88	/* where each bough sits: desk point it shades, height, size, turn, sway phase */
+89	const BOUGHS = [
+90	  { at: [-9, 0], h: 8, size: 12, rot: 0.2, phase: 0 },
+91	  { at: [-3, 6], h: 9, size: 10, rot: -0.6, phase: 1.7 },
+92	  { at: [9, -4], h: 8.5, size: 11, rot: 2.8, phase: 3.1 },
+93	] as const;
+94	
+95	export function Foliage({ reduced }: { reduced: boolean }) {
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:13:32Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```python
+p = r"C:\Portfolio\src\components\hero\desk\foliage.tsx"
+s = open(p, encoding="utf8").read()
+a = s.index("  const branch = (x: number")
+b = s.index("  const tex = new THREE.CanvasTexture(c);")
+s = s[:a] + '''  /* a twig wanders out, shedding small leaves on both sides and splitting into finer twigs */
+  const twig = (x: number, y: number, a: number, len: number, w: number, depth: number) => {
+    const steps = 12;
+    let px = x;
+    let py = y;
+    let ang = a;
+    for (let i = 0; i < steps; i++) {
+      ang += (rand() - 0.5) * 0.35;
+      const nx = px + Math.cos(ang) * (len / steps);
+      const ny = py + Math.sin(ang) * (len / steps);
+      ctx.lineWidth = w * (1 - i / steps) + 0.6;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(nx, ny);
+      ctx.stroke();
+      for (const side of [-1, 1]) {
+        for (let k = 0; k < 2; k++) {
+          if (rand() < 0.7) leaf(nx + (rand() - 0.5) * 10, ny + (rand() - 0.5) * 10, ang + side * (0.4 + rand() * 0.9), 13 + rand() * 13);
+        }
+      }
+      if (depth > 0 && i > 1 && rand() < 0.42) twig(nx, ny, ang + (rand() < 0.5 ? -1 : 1) * (0.4 + rand() * 0.6), len * (0.35 + rand() * 0.25), w * 0.55, depth - 1);
+      px = nx;
+      py = ny;
+    }
+    leaf(px, py, ang, 18);
+  };
+
+  /*
+   * A canopy, not a branch: many twigs reach in from one edge, so the shade is
+   * thick there and breaks into sunflecks further in, like light through a tree.
+   */
+  for (let i = 0; i < 9; i++) {
+    twig(-20, size * (0.04 + i * 0.11 + rand() * 0.05), -0.35 + rand() * 0.7, size * (0.45 + rand() * 0.5), 7, 3);
+  }
+''' + s[b:]
+s = s.replace('''const BOUGHS = [
+  { at: [-9, 0], h: 8, size: 12, rot: 0.2, phase: 0 },
+  { at: [-3, 6], h: 9, size: 10, rot: -0.6, phase: 1.7 },
+  { at: [9, -4], h: 8.5, size: 11, rot: 2.8, phase: 3.1 },
+] as const;''', '''const BOUGHS = [
+  { at: [8, -5], h: 8.5, size: 13, rot: 2.9, phase: 0 },
+  { at: [11, 1], h: 9, size: 12, rot: 3.4, phase: 1.1 },
+  { at: [-10, -3], h: 8, size: 12, rot: 0.1, phase: 2.3 },
+  { at: [-4, -7], h: 9.5, size: 11, rot: -1.5, phase: 3.4 },
+] as const;''')
+s = s.replace(" * Dappled light: leafy branches outside the window,", " * Dappled light: a tree's small leaves outside the window,")
+open(p, "w", encoding="utf8").write(s)
+print("ok")
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\leaves.py (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:14:02Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Apply canopy texture and reshoot
+
+`python /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/leaves.py && grep -n "rot: 2.9\|tree's small" src/components/hero/desk/foliage.tsx && cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js`
+
+```text
+ok
+8: * Dappled light: a tree's small leaves outside the window, between the sun and the
+92:  { at: [8, -5], h: 8.5, size: 13, rot: 2.9, phase: 0 },
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:14:05Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:14:11Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Crop new shade region
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && python -c "
+from PIL import Image
+Image.open('l-0.png').crop((720,200,1440,650)).resize((1080,675)).save('l-tr.png')"
+```
+
+```text
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:14:14Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-tr.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:14:36Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Typecheck and lint
+
+`npx tsc --noEmit && npx eslint src/components/hero/desk && echo OK`
+
+```text
+OK
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:14:43Z)**_
+
+The leaf shade is now soft dappling from many small leaves, much closer to oryzo.ai.
+
+I loaded oryzo.ai in a browser and screenshotted its home page to study the shade. It isn't separate branch shapes. It's a dense canopy of small leaves, so blurry it reads as low-contrast mottling with sunlit gaps. It's heaviest over the top-right of the mat and breaks up toward the middle.
+
+Changes in [foliage.tsx](src/components/hero/desk/foliage.tsx):
+- **Leaves:** each shadow texture is now 9 twigs that fork up to three levels deep, with many small leaves on each side. The old version was 3 branches with a few big leaves. The soft shadow blur turns them into dapples instead of crisp leaf shapes.
+- **Density:** the leaves crowd one edge and thin out further in. The shade is thick where the tree is and turns into sunflecks across the desk.
+- **Placement:** 4 leaf patches instead of 3. Two sit over the top-right of the mat and the right side, like Oryzo, and two over the left wood and the top-left.
+- The sway is unchanged: a slow lean plus a quicker flutter, and it holds still when reduced motion is on.
+
+In the new screenshot the mat, the iPad edge and the wood show the mottled shade, and the middle stays in sunlight. tsc and eslint pass.
+
+To tune:
+- **Denser or sparser:** change the twig count (`i < 9`) or the leaf odds (`rand() < 0.7`).
+- **Darker shade:** lower `hemi` and `env` in `DAY` in [lighting.tsx](src/components/hero/desk/lighting.tsx).
+
+Nothing is committed. The work is on `fix/drop-ponytail-gitlink`, and `foliage.tsx` is still a new file that git isn't tracking.
+
+---
+
+_**User (2026-10-29 15:15:59Z)**_
+
+make the movemebt of the shadow faster
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 15:16:02Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ path `C:\Portfolio\src\components\hero\desk\foliage.tsx` pattern `Math.sin\(t`
+
+```text
+115:      const gust = Math.sin(t * 0.35 + p.phase) * 0.5 + 0.5;
+116:      g.rotation.y = p.rot + Math.sin(t * 0.6 + p.phase) * 0.035 + Math.sin(t * 1.9 + p.phase * 2) * 0.012 * gust;
+117:      g.position.x = p.pos[0] + Math.sin(t * 0.45 + p.phase) * 0.18;
+118:      g.position.z = p.pos[2] + Math.sin(t * 0.7 + p.phase * 1.3) * 0.12 * (0.4 + gust);
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:16:04Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Portfolio\src\components\hero\desk\foliage.tsx`
+
+```text
+108	  useFrame(({ clock }) => {
+109	    if (reduced) return;
+110	    const t = clock.elapsedTime;
+111	    parts.forEach((p, i) => {
+112	      const g = groups.current[i];
+113	      if (!g) return;
+114	      /* a slow lean with a quicker flutter on top, never quite repeating */
+115	      const gust = Math.sin(t * 0.35 + p.phase) * 0.5 + 0.5;
+116	      g.rotation.y = p.rot + Math.sin(t * 0.6 + p.phase) * 0.035 + Math.sin(t * 1.9 + p.phase * 2) * 0.012 * gust;
+117	      g.position.x = p.pos[0] + Math.sin(t * 0.45 + p.phase) * 0.18;
+118	      g.position.z = p.pos[2] + Math.sin(t * 0.7 + p.phase * 1.3) * 0.12 * (0.4 + gust);
+119	    });
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:16:12Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\hero\desk\foliage.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:16:28Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Typecheck and lint
+
+`npx tsc --noEmit && npx eslint src/components/hero/desk/foliage.tsx && echo OK`
+
+```text
+OK
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:16:31Z)**_
+
+The leaf shadows now sway 2.2× faster, and the quick flutter is a little bigger (0.012 → 0.018), so it reads more like a breeze. I didn't screenshot this change; tsc and eslint pass.
+
+The speed is the `2.2` multiplier on `clock.elapsedTime` in [foliage.tsx](src/components/hero/desk/foliage.tsx). Raise it for faster, lower it to calm it down. Reduced-motion users still get still shade.
+
+---
+
+_**User (2026-10-29 15:18:12Z)**_
+
+make the bottom left of the screen tint a bit darker and lighter towards the top right, diagonal. simila rot orzyo
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 15:18:20Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\app\globals.css has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:18:44Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Screenshot the new tint
+
+`cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 2 && node leaf.js`
+
+```text
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:18:47Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:18:52Z)**_
+
+The hero now shades darker toward the bottom left and lifts toward the top right, like window light falling across the desk. In the screenshot, the polaroid and card corner sit in deeper shade and the books and iPad side reads brighter.
+
+It's a diagonal gradient added to the day vignette in [globals.css](src/app/globals.css). The bottom-left starts at 50% dark brown, fades out by about 60% of the way across, and ends in a faint warm glow at the top right. I also eased the existing radial vignette (0.55 → 0.5) and the top band (0.22 → 0.18) so the total darkening doesn't stack too heavily. Night mode keeps its own vignette, unchanged.
+
+To tune it, change the first two alpha values (`0.5`, `0.18`) for more or less shade, and the last one (`0.1`) for more or less highlight.
+
+---
+
+_**User (2026-10-29 15:21:01Z)**_
+
+follow the nav menu placement of orzyo, is closer to the dge of the screen no margin on the side.
+
+remove the horizontal and vertical scrollbards on the screen also i dont know why they are there /caveman
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 15:21:23Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Find overflow culprits and layout tokens
+
+```bash
+grep -n "section-pad\|--max\|--page-pad\|scrollbar\|overflow-x\|^html\|^body" src/app/globals.css | head -30; cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && cat > over.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const b = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe" });
+  const p = await b.newPage({ viewport: { width: 1910, height: 940 } });
+  await p.goto("http://localhost:3000", { waitUntil: "load", timeout: 240000 });
+  await p.waitForTimeout(8000);
+  console.log(await p.evaluate(() => {
+    const W = document.documentElement.clientWidth;
+    const out = [];
+    document.querySelectorAll("body *").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (r.right > W + 1 && r.width > 0) out.push(`${el.tagName}.${(el.className && el.className.baseVal === undefined ? el.className : "").toString().slice(0, 60)} right=${Math.round(r.right)}`);
+    });
+    return { W, sw: document.documentElement.scrollWidth, bodyOverflow: getComputedStyle(document.body).overflowX, htmlOverflow: getComputedStyle(document.documentElement).overflowX, out: out.slice(0, 15) };
+  }));
+  await b.close();
+})();
+EOF
+node over.js
+```
+
+```text
+23:  --page-pad: clamp(1.25rem, 4vw, 2.75rem);
+24:  --max: 1400px;
+52:html {
+55:  scrollbar-width: thin;
+56:  scrollbar-color: var(--mat) var(--desk);
+59:html.lenis,
+60:html.lenis body {
+68:body {
+325:.section-pad {
+326:  padding-inline: var(--page-pad);
+330:  width: min(100%, var(--max));
+351:html.desk-loading,
+352:html.desk-loading body {
+363:  padding: var(--page-pad);
+457:  left: var(--page-pad);
+491:  right: calc(var(--page-pad) + 3rem);
+526:  left: var(--page-pad);
+583:  right: calc(var(--page-pad) + 3rem);
+626:  left: var(--page-pad);
+639: * The list scrolls with its scrollbar hidden. Each edge fades out only while
+647:  scrollbar-width: none;
+653:.scroll-fade::-webkit-scrollbar {
+1485:    left: var(--page-pad);
+1486:    right: var(--page-pad);
+1510:    left: var(--page-pad);
+1511:    right: var(--page-pad);
+1640:  padding: 1.1rem var(--page-pad) 1.5rem;
+{
+  W: 1910,
+  sw: 1910,
+  bodyOverflow: 'hidden',
+  htmlOverflow: 'hidden',
+  out: []
+}
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:21:49Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read html/body CSS and recheck after load
+
+`sed -n 50,72p src/app/globals.css; sed -n 348,358p src/app/globals.css; cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sed -i 's|await p.waitForTimeout(8000);|await p.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 }); await p.waitForTimeout(2000);|; s|chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe" })|chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] })|' over.js && node over.js`
+
+```text
+}
+
+html {
+  background: var(--desk);
+  color: var(--ink);
+  scrollbar-width: thin;
+  scrollbar-color: var(--mat) var(--desk);
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--desk);
+  color: var(--ink);
+
+/* ── Desk hero: cream print over a 3D studio desk (Oryzo-style) ── */
+
+html.desk-loading,
+html.desk-loading body {
+  overflow: hidden;
+}
+
+.desk-loader {
+  position: fixed;
+  inset: 0;
+{
+  W: 1910,
+  sw: 1910,
+  bodyOverflow: 'visible',
+  htmlOverflow: 'visible',
+  out: []
+}
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:21:58Z)**_
+
+<think><details><summary>Thought Process</summary>
+Found the issue: Windows Chrome's classic scrollbar takes up width, so it shows up alongside the styled scrollbar plus any `100vw` elements, while headless hides it since its scrollbars overlay the page. I'll hide the scrollbars (keeping scroll functional) and clip horizontal overflow, then move on to the nav.
+
+</details></think>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:21:59Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read side tab CSS and nav container
+
+`grep -n "\.desk-side-tab {" -A16 src/app/globals.css | head -20; grep -n "max-w-\[var(--max)\]\|section-pad mx-auto" src/components/layout/*.tsx`
+
+```text
+1246:.desk-side-tab {
+1247-  position: absolute;
+1248-  right: 0;
+1249-  top: calc(var(--nav-h) - 0.5rem);
+1250-  display: flex;
+1251-  align-items: center;
+1252-  gap: 0.6rem;
+1253-  writing-mode: vertical-rl;
+1254-  padding: 1rem 0.55rem;
+1255-  background: var(--desk-cream);
+1256-  color: var(--ink);
+1257-  font-family: var(--font-mono);
+1258-  font-size: 0.66rem;
+1259-  font-weight: 500;
+1260-  letter-spacing: 0.14em;
+1261-  text-transform: uppercase;
+1262-  text-shadow: none;
+src/components/layout/Nav.tsx:21:      <div className="section-pad mx-auto flex h-full max-w-[var(--max)] items-center justify-between gap-6">
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:22:09Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\layout\Nav.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:22:09Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\app\globals.css has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:22:10Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read body rule
+
+`sed -n 74,84p src/app/globals.css`
+
+```text
+  scroll-behavior: auto !important;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--desk);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:22:19Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\app\globals.css has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:22:54Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Headed Chrome check for scrollbars and nav
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && cat > nav.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const b = await chromium.launch({ headless: false, executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--window-size=1920,1080"] });
+  const p = await b.newPage({ viewport: null });
+  await p.goto("http://localhost:3000", { waitUntil: "load", timeout: 240000 });
+  await p.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+  await p.waitForTimeout(2000);
+  console.log(await p.evaluate(() => ({ inner: innerWidth, client: document.documentElement.clientWidth, sw: document.documentElement.scrollWidth, sh: document.documentElement.scrollHeight })));
+  await p.screenshot({ path: "nav.png" });
+  await p.evaluate(() => scrollTo(0, 3000)); await p.waitForTimeout(800);
+  console.log("scrolled to", await p.evaluate(() => scrollY));
+  await b.close();
+})();
+EOF
+node nav.js; cd /c/Portfolio && npx tsc --noEmit && npx eslint src/components/layout && echo OK
+```
+
+```text
+{ inner: 1904, client: 1904, sw: 1904, sh: 7470 }
+scrolled to 3000
+OK
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:22:57Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\nav.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:23:03Z)**_
+
+The nav now runs edge to edge and both scrollbars are gone. I checked it in a real 1920px Chrome window: the page width matches the window, so no scrollbar is taking space and nothing overflows sideways, and the page still scrolls normally. tsc and eslint pass.
+
+- **Nav placement:** it was locked to the centred 1400px content column, which is why "JD PALOMA" sat around 365px in from the left on your wide screen. It now spans the full width. The logo lines up with the "JEANNE" wordmark on the left and the links end near the right edge, like Oryzo ([Nav.tsx](src/components/layout/Nav.tsx)).
+- **Why the scrollbars appeared:**
+  - The vertical bar was the page's own scrollbar, styled thin and green.
+  - On Windows that scrollbar takes up screen width. Anything sized to the full window (`100vw`) then ended up wider than the visible area, which produced the horizontal bar.
+  - Headless browsers draw scrollbars on top of the page instead of beside it, so my earlier checks never showed either bar.
+- **Scrollbar fix** ([globals.css](src/app/globals.css)):
+  - The page scrollbar is hidden in all browsers. The wheel, keyboard, touch and nav links still scroll.
+  - Sideways overflow is clipped on `html` and `body`, so a horizontal bar can't appear.
+
+One trade-off: with no scrollbar, the nav's active link is the only sign of where you are on the page.

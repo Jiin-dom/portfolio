@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { site } from "@/lib/content";
-import { chapters, openSkills, skillsLink, type ChapterId } from "@/lib/chapters";
+import { chapters, deskLinks, goHome, goToSpot, type ChapterId } from "@/lib/chapters";
 import { ease } from "@/lib/easings";
+import { useDeskSpot } from "@/hooks/useActiveChapter";
 
 type Props = {
   active: ChapterId;
@@ -14,6 +15,7 @@ type Props = {
 export function MobileNav({ active, dark }: Props) {
   const [open, setOpen] = useState(false);
   const reduce = useReducedMotion();
+  const spot = useDeskSpot();
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -52,8 +54,11 @@ export function MobileNav({ active, dark }: Props) {
                   key={link.id}
                   href={link.href}
                   className="chapter-link text-sm tracking-[0.12em]"
-                  aria-current={active === link.id ? "page" : undefined}
-                  onClick={() => setOpen(false)}
+                  aria-current={active === link.id && !(spot && link.id === "intro") ? "page" : undefined}
+                  onClick={() => {
+                    setOpen(false);
+                    if (link.id === "intro") goHome();
+                  }}
                   initial={reduce ? false : { opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.2, delay: i * 0.04, ease: ease.out }}
@@ -61,16 +66,20 @@ export function MobileNav({ active, dark }: Props) {
                   {link.label}
                 </motion.a>
               ))}
-              <a
-                href={skillsLink.href}
-                className="chapter-link text-sm tracking-[0.12em]"
-                onClick={(e) => {
-                  setOpen(false);
-                  openSkills(e);
-                }}
-              >
-                {skillsLink.label}
-              </a>
+              {deskLinks.map((link) => (
+                <a
+                  key={link.spot}
+                  href={link.href}
+                  className="chapter-link text-sm tracking-[0.12em]"
+                  aria-current={spot === link.spot ? "page" : undefined}
+                  onClick={(e) => {
+                    setOpen(false);
+                    goToSpot(link.spot, e);
+                  }}
+                >
+                  {link.label}
+                </a>
+              ))}
               <a
                 href={site.resume}
                 target="_blank"

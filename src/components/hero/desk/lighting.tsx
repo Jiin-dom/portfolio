@@ -20,13 +20,14 @@ export const LAMP = (() => {
   return { pos: LAMP_POS, yaw, bulb, aim: LAMP_AIM };
 })();
 
+/* late-afternoon room light: warm, low and soft, so the desk reads as wood and paper, not a lightbox */
 const DAY = {
-  hemiSky: new THREE.Color("#ffe6c8"),
-  hemiGround: new THREE.Color("#6a4226"),
-  hemi: 1.05,
-  sunColor: new THREE.Color("#ffe4c4"),
-  sun: 2.8,
-  env: 1,
+  hemiSky: new THREE.Color("#f2cfa4"),
+  hemiGround: new THREE.Color("#4a2c18"),
+  hemi: 0.55,
+  sunColor: new THREE.Color("#ffcf96"),
+  sun: 2.9,
+  env: 0.5,
 };
 
 const NIGHT = {
