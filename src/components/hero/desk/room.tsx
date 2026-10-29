@@ -168,6 +168,8 @@ const phase = (p: number, a: number, b: number) => ease(THREE.MathUtils.clamp((p
 type ShelfProps = {
   projects: readonly BookProject[];
   open: number | null;
+  /* hides the floating tag while something else has the reader's attention */
+  quiet: boolean;
   reduced: boolean;
   onOpen: (index: number | null) => void;
   onHover: (index: number | null) => void;
@@ -381,7 +383,7 @@ class ShelfAnim {
   }
 }
 
-export function ProjectShelf({ projects, open, reduced, night, link, onOpen, onHover, onLoaded }: ShelfProps) {
+export function ProjectShelf({ projects, open, quiet, reduced, night, link, onOpen, onHover, onLoaded }: ShelfProps) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
   const [tex, setTex] = useState<BookTextures | null>(null);
@@ -414,7 +416,7 @@ export function ProjectShelf({ projects, open, reduced, night, link, onOpen, onH
   return (
     <group>
       {/* floating tag so the shelf reads as the way into the work */}
-      {tex && open === null && (
+      {tex && open === null && !quiet && (
         <Html position={[SHELF.x, 0.3, SHELF.z + 1.7]} center zIndexRange={[15, 10]}>
           <button type="button" className="shelf-tag" onClick={() => onOpen(0)}>
             <span className="shelf-tag__dot" aria-hidden />

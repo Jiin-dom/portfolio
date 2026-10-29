@@ -9138,3 +9138,5894 @@ The tank now has its own L-shaped desk return on the left, with a head-on close-
 - Your own `next dev` on port 3000 was already running. I took the screenshots against it and didn't start another server.
 
 The new code is in [aquarium.tsx](src/components/hero/desk/aquarium.tsx), [species.ts](src/components/hero/desk/species.ts) and [skills.ts](src/lib/skills.ts). The tank and return sizes live in [constants.ts](src/components/hero/desk/constants.ts), and the camera framing is the `tank` view in [world.ts](src/components/hero/desk/world.ts).
+
+---
+
+_**User (2026-10-29 12:47:28Z)**_
+
+remove the scroll bar in the skills section of the aquarium. but make the UI and the use realize that the list is still scrollable, maybe a fade the item that is near the bottom/top of the list indicating is scrollable on top/down
+
+
+the the folder object for the experiences. i actually want to be a folder that shows the document/file a bit. and what that document/file/paper/folder is clicked. it will have an animation like the user is viewing the document and that is where  my experience details are at. its kinda simila to the projects. i dont want it to be a wole page page like it current is, i want it to be in the paper
+
+/caveman
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 12:47:41Z)**_
+
+Two jobs:
+1. Guide panel: hidden scrollbar, with a top/bottom fade that shows only when there's more to scroll.
+2. Experience folder: show the paper peeking out, and fly the paper to the camera on click, with the details printed on the paper itself.
+
+Reading the current folder code first.
+
+_**Agent (claude-opus-5-5 2026-10-29 12:47:43Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Locate folder model and texture code
+
+`grep -n "ExperienceFolder" -n src/components/hero/desk/models.tsx | head -3; grep -n "experience" -i src/components/hero/desk/textures.ts | head -20`
+
+```text
+61:type ExperienceFolderProps = {
+70:export function ExperienceFolder({ map, extracting, reduced, onOpen, onExtracted, onReturned }: ExperienceFolderProps) {
+2:import { experience, site } from "@/lib/content";
+444:function experienceFolderTexture(f: Fonts) {
+459:  experience.slice(0, 2).forEach((item, index) => {
+488:    experience: experienceFolderTexture(f),
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:47:46Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Portfolio\src\components\hero\desk\models.tsx`
+
+```text
+55	      </mesh>
+56	      <Decal map={map} w={1.75} d={1} y={0.017} />
+57	    </group>
+58	  );
+59	}
+60	
+61	type ExperienceFolderProps = {
+62	  map: THREE.Texture;
+63	  extracting: boolean;
+64	  reduced: boolean;
+65	  onOpen: () => void;
+66	  onExtracted: () => void;
+67	  onReturned: () => void;
+68	};
+69	
+70	export function ExperienceFolder({ map, extracting, reduced, onOpen, onExtracted, onReturned }: ExperienceFolderProps) {
+71	  const paper = useRef<THREE.Group>(null);
+72	  const restingPrint = useRef<THREE.Mesh>(null);
+73	  const progress = useRef(0);
+74	  const wasActive = useRef(false);
+75	  const reportedExtracted = useRef(false);
+76	
+77	  useFrame((_, delta) => {
+78	    if (!paper.current) return;
+79	    const target = extracting ? 1 : 0;
+80	    progress.current = reduced ? target : THREE.MathUtils.damp(progress.current, target, 4.8, Math.min(delta, 1 / 30));
+81	    const lift = THREE.MathUtils.smoothstep(progress.current, 0, 0.42);
+82	    const pull = THREE.MathUtils.smoothstep(progress.current, 0.18, 1);
+83	    if (restingPrint.current) restingPrint.current.visible = progress.current < 0.025;
+84	
+85	    // The group pivots at the tucked edge: the exposed edge lifts first, then
+86	    // the whole sheet slides forward and up out of the pocket.
+87	    paper.current.position.set(0, 0.054 + 0.38 * pull, -0.67 + 1.34 * pull);
+88	    paper.current.rotation.x = -0.48 * lift;
+89	
+90	    if (extracting) {
+91	      wasActive.current = true;
+92	      if (progress.current > 0.98 && !reportedExtracted.current) {
+93	        reportedExtracted.current = true;
+94	        onExtracted();
+95	      }
+96	    } else if (progress.current < 0.02 && wasActive.current) {
+97	      wasActive.current = false;
+98	      reportedExtracted.current = false;
+99	      onReturned();
+100	    }
+101	  });
+102	
+103	  return (
+104	    <group>
+105	      <RoundedBox args={[2.05, 0.05, 1.48]} radius={0.035} smoothness={3} position={[0, 0.025, 0]}>
+106	        <meshStandardMaterial color="#a98250" roughness={0.92} />
+107	      </RoundedBox>
+108	      {/* A short pocket lip holds the sheet while leaving its printed face visible. */}
+109	      <RoundedBox args={[1.98, 0.035, 0.2]} radius={0.018} smoothness={3} position={[0, 0.068, 0.57]}>
+110	        <meshStandardMaterial color="#c5a16c" roughness={0.9} />
+111	      </RoundedBox>
+112	      <mesh ref={restingPrint} position={[0, 0.052, 0]} rotation={[FLAT, 0, 0]}>
+113	        <planeGeometry args={[1.9, 1.34]} />
+114	        <meshBasicMaterial map={map} toneMapped={false} />
+115	      </mesh>
+116	      <group
+117	        ref={paper}
+118	        onClick={(event) => {
+119	          event.stopPropagation();
+120	          onOpen();
+121	        }}
+122	      >
+123	        <mesh position={[0, 0.005, 0.67]}>
+124	          <boxGeometry args={[1.9, 0.012, 1.34]} />
+125	          <meshStandardMaterial color="#f4ead7" roughness={0.88} />
+126	        </mesh>
+127	        <mesh position={[0, 0.012, 0.67]} rotation={[FLAT, 0, 0]}>
+128	          <planeGeometry args={[1.88, 1.32]} />
+129	          <meshStandardMaterial map={map} roughness={0.9} />
+130	        </mesh>
+131	      </group>
+132	    </group>
+133	  );
+134	}
+135	
+136	export function StickyNote({ map }: { map: THREE.Texture }) {
+137	  return (
+138	    <group>
+139	      <mesh position={[0, 0.006, 0]}>
+140	        <boxGeometry args={[1.2, 0.012, 1.2]} />
+141	        <meshStandardMaterial color="#f2d468" roughness={0.9} />
+142	      </mesh>
+143	      <Decal map={map} w={1.2} d={1.2} y={0.013} />
+144	    </group>
+145	  );
+146	}
+147	
+148	export function Ruler({ map }: { map: THREE.Texture }) {
+149	  return (
+150	    <group>
+151	      <mesh position={[0, 0.012, 0]}>
+152	        <boxGeometry args={[3.4, 0.024, 0.34]} />
+153	        <meshStandardMaterial color="#c9cbcf" metalness={0.9} roughness={0.3} />
+154	      </mesh>
+155	      <mesh position={[0, 0.0245, 0]} rotation={[FLAT, 0, 0]}>
+156	        <planeGeometry args={[3.4, 0.34]} />
+157	        <meshStandardMaterial map={map} metalness={0.75} roughness={0.32} />
+158	      </mesh>
+159	    </group>
+160	  );
+161	}
+162	
+163	export function Pen() {
+164	  const r = 0.07;
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:47:46Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Portfolio\src\components\hero\desk\textures.ts`
+
+```text
+1	import * as THREE from "three";
+2	import { experience, site } from "@/lib/content";
+3	
+4	type Fonts = { display: string; serif: string; mono: string };
+5	type Ctx = CanvasRenderingContext2D;
+6	
+7	const INK = "#1c1612";
+8	const PAPER = "#f6f2ea";
+9	
+10	function readFonts(): Fonts {
+11	  const s = getComputedStyle(document.documentElement);
+12	  const pick = (v: string, fallback: string) => s.getPropertyValue(v).trim() || fallback;
+13	  return {
+14	    display: pick("--font-display", "sans-serif"),
+15	    serif: pick("--font-serif", "serif"),
+16	    mono: pick("--font-mono", "monospace"),
+17	  };
+18	}
+19	
+20	async function loadFonts(f: Fonts) {
+21	  try {
+22	    await Promise.all([
+23	      document.fonts.load(`800 64px ${f.display}`),
+24	      document.fonts.load(`italic 64px ${f.serif}`),
+25	      document.fonts.load(`500 32px ${f.mono}`),
+26	    ]);
+27	  } catch {
+28	    /* canvas falls back to system fonts */
+29	  }
+30	}
+31	
+32	function loadImage(src: string) {
+33	  return new Promise<HTMLImageElement>((resolve, reject) => {
+34	    const img = new Image();
+35	    img.decoding = "async";
+36	    img.onload = () => resolve(img);
+37	    img.onerror = reject;
+38	    img.src = encodeURI(src);
+39	  });
+40	}
+41	
+42	function surface(w: number, h: number) {
+43	  const c = document.createElement("canvas");
+44	  c.width = w;
+45	  c.height = h;
+46	  return { c, ctx: c.getContext("2d")! };
+47	}
+48	
+49	function toTexture(c: HTMLCanvasElement) {
+50	  const t = new THREE.CanvasTexture(c);
+51	  t.colorSpace = THREE.SRGBColorSpace;
+52	  t.anisotropy = 8;
+53	  return t;
+54	}
+55	
+56	function drawCover(ctx: Ctx, img: HTMLImageElement, dx: number, dy: number, dw: number, dh: number, focusY = 0.5) {
+57	  const cw = img.naturalWidth;
+58	  const ch = img.naturalHeight;
+59	  const scale = Math.max(dw / cw, dh / ch);
+60	  const sw = dw / scale;
+61	  const sh = dh / scale;
+62	  ctx.drawImage(img, (cw - sw) / 2, (ch - sh) * focusY, sw, sh, dx, dy, dw, dh);
+63	}
+64	
+65	function speckle(ctx: Ctx, w: number, h: number, count: number, colors: string[], maxR = 1.6) {
+66	  for (let i = 0; i < count; i++) {
+67	    ctx.fillStyle = colors[i % colors.length];
+68	    ctx.globalAlpha = 0.25 + Math.random() * 0.5;
+69	    ctx.beginPath();
+70	    ctx.arc(Math.random() * w, Math.random() * h, Math.random() * maxR + 0.3, 0, Math.PI * 2);
+71	    ctx.fill();
+72	  }
+73	  ctx.globalAlpha = 1;
+74	}
+75	
+76	/* Self-healing cutting mat: cm grid, ruler numerals on two edges, angle guides */
+77	function matTexture(f: Fonts, w: number, d: number) {
+78	  const W = 2048;
+79	  const H = Math.round((W * d) / w);
+80	  const { c, ctx } = surface(W, H);
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:47:46Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Portfolio\src\components\hero\desk\textures.ts`
+
+```text
+430	    if (i % 10 === 0) {
+431	      ctx.font = `500 24px ${f.mono}`;
+432	      ctx.textAlign = "center";
+433	      ctx.fillText(String(i / 10), m + i * step, 104);
+434	    }
+435	  }
+436	  ctx.font = `500 20px ${f.mono}`;
+437	  ctx.textAlign = "left";
+438	  ctx.globalAlpha = 0.6;
+439	  ctx.fillText("STAINLESS · 300 MM · JD", m, H - 26);
+440	  ctx.globalAlpha = 1;
+441	  return toTexture(c);
+442	}
+443	
+444	function experienceFolderTexture(f: Fonts) {
+445	  const W = 768;
+446	  const H = 512;
+447	  const { c, ctx } = surface(W, H);
+448	  ctx.fillStyle = "#f4ead7";
+449	  ctx.fillRect(0, 0, W, H);
+450	  speckle(ctx, W, H, 1900, ["#fffaf0", "#b8a98f"], 0.7);
+451	  ctx.strokeStyle = "rgba(48, 35, 19, 0.16)";
+452	  ctx.lineWidth = 2;
+453	  ctx.strokeRect(18, 18, W - 36, H - 36);
+454	  ctx.fillStyle = INK;
+455	  ctx.font = `500 24px ${f.mono}`;
+456	  ctx.fillText("WORK RECORD", 48, 72);
+457	  ctx.fillRect(48, 92, W - 96, 2);
+458	  ctx.globalAlpha = 0.72;
+459	  experience.slice(0, 2).forEach((item, index) => {
+460	    const y = 166 + index * 150;
+461	    ctx.globalAlpha = index === 0 ? 1 : 0.72;
+462	    ctx.font = `800 30px ${f.display}`;
+463	    ctx.fillText(item.title.toUpperCase(), 48, y, W - 96);
+464	    ctx.font = `500 18px ${f.mono}`;
+465	    ctx.fillText(item.place.toUpperCase(), 48, y + 30, W - 96);
+466	    ctx.fillText(item.year.toUpperCase(), 48, y + 58, W - 96);
+467	  });
+468	  ctx.globalAlpha = 1;
+469	  return toTexture(c);
+470	}
+471	
+472	export type DeskTextures = Awaited<ReturnType<typeof buildTextures>>;
+473	
+474	export async function buildTextures() {
+475	  const f = readFonts();
+476	  const [me] = await Promise.all([loadImage("/images/me2.png"), loadFonts(f)]);
+477	
+478	  return {
+479	    mat: matTexture(f, 7.6, 5.2),
+480	    polaroidMe: polaroidTexture(f, paintPortrait(me), "it's me, JD", "’26"),
+481	    polaroidSunset: polaroidTexture(f, paintSunset, "golden hour", "Nº 12"),
+482	    tablet: tabletTexture(f),
+483	    tabletNight: tabletTexture(f, true),
+484	    nothing: nothingBackTexture(f),
+485	    card: cardTexture(f),
+486	    note: noteTexture(f),
+487	    ruler: rulerTexture(f),
+488	    experience: experienceFolderTexture(f),
+489	  };
+490	}
+491	
+492	/* ── Project books on the desk shelf ── */
+493	
+494	export const BOOK_COLORS = ["#2f5a40", "#9c3d22", "#e7dcc6", "#1f2d44", "#b8862f"] as const;
+495	
+496	function inkFor(bg: string) {
+497	  return bg === "#e7dcc6" ? INK : "#f6ecdb";
+498	}
+499	
+500	function wrapLines(ctx: Ctx, text: string, maxWidth: number) {
+501	  const words = text.split(/\s+/);
+502	  const lines: string[] = [];
+503	  let line = "";
+504	  for (const w of words) {
+505	    const next = line ? `${line} ${w}` : w;
+506	    if (ctx.measureText(next).width > maxWidth && line) {
+507	      lines.push(line);
+508	      line = w;
+509	    } else line = next;
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:49:01Z)**_
+
+<think><details><summary>Thought Process</summary>
+I've sketched the folder interaction: a slightly ajar manila folder that opens on click, with the paper flying toward the camera and dimming the scene behind it, similar to the book animation. Now I'll review the reader CSS and hero experience code to implement this.
+
+</details></think>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:49:02Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read reader CSS and experience wiring
+
+`grep -n "\.desk-reader" -A14 src/app/globals.css | head -60; grep -n "desk-experience" src/app/globals.css | head -40; grep -n "experience\|Experience" src/components/hero/DeskHero.tsx src/components/hero/desk/DeskCanvas.tsx`
+
+```text
+1122:.desk-reader {
+1123-  position: absolute;
+1124-  z-index: 30;
+1125-  left: 50%;
+1126-  bottom: 1.5rem;
+1127-  display: flex;
+1128-  align-items: center;
+1129-  gap: 1.25rem;
+1130-  padding: 0.7rem 0.8rem 0.7rem 1.2rem;
+1131-  transform: translateX(-50%);
+1132-  border-radius: 14px;
+1133-  color: var(--desk-cream);
+1134-  animation: reader-in 500ms 900ms var(--ease-out) both;
+1135-}
+1136-
+--
+1144:.desk-reader__count {
+1145-  margin: 0;
+1146-  font-family: var(--font-mono);
+1147-  font-size: 0.6rem;
+1148-  letter-spacing: 0.14em;
+1149-  text-transform: uppercase;
+1150-  opacity: 0.7;
+1151-  white-space: nowrap;
+1152-}
+1153-
+1154:.desk-reader__title {
+1155-  margin: 0;
+1156-  font-family: var(--font-serif);
+1157-  font-style: italic;
+1158-  font-size: 1.35rem;
+1159-  white-space: nowrap;
+1160-}
+1161-
+1162:.desk-reader__actions {
+1163-  display: flex;
+1164-  gap: 0.4rem;
+1165-}
+1166-
+1167:.desk-reader .desk-chip svg {
+1168-  width: 12px;
+1169-  height: 12px;
+1170-}
+1171-
+1172-.desk-experience {
+1173-  position: absolute;
+1174-  z-index: 30;
+1175-  inset: 0;
+1176-  width: 100%;
+1177-  max-height: 100%;
+1178-  overflow-y: auto;
+1179-  padding: clamp(5rem, 12vh, 8rem) clamp(1.25rem, 7vw, 8rem) 4rem;
+1180-  background:
+1181-    repeating-linear-gradient(0deg, transparent 0 7px, rgb(80 58 30 / 0.025) 7px 8px),
+--
+1313:  .desk-reader {
+1314-    left: var(--page-pad);
+1315-    right: var(--page-pad);
+1316-    flex-wrap: wrap;
+1317-    gap: 0.5rem;
+1172:.desk-experience {
+1189:.desk-experience[data-state="open"] {
+1193:.desk-experience[data-state="returning"] {
+1219:.desk-experience__head {
+1228:.desk-experience__head .desk-chip,
+1229:.desk-experience__resume {
+1234:.desk-experience__content {
+1240:.desk-experience[data-state="returning"] .desk-experience__content {
+1244:.desk-experience__title {
+1253:.desk-experience__list {
+1259:.desk-experience__entry {
+1265:.desk-experience__entry::before {
+1276:.desk-experience__date,
+1277:.desk-experience__place {
+1285:.desk-experience__date {
+1289:.desk-experience__entry h3 {
+1295:.desk-experience__place {
+1303:.desk-experience__resume {
+1307:.desk-experience__resume svg {
+src/components/hero/DeskHero.tsx:8:import { experience, projects, site } from "@/lib/content";
+src/components/hero/DeskHero.tsx:111:  const [experienceState, setExperienceState] = useState<"closed" | "extracting" | "open" | "returning">("closed");
+src/components/hero/DeskHero.tsx:112:  const [experienceOrigin, setExperienceOrigin] = useState({ x: 0, y: 0 });
+src/components/hero/DeskHero.tsx:113:  const experienceScreen = useRef<HTMLElement>(null);
+src/components/hero/DeskHero.tsx:114:  const experienceTrigger = useRef<HTMLButtonElement>(null);
+src/components/hero/DeskHero.tsx:117:  const experienceActive = experienceState !== "closed";
+src/components/hero/DeskHero.tsx:118:  const experienceExtracting = experienceState === "extracting" || experienceState === "open";
+src/components/hero/DeskHero.tsx:120:  const openExperience = useCallback((origin?: { x: number; y: number }) => {
+src/components/hero/DeskHero.tsx:122:    focusReturn.current = active instanceof HTMLElement && active !== document.body ? active : experienceTrigger.current;
+src/components/hero/DeskHero.tsx:124:    setExperienceOrigin({
+src/components/hero/DeskHero.tsx:129:    setExperienceState("extracting");
+src/components/hero/DeskHero.tsx:132:  const experienceExtracted = useCallback(() => {
+src/components/hero/DeskHero.tsx:133:    setExperienceState((state) => state === "extracting" ? "open" : state);
+src/components/hero/DeskHero.tsx:136:  const experienceReturned = useCallback(() => {
+src/components/hero/DeskHero.tsx:137:    setExperienceState((state) => state === "returning" ? "closed" : state);
+src/components/hero/DeskHero.tsx:140:  const closeExperience = useCallback(() => {
+src/components/hero/DeskHero.tsx:141:    setExperienceState((state) => state === "closed" || state === "returning" ? state : "returning");
+src/components/hero/DeskHero.tsx:145:    if (!experienceActive) return;
+src/components/hero/DeskHero.tsx:150:        closeExperience();
+src/components/hero/DeskHero.tsx:158:  }, [experienceActive, closeExperience]);
+src/components/hero/DeskHero.tsx:161:    if (experienceState !== "open") return;
+src/components/hero/DeskHero.tsx:162:    experienceScreen.current?.querySelector<HTMLElement>("button, a[href]")?.focus();
+src/components/hero/DeskHero.tsx:163:  }, [experienceState]);
+src/components/hero/DeskHero.tsx:177:    closeExperience();
+src/components/hero/DeskHero.tsx:182:  }, [closeExperience, view]);
+src/components/hero/DeskHero.tsx:263:          experienceActive={experienceActive}
+src/components/hero/DeskHero.tsx:264:          experienceExtracting={experienceExtracting}
+src/components/hero/DeskHero.tsx:265:          onOpenExperience={openExperience}
+src/components/hero/DeskHero.tsx:266:          onExperienceExtracted={experienceExtracted}
+src/components/hero/DeskHero.tsx:267:          onExperienceReturned={experienceReturned}
+src/components/hero/DeskHero.tsx:268:          onCloseExperience={closeExperience}
+src/components/hero/DeskHero.tsx:296:      <div className="desk-ui pointer-events-none absolute inset-0 z-20" data-reading={reading || experienceActive || tankOpen ? "" : undefined}>
+src/components/hero/DeskHero.tsx:363:              <button ref={experienceTrigger} type="button" className="desk-chip" onClick={(event) => openExperience({ x: event.clientX, y: event.clientY })}>
+src/components/hero/DeskHero.tsx:364:                <Briefcase aria-hidden /> Experience
+src/components/hero/DeskHero.tsx:411:      {(experienceState === "open" || experienceState === "returning") && (
+src/components/hero/DeskHero.tsx:413:          ref={experienceScreen}
+src/components/hero/DeskHero.tsx:414:          className="desk-experience"
+src/components/hero/DeskHero.tsx:415:          data-state={experienceState}
+src/components/hero/DeskHero.tsx:416:          style={{ "--paper-origin-x": `${experienceOrigin.x}px`, "--paper-origin-y": `${experienceOrigin.y}px` } as CSSProperties}
+src/components/hero/DeskHero.tsx:417:          aria-labelledby="desk-experience-title"
+src/components/hero/DeskHero.tsx:419:          <div className="desk-experience__head">
+src/components/hero/DeskHero.tsx:420:            <p className="desk-reader__count">Work record · {String(experience.length).padStart(2, "0")}</p>
+src/components/hero/DeskHero.tsx:421:            <button type="button" className="desk-chip" onClick={closeExperience}>
+src/components/hero/DeskHero.tsx:425:          <div className="desk-experience__content">
+src/components/hero/DeskHero.tsx:426:            <h2 id="desk-experience-title" className="desk-experience__title">Experience</h2>
+src/components/hero/DeskHero.tsx:427:            <ol className="desk-experience__list">
+src/components/hero/DeskHero.tsx:428:              {experience.map((item) => (
+src/components/hero/DeskHero.tsx:429:                <li key={`${item.title}-${item.year}`} className="desk-experience__entry">
+src/components/hero/DeskHero.tsx:430:                  <p className="desk-experience__date">{item.year}</p>
+src/components/hero/DeskHero.tsx:432:                  <p className="desk-experience__place">{item.place}</p>
+src/components/hero/DeskHero.tsx:436:            <a className="desk-chip desk-experience__resume" href={site.resume} target="_blank" rel="noopener noreferrer">
+src/components/hero/desk/DeskCanvas.tsx:38:  experienceActive: boolean;
+src/components/hero/desk/DeskCanvas.tsx:39:  experienceExtracting: boolean;
+src/components/hero/desk/DeskCanvas.tsx:40:  onOpenExperience: (origin: { x: number; y: number }) => void;
+src/components/hero/desk/DeskCanvas.tsx:41:  onExperienceExtracted: () => void;
+src/components/hero/desk/DeskCanvas.tsx:42:  onExperienceReturned: () => void;
+src/components/hero/desk/DeskCanvas.tsx:43:  onCloseExperience: () => void;
+src/components/hero/desk/DeskCanvas.tsx:63:  experienceProps: Pick<Props, "experienceExtracting" | "reduced" | "onOpenExperience" | "onExperienceExtracted" | "onExperienceReturned">,
+src/components/hero/desk/DeskCanvas.tsx:94:    case "experience":
+src/components/hero/desk/DeskCanvas.tsx:96:        <Model.ExperienceFolder
+src/components/hero/desk/DeskCanvas.tsx:97:          map={t.experience}
+src/components/hero/desk/DeskCanvas.tsx:98:          extracting={experienceProps.experienceExtracting}
+src/components/hero/desk/DeskCanvas.tsx:99:          reduced={experienceProps.reduced}
+src/components/hero/desk/DeskCanvas.tsx:100:          onOpen={experienceProps.onOpenExperience}
+src/components/hero/desk/DeskCanvas.tsx:101:          onExtracted={experienceProps.onExperienceExtracted}
+src/components/hero/desk/DeskCanvas.tsx:102:          onReturned={experienceProps.onExperienceReturned}
+src/components/hero/desk/DeskCanvas.tsx:157:function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, experienceActive, experienceExtracting, onOpenExperience, onExperienceExtracted, onExperienceReturned, onCloseExperience, onHoverProject, skills, activeSkill, featuredSkills, labelledSkill, onSelectSkill, onHoverSkill, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active">) {
+src/components/hero/desk/DeskCanvas.tsx:236:      if (world.grabbing || openProject !== null || experienceActive || view === "tank") return;
+src/components/hero/desk/DeskCanvas.tsx:244:  }, [gl, world, openProject, experienceActive, view]);
+src/components/hero/desk/DeskCanvas.tsx:280:          onCloseExperience();
+src/components/hero/desk/DeskCanvas.tsx:344:                experienceExtracting,
+src/components/hero/desk/DeskCanvas.tsx:346:                onOpenExperience,
+src/components/hero/desk/DeskCanvas.tsx:347:                onExperienceExtracted,
+src/components/hero/desk/DeskCanvas.tsx:348:                onExperienceReturned,
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:49:16Z)**_
+
+Building the folder and the paper. First, the paper and cover textures.
+
+_**Agent (claude-opus-5-5 2026-10-29 12:49:18Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Check wrap helper and content imports
+
+`grep -n "^function wrapLines" -A16 src/components/hero/desk/textures.ts | head -20; grep -n "import.*content" src/components/hero/desk/textures.ts`
+
+```text
+500:function wrapLines(ctx: Ctx, text: string, maxWidth: number) {
+501-  const words = text.split(/\s+/);
+502-  const lines: string[] = [];
+503-  let line = "";
+504-  for (const w of words) {
+505-    const next = line ? `${line} ${w}` : w;
+506-    if (ctx.measureText(next).width > maxWidth && line) {
+507-      lines.push(line);
+508-      line = w;
+509-    } else line = next;
+510-  }
+511-  if (line) lines.push(line);
+512-  return lines;
+513-}
+514-
+515-function clothTexture(ctx: Ctx, w: number, h: number, bg: string) {
+516-  ctx.fillStyle = bg;
+2:import { experience, site } from "@/lib/content";
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:49:42Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```typescript
+/*
+ * The work record: one A4 sheet, read in front of the camera like the books.
+ * Portrait at ~150 dpi so the type stays crisp when it fills the screen.
+ */
+function experiencePaperTexture(f: Fonts) {
+  const W = 1240;
+  const H = 1754;
+  const m = 110;
+  const { c, ctx } = surface(W, H);
+  ctx.fillStyle = "#f6f0e2";
+  ctx.fillRect(0, 0, W, H);
+  speckle(ctx, W, H, 5200, ["#fffaf0", "#cfc2a8"], 0.9);
+  /* edges yellow a little, like paper that has lived in a folder */
+  const edge = ctx.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.75);
+  edge.addColorStop(0, "rgba(0,0,0,0)");
+  edge.addColorStop(1, "rgba(150,112,58,0.16)");
+  ctx.fillStyle = edge;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = INK;
+  ctx.textBaseline = "alphabetic";
+  ctx.font = `500 24px ${f.mono}`;
+  ctx.fillText(`${site.name.toUpperCase()}  ·  WORK RECORD`, m, 130);
+  ctx.textAlign = "right";
+  ctx.fillText(`Nº ${String(experience.length).padStart(2, "0")}`, W - m, 130);
+  ctx.textAlign = "left";
+  ctx.fillRect(m, 156, W - m * 2, 3);
+
+  ctx.font = `800 150px ${f.display}`;
+  ctx.fillText("Experience", m - 6, 330);
+  ctx.font = `italic 40px ${f.serif}`;
+  ctx.globalAlpha = 0.75;
+  wrapLines(ctx, site.role, W - m * 2 - 260).forEach((line, i) => ctx.fillText(line, m, 400 + i * 50));
+  ctx.globalAlpha = 1;
+
+  /* a rubber stamp, slightly crooked */
+  ctx.save();
+  ctx.translate(W - m - 120, 300);
+  ctx.rotate(-0.16);
+  ctx.strokeStyle = "rgba(232,93,44,0.82)";
+  ctx.fillStyle = "rgba(232,93,44,0.82)";
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.arc(0, 0, 104, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, 0, 90, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.textAlign = "center";
+  ctx.font = `800 40px ${f.display}`;
+  ctx.fillText("ON FILE", 0, 14);
+  ctx.font = `500 16px ${f.mono}`;
+  ctx.fillText("JD · PALOMA", 0, 50);
+  ctx.restore();
+
+  let y = 540;
+  experience.forEach((item, i) => {
+    ctx.fillStyle = INK;
+    ctx.fillRect(m, y, W - m * 2, 2);
+    ctx.font = `500 24px ${f.mono}`;
+    ctx.globalAlpha = 0.6;
+    ctx.fillText(String(i + 1).padStart(2, "0"), m, y + 58);
+    ctx.fillText(item.year.toUpperCase(), m + 100, y + 58);
+    ctx.globalAlpha = 1;
+    ctx.font = `800 66px ${f.display}`;
+    ctx.fillText(item.title, m + 100, y + 140, W - m * 2 - 100);
+    ctx.font = `italic 42px ${f.serif}`;
+    ctx.fillText(item.place, m + 100, y + 196, W - m * 2 - 100);
+    y += 250;
+  });
+
+  y += 40;
+  ctx.font = `500 24px ${f.mono}`;
+  ctx.fillText("EDUCATION", m, y);
+  ctx.fillRect(m, y + 20, W - m * 2, 2);
+  y += 82;
+  education.forEach((item) => {
+    ctx.font = `500 22px ${f.mono}`;
+    ctx.globalAlpha = 0.6;
+    ctx.fillText(item.year.toUpperCase(), m, y);
+    ctx.globalAlpha = 1;
+    ctx.font = `700 34px ${f.display}`;
+    ctx.fillText(item.title, m + 140, y, W - m * 2 - 140);
+    ctx.font = `italic 28px ${f.serif}`;
+    ctx.globalAlpha = 0.75;
+    ctx.fillText(item.place, m + 140, y + 40, W - m * 2 - 140);
+    ctx.globalAlpha = 1;
+    y += 104;
+  });
+
+  ctx.fillRect(m, H - 150, W - m * 2, 2);
+  ctx.font = `500 22px ${f.mono}`;
+  ctx.fillText(`${site.email}  ·  ${site.phone}`, m, H - 104);
+  ctx.textAlign = "right";
+  ctx.fillText("1 / 1", W - m, H - 104);
+  ctx.textAlign = "left";
+  return toTexture(c);
+}
+
+/* manila folder cover with a typed label */
+function folderCoverTexture(f: Fonts) {
+  const W = 620;
+  const H = 840;
+  const { c, ctx } = surface(W, H);
+  ctx.fillStyle = "#d4b07a";
+  ctx.fillRect(0, 0, W, H);
+  speckle(ctx, W, H, 2600, ["#e6c894", "#a8854f", "#c49d62"], 1.1);
+  /* a faint crease a little in from the spine */
+  ctx.fillStyle = "rgba(90,62,26,0.12)";
+  ctx.fillRect(34, 0, 3, H);
+
+  ctx.save();
+  ctx.translate(96, 110);
+  ctx.rotate(-0.02);
+  ctx.fillStyle = "#f7f1e3";
+  ctx.fillRect(0, 0, 430, 190);
+  ctx.strokeStyle = "rgba(28,22,18,0.25)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(10, 10, 410, 170);
+  ctx.fillStyle = INK;
+  ctx.font = `500 18px ${f.mono}`;
+  ctx.fillText("WORK RECORD · JD PALOMA", 30, 52);
+  ctx.font = `800 64px ${f.display}`;
+  ctx.fillText("Experience", 28, 130);
+  ctx.font = `italic 26px ${f.serif}`;
+  ctx.globalAlpha = 0.7;
+  ctx.fillText(`${experience.length} roles · résumé inside`, 30, 166);
+  ctx.restore();
+
+  ctx.fillStyle = "rgba(232,93,44,0.75)";
+  ctx.font = `800 30px ${f.display}`;
+  ctx.save();
+  ctx.translate(380, 720);
+  ctx.rotate(-0.12);
+  ctx.fillText("CONFIDENTIAL-ISH", 0, 0);
+  ctx.restore();
+  return toTexture(c);
+}
+
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\paper.ts (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:49:46Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Swap folder texture for paper and cover textures
+
+```bash
+python - <<'PYEOF'
+p="src/components/hero/desk/textures.ts"; s=open(p,encoding="utf8").read()
+a=s.index("function experienceFolderTexture(")
+b=s.index("export type DeskTextures")
+new=open(r"C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/paper.ts",encoding="utf8").read()
+s=s[:a]+new+s[b:]
+s=s.replace('import { experience, site } from "@/lib/content";','import { education, experience, site } from "@/lib/content";',1)
+old="    experience: experienceFolderTexture(f),\n"
+assert old in s
+s=s.replace(old,"    paper: experiencePaperTexture(f),\n    folderCover: folderCoverTexture(f),\n")
+open(p,"w",encoding="utf8").write(s)
+PYEOF
+```
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:49:48Z)**_
+
+Next: the folder model and the paper animation.
+
+_**Agent (claude-opus-5-5 2026-10-29 12:50:15Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```typescript
+"use client";
+
+import { RoundedBox } from "@react-three/drei";
+import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
+import { useRef, useState } from "react";
+import * as THREE from "three";
+
+/*
+ * The work folder on the desk and the sheet inside it. The folder is a desk
+ * body (draggable like everything else); the sheet flies to the camera on its
+ * own, in world space, the way the project books do.
+ */
+
+/* A4 proportions, sized to sit inside the folder */
+export const PAPER = { w: 1.4, h: 1.98 };
+const FOLDER = { w: 1.55, d: 2.1 };
+const OPEN_SECONDS = 1.6;
+const FLAT = -Math.PI / 2;
+/* the cover rests a touch open so the sheet inside shows */
+const AJAR = 0.09;
+
+const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const phase = (p: number, a: number, b: number) => ease(THREE.MathUtils.clamp((p - a) / (b - a), 0, 1));
+
+/* Shared between the folder and the flying sheet: how far open, and where the sheet rests. */
+export class PaperLink {
+  p = 0;
+  anchor: THREE.Object3D | null = null;
+
+  setAnchor(o: THREE.Object3D | null) {
+    this.anchor = o;
+  }
+
+  step(open: boolean, reduced: boolean, dt: number) {
+    const goal = open ? 1 : 0;
+    const step = reduced ? 1 : dt / OPEN_SECONDS;
+    this.p = goal > this.p ? Math.min(goal, this.p + step) : Math.max(goal, this.p - step * 1.3);
+  }
+}
+
+function Sheet({ map }: { map: THREE.Texture }) {
+  return (
+    <mesh castShadow receiveShadow>
+      <boxGeometry args={[PAPER.w, PAPER.h, 0.008]} />
+      {[0, 1, 2, 3, 5].map((k) => (
+        <meshStandardMaterial key={k} attach={`material-${k}`} color="#f2ecdd" roughness={0.9} />
+      ))}
+      <meshStandardMaterial attach="material-4" map={map} roughness={0.88} />
+    </mesh>
+  );
+}
+
+type FolderProps = {
+  cover: THREE.Texture;
+  paper: THREE.Texture;
+  link: PaperLink;
+  onOpen: () => void;
+};
+
+export function ExperienceFolder({ cover, paper, link, onOpen }: FolderProps) {
+  const flap = useRef<THREE.Group>(null);
+  const resting = useRef<THREE.Group>(null);
+
+  useFrame(() => {
+    const c = phase(link.p, 0, 0.3);
+    if (flap.current) flap.current.rotation.z = THREE.MathUtils.lerp(AJAR, 2.75, c);
+    /* the flying sheet takes over the moment it leaves */
+    if (resting.current) resting.current.visible = link.p < 0.001;
+  });
+
+  /* a drag that ends on the folder is a move, not a request to read */
+  const open = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    if (e.delta > 6) return;
+    onOpen();
+  };
+
+  return (
+    <group onClick={open}>
+      {/* back panel, with the tab along the far edge */}
+      <RoundedBox args={[FOLDER.w, 0.02, FOLDER.d]} radius={0.01} smoothness={2} position={[0, 0.01, 0]} castShadow receiveShadow>
+        <meshStandardMaterial color="#c9a46a" roughness={0.92} />
+      </RoundedBox>
+      <RoundedBox args={[0.6, 0.02, 0.22]} radius={0.01} smoothness={2} position={[-0.32, 0.01, -FOLDER.d / 2 - 0.09]} castShadow>
+        <meshStandardMaterial color="#c9a46a" roughness={0.92} />
+      </RoundedBox>
+
+      {/* the sheet, pushed off-center so its edge and corner stick out of the folder */}
+      <group ref={(g) => {
+        resting.current = g;
+        link.setAnchor(g);
+      }} position={[0.16, 0.03, -0.02]} rotation={[FLAT, 0, -0.035]}>
+        <Sheet map={paper} />
+      </group>
+
+      {/* front cover, hinged on the spine at -x */}
+      <group ref={flap} position={[-FOLDER.w / 2, 0.045, 0]} rotation={[0, 0, AJAR]}>
+        <group position={[FOLDER.w / 2, 0, 0]}>
+          <RoundedBox args={[FOLDER.w, 0.016, FOLDER.d - 0.04]} radius={0.008} smoothness={2} castShadow receiveShadow>
+            <meshStandardMaterial color="#d4b07a" roughness={0.92} />
+          </RoundedBox>
+          <mesh position={[0, 0.0085, 0]} rotation={[FLAT, 0, 0]}>
+            <planeGeometry args={[FOLDER.w - 0.02, FOLDER.d - 0.06]} />
+            <meshStandardMaterial map={cover} roughness={0.9} />
+          </mesh>
+        </group>
+      </group>
+    </group>
+  );
+}
+
+type PaperProps = {
+  map: THREE.Texture;
+  open: boolean;
+  reduced: boolean;
+  night: boolean;
+  link: PaperLink;
+  onClose: () => void;
+};
+
+/* Mutable flight state, kept out of React like the shelf. */
+class Flight {
+  private rest = { pos: new THREE.Vector3(), q: new THREE.Quaternion(), s: new THREE.Vector3() };
+  private present = new THREE.Vector3();
+  private fwd = new THREE.Vector3();
+  private tilt = new THREE.Quaternion();
+  private q = new THREE.Quaternion();
+  private readonly xAxis = new THREE.Vector3(1, 0, 0);
+
+  step(
+    link: PaperLink,
+    camera: THREE.PerspectiveCamera,
+    aspect: number,
+    sheet: THREE.Group | null,
+    dim: THREE.Mesh | null,
+    face: THREE.MeshStandardMaterial | null,
+    night: boolean,
+  ) {
+    const p = link.p;
+    const a = link.anchor;
+    const live = p > 0.001 && a !== null;
+    if (sheet) sheet.visible = live;
+    const s2 = phase(p, 0.38, 1);
+    if (dim) {
+      (dim.material as THREE.MeshBasicMaterial).opacity = s2 * 0.55;
+      dim.visible = live && s2 > 0.01;
+    }
+    if (!live || !sheet || !a) return;
+
+    a.updateWorldMatrix(true, false);
+    a.matrixWorld.decompose(this.rest.pos, this.rest.q, this.rest.s);
+
+    /* fill most of the height, or the width on tall screens */
+    const tanHalf = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const dist = Math.max(PAPER.h / (0.84 * 2 * tanHalf), PAPER.w / (0.9 * 2 * tanHalf * aspect));
+    camera.getWorldDirection(this.fwd);
+    this.present.copy(camera.position).addScaledVector(this.fwd, dist);
+
+    /* lift out of the folder, tipping toward the viewer, then fly up to the eye */
+    const s1 = phase(p, 0.18, 0.42);
+    sheet.position.copy(this.rest.pos);
+    sheet.position.y += 0.7 * s1;
+    sheet.position.lerp(this.present, s2);
+    sheet.position.y += Math.sin(Math.PI * s2) * 0.5;
+    this.tilt.setFromAxisAngle(this.xAxis, 0.35 * s1 * (1 - s2));
+    this.q.copy(this.rest.q).multiply(this.tilt).slerp(camera.quaternion, s2);
+    sheet.quaternion.copy(this.q);
+
+    /* the page reads by its own light once it's up, day or night */
+    if (face) face.emissiveIntensity = (night ? 0.85 : 0.4) * s2;
+
+    if (dim) {
+      dim.position.copy(camera.position).addScaledVector(this.fwd, dist + 1.2);
+      dim.quaternion.copy(camera.quaternion);
+    }
+  }
+}
+
+export function ExperiencePaper({ map, open, reduced, night, link, onClose }: PaperProps) {
+  const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
+  const size = useThree((s) => s.size);
+  const sheet = useRef<THREE.Group>(null);
+  const dim = useRef<THREE.Mesh>(null);
+  const face = useRef<THREE.MeshStandardMaterial>(null);
+  const [flight] = useState(() => new Flight());
+
+  useFrame((_, delta) => {
+    link.step(open, reduced, Math.min(delta, 1 / 30));
+    flight.step(link, camera, size.width / size.height, sheet.current, dim.current, face.current, night);
+  });
+
+  return (
+    <>
+      <group ref={sheet} visible={false} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+        <mesh>
+          <boxGeometry args={[PAPER.w, PAPER.h, 0.008]} />
+          {[0, 1, 2, 3, 5].map((k) => (
+            <meshStandardMaterial key={k} attach={`material-${k}`} color="#f2ecdd" roughness={0.9} />
+          ))}
+          <meshStandardMaterial ref={face} attach="material-4" map={map} emissiveMap={map} emissive="#ffffff" emissiveIntensity={0} roughness={0.88} />
+        </mesh>
+      </group>
+
+      {/* backdrop that dims the desk while the sheet is up; click it to put the sheet back */}
+      <mesh
+        ref={dim}
+        visible={false}
+        renderOrder={10}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <planeGeometry args={[400, 400]} />
+        <meshBasicMaterial color="#120a04" transparent opacity={0} depthWrite={false} />
+      </mesh>
+    </>
+  );
+}
+
+```
+
+```text
+File created successfully at: C:\Portfolio\src\components\hero\desk\experience.tsx (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:50:21Z)**_
+
+Removing the cover's joke stamp, then wiring the canvas.
+
+_**Agent (claude-opus-5-5 2026-10-29 12:50:35Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Wire new folder and paper into canvas
+
+```bash
+python - <<'PYEOF'
+def edit(p, pairs):
+    s=open(p,encoding="utf8").read()
+    for a,b in pairs:
+        assert s.count(a)==1, (p,a)
+        s=s.replace(a,b)
+    open(p,"w",encoding="utf8").write(s)
+edit("src/components/hero/desk/textures.ts",[
+("""  ctx.fillStyle = "rgba(232,93,44,0.75)";
+  ctx.font = `800 30px ${f.display}`;
+  ctx.save();
+  ctx.translate(380, 720);
+  ctx.rotate(-0.12);
+  ctx.fillText("CONFIDENTIAL-ISH", 0, 0);
+  ctx.restore();
+  return toTexture(c);""","""  return toTexture(c);"""),
+])
+# remove old folder from models.tsx
+p="src/components/hero/desk/models.tsx"; s=open(p,encoding="utf8").read()
+a=s.index("type ExperienceFolderProps = {"); b=s.index("export function StickyNote(")
+s=s[:a]+s[b:]
+open(p,"w",encoding="utf8").write(s)
+edit("src/components/hero/desk/items.ts",[
+('{ id: "experience", label: "Work folder", note: "Click to open my experience record.", w: 2.05, d: 1.48, h: 0.1,',
+ '{ id: "experience", label: "Work folder", note: "Click to pull out my work record.", w: 1.55, d: 2.3, h: 0.12,'),
+])
+edit("src/components/hero/desk/DeskCanvas.tsx",[
+("""import { Aquarium } from "./aquarium";""","""import { Aquarium } from "./aquarium";
+import { ExperienceFolder, ExperiencePaper, PaperLink } from "./experience";"""),
+("""  experienceActive: boolean;
+  experienceExtracting: boolean;
+  onOpenExperience: (origin: { x: number; y: number }) => void;
+  onExperienceExtracted: () => void;
+  onExperienceReturned: () => void;
+  onCloseExperience: () => void;""","""  experienceOpen: boolean;
+  onOpenExperience: () => void;
+  onCloseExperience: () => void;"""),
+("""  experienceProps: Pick<Props, "experienceExtracting" | "reduced" | "onOpenExperience" | "onExperienceExtracted" | "onExperienceReturned">,""","""  paper: PaperLink,
+  onOpenExperience: () => void,"""),
+("""        <Model.ExperienceFolder
+          map={t.experience}
+          extracting={experienceProps.experienceExtracting}
+          reduced={experienceProps.reduced}
+          onOpen={experienceProps.onOpenExperience}
+          onExtracted={experienceProps.onExperienceExtracted}
+          onReturned={experienceProps.onExperienceReturned}
+        />""","""        <ExperienceFolder cover={t.folderCover} paper={t.paper} link={paper} onOpen={onOpenExperience} />"""),
+("experienceActive, experienceExtracting, onOpenExperience, onExperienceExtracted, onExperienceReturned, onCloseExperience,","experienceOpen, onOpenExperience, onCloseExperience,"),
+("""  const [link] = useState(() => new SceneLink());""","""  const [link] = useState(() => new SceneLink());
+  const [paper] = useState(() => new PaperLink());"""),
+("""      if (world.grabbing || openProject !== null || experienceActive || view === "tank") return;""","""      if (world.grabbing || openProject !== null || experienceOpen || view === "tank") return;"""),
+("""  }, [gl, world, openProject, experienceActive, view]);""","""  }, [gl, world, openProject, experienceOpen, view]);"""),
+])
+s=open("src/components/hero/desk/DeskCanvas.tsx",encoding="utf8").read()
+i=s.index("{renderModel(item.id, tex, night, {")
+j=s.index("})}",i)+3
+s=s[:i]+"{renderModel(item.id, tex, night, paper, onOpenExperience)}"+s[j:]
+# add the flying sheet after the flashlight block
+k=s.index("      {tex\n        ? deskItems.map(")
+s=s[:k]+"""      {tex && <ExperiencePaper map={tex.paper} open={experienceOpen} reduced={reduced} night={night} link={paper} onClose={onCloseExperience} />}
+"""+s[k:]
+open("src/components/hero/desk/DeskCanvas.tsx","w",encoding="utf8").write(s)
+PYEOF
+grep -n "renderModel\|function renderModel" -A3 src/components/hero/desk/DeskCanvas.tsx | head -12
+```
+
+```text
+57:function renderModel(
+58-  id: string,
+59-  t: DeskTextures,
+60-  night: boolean,
+--
+337:              {renderModel(item.id, tex, night, paper, onOpenExperience)}
+338-            </group>
+339-          ))
+340-        : null}
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:50:37Z)**_
+
+Next, the hero: replacing the full-page overlay with reader controls.
+
+_**Agent (claude-opus-5-5 2026-10-29 12:50:39Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Show current experience code in hero
+
+`sed -n 108,170p src/components/hero/DeskHero.tsx; sed -n 405,445p src/components/hero/DeskHero.tsx`
+
+```text
+  /* a book in hand calls its fish to the front glass */
+  const handProject = openProject ?? hoverProject;
+  const featuredSkills = useMemo(() => (handProject === null ? NONE : projectSkills[handProject]), [handProject]);
+  const [experienceState, setExperienceState] = useState<"closed" | "extracting" | "open" | "returning">("closed");
+  const [experienceOrigin, setExperienceOrigin] = useState({ x: 0, y: 0 });
+  const experienceScreen = useRef<HTMLElement>(null);
+  const experienceTrigger = useRef<HTMLButtonElement>(null);
+  const focusReturn = useRef<HTMLElement | null>(null);
+
+  const experienceActive = experienceState !== "closed";
+  const experienceExtracting = experienceState === "extracting" || experienceState === "open";
+
+  const openExperience = useCallback((origin?: { x: number; y: number }) => {
+    const active = document.activeElement;
+    focusReturn.current = active instanceof HTMLElement && active !== document.body ? active : experienceTrigger.current;
+    const bounds = root.current?.getBoundingClientRect();
+    setExperienceOrigin({
+      x: origin && bounds ? origin.x - bounds.left : (bounds?.width ?? 0) / 2,
+      y: origin && bounds ? origin.y - bounds.top : (bounds?.height ?? 0) / 2,
+    });
+    setOpenProject(null);
+    setExperienceState("extracting");
+  }, []);
+
+  const experienceExtracted = useCallback(() => {
+    setExperienceState((state) => state === "extracting" ? "open" : state);
+  }, []);
+
+  const experienceReturned = useCallback(() => {
+    setExperienceState((state) => state === "returning" ? "closed" : state);
+  }, []);
+
+  const closeExperience = useCallback(() => {
+    setExperienceState((state) => state === "closed" || state === "returning" ? state : "returning");
+  }, []);
+
+  useEffect(() => {
+    if (!experienceActive) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeExperience();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      focusReturn.current?.focus();
+    };
+  }, [experienceActive, closeExperience]);
+
+  useEffect(() => {
+    if (experienceState !== "open") return;
+    experienceScreen.current?.querySelector<HTMLElement>("button, a[href]")?.focus();
+  }, [experienceState]);
+
+  useEffect(() => {
+    if (openProject === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenProject(null);
+      if (e.key === "ArrowRight") setOpenProject((i) => (i === null ? i : (i + 1) % projects.length));
+      if (e.key === "ArrowLeft") setOpenProject((i) => (i === null ? i : (i + projects.length - 1) % projects.length));
+              <X aria-hidden /> Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {(experienceState === "open" || experienceState === "returning") && (
+        <section
+          ref={experienceScreen}
+          className="desk-experience"
+          data-state={experienceState}
+          style={{ "--paper-origin-x": `${experienceOrigin.x}px`, "--paper-origin-y": `${experienceOrigin.y}px` } as CSSProperties}
+          aria-labelledby="desk-experience-title"
+        >
+          <div className="desk-experience__head">
+            <p className="desk-reader__count">Work record · {String(experience.length).padStart(2, "0")}</p>
+            <button type="button" className="desk-chip" onClick={closeExperience}>
+              <ArrowLeft aria-hidden /> Back to desk
+            </button>
+          </div>
+          <div className="desk-experience__content">
+            <h2 id="desk-experience-title" className="desk-experience__title">Experience</h2>
+            <ol className="desk-experience__list">
+              {experience.map((item) => (
+                <li key={`${item.title}-${item.year}`} className="desk-experience__entry">
+                  <p className="desk-experience__date">{item.year}</p>
+                  <h3>{item.title}</h3>
+                  <p className="desk-experience__place">{item.place}</p>
+                </li>
+              ))}
+            </ol>
+            <a className="desk-chip desk-experience__resume" href={site.resume} target="_blank" rel="noopener noreferrer">
+              Résumé <ArrowUpRight aria-hidden />
+            </a>
+          </div>
+        </section>
+      )}
+
+      {tankOpen && (
+        <FieldGuide
+          active={activeSkill}
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:50:51Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```python
+p = r"C:\Portfolio\src\components\hero\DeskHero.tsx"
+s = open(p, encoding="utf8").read()
+
+
+def r(a, b):
+    global s
+    assert s.count(a) == 1, a
+    s = s.replace(a, b)
+
+
+a = s.index('  const [experienceState, setExperienceState]')
+b = s.index('  useEffect(() => {\n    if (openProject === null) return;')
+s = s[:a] + '''  /* the work record is a sheet pulled from the folder and held up to the camera, like a book */
+  const [experienceOpen, setExperienceOpen] = useState(false);
+  const experienceScreen = useRef<HTMLDivElement>(null);
+  const experienceTrigger = useRef<HTMLButtonElement>(null);
+  const focusReturn = useRef<HTMLElement | null>(null);
+  const experienceActive = experienceOpen;
+
+  const openExperience = useCallback(() => {
+    const active = document.activeElement;
+    focusReturn.current = active instanceof HTMLElement && active !== document.body ? active : experienceTrigger.current;
+    setOpenProject(null);
+    setExperienceOpen(true);
+  }, []);
+
+  const closeExperience = useCallback(() => setExperienceOpen(false), []);
+
+  useEffect(() => {
+    if (!experienceOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeExperience();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    experienceScreen.current?.querySelector<HTMLElement>("button, a[href]")?.focus({ preventScroll: true });
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      focusReturn.current?.focus({ preventScroll: true });
+    };
+  }, [experienceOpen, closeExperience]);
+
+''' + s[b:]
+
+r('''          experienceActive={experienceActive}
+          experienceExtracting={experienceExtracting}
+          onOpenExperience={openExperience}
+          onExperienceExtracted={experienceExtracted}
+          onExperienceReturned={experienceReturned}
+          onCloseExperience={closeExperience}''', '''          experienceOpen={experienceOpen}
+          onOpenExperience={openExperience}
+          onCloseExperience={closeExperience}''')
+r('onClick={(event) => openExperience({ x: event.clientX, y: event.clientY })}', 'onClick={openExperience}')
+
+a = s.index('      {(experienceState === "open" || experienceState === "returning") && (')
+b = s.index('      {tankOpen && (')
+s = s[:a] + '''      {experienceOpen && (
+        <div ref={experienceScreen} className="desk-reader desk-glass" role="dialog" aria-labelledby="desk-experience-title">
+          <p className="desk-reader__count">Work record · {String(experience.length).padStart(2, "0")} roles</p>
+          <p id="desk-experience-title" className="desk-reader__title">
+            Experience
+          </p>
+          {/* the sheet is a canvas texture; this carries the same record for screen readers */}
+          <ol className="sr-only">
+            {experience.map((item) => (
+              <li key={`${item.title}-${item.year}`}>
+                {item.title}, {item.place}, {item.year}
+              </li>
+            ))}
+          </ol>
+          <div className="desk-reader__actions">
+            <a className="desk-chip" href={site.resume} target="_blank" rel="noopener noreferrer">
+              Résumé <ArrowUpRight aria-hidden />
+            </a>
+            <button type="button" className="desk-chip" onClick={closeExperience}>
+              <X aria-hidden /> Close
+            </button>
+          </div>
+        </div>
+      )}
+
+''' + s[b:]
+open(p, "w", encoding="utf8").write(s)
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\hero_exp.py (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:51:15Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Apply hero experience edits, typecheck, lint
+
+`python "C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/hero_exp.py" && npx tsc --noEmit -p . 2>&1 | head; npx eslint src 2>&1 | grep -E "error|warning" | head`
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:51:25Z)**_
+
+Types and lint pass, and the old DeskCanvas type error is gone too. Next: the scroll fade on the guide, plus removing the dead full-page CSS.
+
+_**Agent (claude-opus-5-5 2026-10-29 12:51:42Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```python
+p = r"C:\Portfolio\src\components\hero\DeskHero.tsx"
+s = open(p, encoding="utf8").read()
+
+
+def r(a, b):
+    global s
+    assert s.count(a) == 1, a
+    s = s.replace(a, b)
+
+
+r('''  onClose: () => void;
+}) {
+  return (
+    <section className="desk-tank desk-glass" data-hidden={hidden ? "" : undefined} aria-labelledby="desk-tank-title" data-lenis-prevent>''', '''  onClose: () => void;
+}) {
+  /* no scrollbar: the list fades out at whichever edge still has more to show */
+  const list = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ top: false, bottom: false });
+  const measure = useCallback(() => {
+    const el = list.current;
+    if (!el) return;
+    const top = el.scrollTop > 2;
+    const bottom = el.scrollTop + el.clientHeight < el.scrollHeight - 2;
+    setEdges((e) => (e.top === top && e.bottom === bottom ? e : { top, bottom }));
+  }, []);
+
+  useEffect(() => {
+    const el = list.current;
+    if (!el) return;
+    measure();
+    /* rows opening and closing change the height without a scroll event */
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    Array.from(el.children).forEach((c) => ro.observe(c));
+    return () => ro.disconnect();
+  }, [measure]);
+
+  return (
+    <section className="desk-tank desk-glass" data-hidden={hidden ? "" : undefined} aria-labelledby="desk-tank-title">''')
+r('''      <p className="desk-tank__lede">Each fish is a tool I build with. Pick one to see the projects it swims through.</p>
+
+      {skillGroups.map((group) => (''', '''      <p className="desk-tank__lede">Each fish is a tool I build with. Pick one to see the projects it swims through.</p>
+
+      <div
+        ref={list}
+        className="desk-tank__scroll"
+        data-fade-top={edges.top ? "" : undefined}
+        data-fade-bottom={edges.bottom ? "" : undefined}
+        onScroll={measure}
+        data-lenis-prevent
+      >
+      {skillGroups.map((group) => (''')
+r('''        </div>
+      ))}
+    </section>
+  );
+}''', '''        </div>
+      ))}
+      </div>
+      {edges.bottom && <ChevronDown className="desk-tank__more" aria-hidden />}
+    </section>
+  );
+}''')
+r("ArrowUpRight, Briefcase,", "ArrowUpRight, Briefcase, ChevronDown,")
+open(p, "w", encoding="utf8").write(s)
+
+c = r"C:\Portfolio\src\app\globals.css"
+s = open(c, encoding="utf8").read()
+r('''  width: min(400px, 36vw);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.15rem 1.15rem 1.4rem;
+  border-radius: 1.1rem;
+  color: var(--desk-cream);
+  animation: tank-guide-in 520ms var(--ease-out) 380ms both;
+  transition: opacity 200ms ease;
+  scrollbar-width: thin;
+}''', '''  display: flex;
+  flex-direction: column;
+  width: min(400px, 36vw);
+  overflow: hidden;
+  padding: 1.15rem 1.15rem 0.6rem;
+  border-radius: 1.1rem;
+  color: var(--desk-cream);
+  animation: tank-guide-in 520ms var(--ease-out) 380ms both;
+  transition: opacity 200ms ease;
+}
+
+/*
+ * The list scrolls with its scrollbar hidden. Each edge fades out only while
+ * there is more beyond it, so the fade itself says "keep scrolling".
+ */
+.desk-tank__scroll {
+  --fade-top: 0px;
+  --fade-bottom: 0px;
+  flex: 1;
+  min-height: 0;
+  margin-top: 0.4rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+  padding-bottom: 0.8rem;
+}
+
+.desk-tank__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.desk-tank__scroll[data-fade-top] {
+  --fade-top: 2.75rem;
+}
+
+.desk-tank__scroll[data-fade-bottom] {
+  --fade-bottom: 4rem;
+}
+
+@property --fade-top {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --fade-bottom {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+.desk-tank__scroll {
+  transition: --fade-top 220ms ease, --fade-bottom 220ms ease;
+}
+
+/* a small nudge under the fade while there is more below */
+.desk-tank__more {
+  align-self: center;
+  width: 16px;
+  height: 16px;
+  margin-top: -1.4rem;
+  opacity: 0.7;
+  pointer-events: none;
+  animation: tank-more 1.6s ease-in-out infinite;
+}
+
+@keyframes tank-more {
+  50% {
+    transform: translateY(3px);
+  }
+}''')
+r('''  .desk-tank,
+  .desk-tank__detail {
+    animation: none;
+  }''', '''  .desk-tank,
+  .desk-tank__detail,
+  .desk-tank__more {
+    animation: none;
+  }''')
+# drop the old full-page experience styles
+a = s.index(".desk-experience {")
+b_marker = ".desk-experience__resume svg {"
+b = s.index(b_marker)
+b = s.index("}", b) + 1
+s = s[:a] + s[b:].lstrip("\n")
+open(c, "w", encoding="utf8").write(s)
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\guide_scroll.py (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:52:02Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Apply scroll fade and CSS cleanup, verify
+
+`python "C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/guide_scroll.py" && grep -n "desk-experience\|experience-enter\|experience-exit" src/app/globals.css | head; npx tsc --noEmit -p . 2>&1 | head -5; npx eslint src 2>&1 | grep -E "error|warning" | head`
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:52:07Z)**_
+
+Lint and types pass. Fixing the indentation of the wrapped list, then screenshots.
+
+_**Agent (claude-opus-5-5 2026-10-29 12:52:47Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Reindent and screenshot experience and guide
+
+```bash
+python - <<'PYEOF'
+p="src/components/hero/DeskHero.tsx"; s=open(p,encoding="utf8").read()
+a=s.index("        data-lenis-prevent\n      >\n")+len("        data-lenis-prevent\n      >\n")
+b=s.index("      </div>\n      {edges.bottom")
+block="".join(("  "+l if l.strip() else l) for l in s[a:b].splitlines(True))
+s=s[:a]+block+s[b:]
+open(p,"w",encoding="utf8").write(s)
+PYEOF
+S="C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot"; cd "$S" && cat > exp.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  const W = +(process.env.W || 1440), H = +(process.env.H || 900), P = process.env.P || "e";
+  const page = await browser.newPage({ viewport: { width: W, height: H } });
+  page.on("pageerror", (e) => console.log("PAGEERROR", e.message));
+  page.on("console", (m) => { if (m.type() === "error" && !m.text().includes("X4122")) console.log("CONSOLE", m.text().slice(0, 400)); });
+  await page.goto("http://localhost:3000", { waitUntil: "load", timeout: 180000 });
+  await page.waitForSelector(".desk-loader", { timeout: 60000 });
+  await page.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+  await page.waitForTimeout(2500);
+  await page.screenshot({ path: `${P}-0-desk.png` });
+  const click = (t) => page.evaluate((t) => [...document.querySelectorAll(".desk-card button")].find((b) => b.textContent.trim().startsWith(t)).click(), t);
+  await click("Experience");
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: `${P}-1-mid.png` });
+  await page.waitForTimeout(2500);
+  await page.screenshot({ path: `${P}-2-open.png` });
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(3000);
+  await click("Skills");
+  await page.waitForTimeout(4500);
+  await page.screenshot({ path: `${P}-3-guide.png` });
+  await page.evaluate(() => { const el = document.querySelector(".desk-tank__scroll"); el.scrollTop = 200; });
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: `${P}-4-guide-mid.png` });
+  await browser.close();
+})();
+EOF
+node exp.js 2>&1 | tail -5
+```
+
+```text
+Shell cwd was reset to C:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:52:50Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\e-0-desk.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:52:51Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\e-1-mid.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:52:53Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\e-2-open.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:53:02Z)**_
+
+The paper flies up, readable, with reader controls. Checking the guide fade next.
+
+_**Agent (claude-opus-5-5 2026-10-29 12:53:03Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\e-3-guide.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:53:04Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\e-4-guide-mid.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:53:09Z)**_
+
+<think><details><summary>Thought Process</summary>
+The list fits fully at 900px tall, so no fade shows—correct behavior. Next I'll add more paper peeking from the folder, nudge the sheet clear of the reader bar, and re-check the fade at shorter heights.
+
+</details></think>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:54:21Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Tweak paper pose, shoot short and phone viewports
+
+```bash
+python - <<'PYEOF'
+p="src/components/hero/desk/experience.tsx"; s=open(p,encoding="utf8").read()
+def r(a,b):
+    global s
+    assert s.count(a)==1, a
+    s=s.replace(a,b)
+r("""      }} position={[0.16, 0.03, -0.02]} rotation={[FLAT, 0, -0.035]}>""","""      }} position={[0.2, 0.03, -0.2]} rotation={[FLAT, 0, -0.06]}>""")
+r("""    const dist = Math.max(PAPER.h / (0.84 * 2 * tanHalf), PAPER.w / (0.9 * 2 * tanHalf * aspect));
+    camera.getWorldDirection(this.fwd);
+    this.present.copy(camera.position).addScaledVector(this.fwd, dist);""","""    const dist = Math.max(PAPER.h / (0.8 * 2 * tanHalf), PAPER.w / (0.9 * 2 * tanHalf * aspect));
+    camera.getWorldDirection(this.fwd);
+    /* sit a little high, clear of the reader bar along the bottom */
+    this.up.set(0, 1, 0).applyQuaternion(camera.quaternion);
+    this.present.copy(camera.position).addScaledVector(this.fwd, dist).addScaledVector(this.up, PAPER.h * 0.05);""")
+r("""  private fwd = new THREE.Vector3();""","""  private fwd = new THREE.Vector3();
+  private up = new THREE.Vector3();""")
+r("if (face) face.emissiveIntensity = (night ? 0.85 : 0.4) * s2;","if (face) face.emissiveIntensity = (night ? 0.8 : 0.3) * s2;")
+open(p,"w",encoding="utf8").write(s)
+PYEOF
+npx eslint src/components/hero/desk/experience.tsx; cd "C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot" && H=680 P=s node exp.js 2>&1 | tail -3; W=390 H=844 P=p node exp.js 2>&1 | tail -3
+```
+
+```text
+Shell cwd was reset to C:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:54:23Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\s-4-guide-mid.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:54:25Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\p-3-guide.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:54:26Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\p-2-open.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:54:33Z)**_
+
+<think><details><summary>Thought Process</summary>
+Both fades are working correctly, but I found a bug where the "Projects 05" tag floats over the paper on phones. I'll fix it by hiding that tag while the paper is up or the tank view is open.
+
+</details></think>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:54:54Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Hide shelf tag during reading, verify
+
+```bash
+python - <<'PYEOF'
+def edit(p, pairs):
+    s=open(p,encoding="utf8").read()
+    for a,b in pairs:
+        assert s.count(a)==1, (p,a)
+        s=s.replace(a,b)
+    open(p,"w",encoding="utf8").write(s)
+edit("src/components/hero/desk/room.tsx",[
+("""  open: number | null;
+  reduced: boolean;""","""  open: number | null;
+  /* hides the floating tag while something else has the reader's attention */
+  quiet: boolean;
+  reduced: boolean;"""),
+("export function ProjectShelf({ projects, open, reduced,","export function ProjectShelf({ projects, open, quiet, reduced,"),
+("{tex && open === null && (","{tex && open === null && !quiet && ("),
+])
+edit("src/components/hero/desk/DeskCanvas.tsx",[
+("""        open={openProject}
+        reduced={reduced}""","""        open={openProject}
+        quiet={experienceOpen || view === "tank"}
+        reduced={reduced}"""),
+])
+PYEOF
+npx tsc --noEmit -p . 2>&1 | head -3; npx eslint src 2>&1 | grep -E "error|warning" | head -3; git status --short | grep -v specstory
+```
+
+```text
+ M src/app/globals.css
+ M src/components/hero/DeskHero.tsx
+ M src/components/hero/desk/DeskCanvas.tsx
+ M src/components/hero/desk/items.ts
+ M src/components/hero/desk/models.tsx
+ M src/components/hero/desk/room.tsx
+ M src/components/hero/desk/textures.ts
+?? src/components/hero/desk/experience.tsx
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:54:57Z)**_
+
+Clean. One more shot to check the paper now peeks out of the folder.
+
+_**Agent (claude-opus-5-5 2026-10-29 12:55:28Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Reshoot desk rest state and paper
+
+`cd "C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot" && P=f node exp.js 2>&1 | tail -3`
+
+```text
+Shell cwd was reset to C:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:55:30Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\f-0-desk.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:55:32Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\f-2-open.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 12:55:41Z)**_
+
+Both changes work, and I checked them in screenshots at 1440×900, 1440×680 and 390×844. Types and lint pass.
+
+**Skills list (aquarium panel)**
+- The scrollbar is gone. Only the list scrolls now; the panel's title and "Desk" button stay put.
+- The top edge fades once you've scrolled down. The bottom edge fades, with a small bouncing arrow, while more items are below.
+- Each fade only shows when there's something to scroll to. On a tall desktop screen the whole list fits, so no fade appears.
+- The fades also update when a row opens and the list gets longer.
+
+**Experience folder**
+- **On the desk:** it's now an upright manila folder with a tab and a printed "Experience" label on the cover. The cover sits slightly open and the paper sticks out past the top and right edges.
+- **On click:** the cover swings open, the sheet lifts out and tilts, then flies up to face the camera, like the project books. The desk dims behind it.
+- **The details are on the paper itself:**
+  - name header with a small orange "ON FILE" rubber stamp
+  - both roles with dates and companies
+  - an Education section, which I added from your existing data
+  - email and phone at the bottom
+- **Controls:** a small bar under the paper holds Résumé ↗ and Close. Escape, Close or clicking the dimmed backdrop puts the sheet back. The full-page overlay and its CSS are removed.
+- **Behavior:**
+  - Dragging the folder doesn't open it; only a plain click does.
+  - The sheet lights itself, so it stays readable at night.
+  - Screen readers get the same record as text, because the paper is an image.
+
+**Also fixed**
+- The "Projects 05" tag no longer floats over the paper on phones; it hides while the paper or the tank is open.
+- The old `DeskCanvas` type error is gone, because the folder's open handler changed.
+
+New code is in [experience.tsx](src/components/hero/desk/experience.tsx), the paper and cover artwork in [textures.ts](src/components/hero/desk/textures.ts), and the panel in `FieldGuide` in [DeskHero.tsx](src/components/hero/DeskHero.tsx).
+
+Two things for you to decide:
+- I added the Education section; say if the paper should show experience only.
+- The "ON FILE" stamp is a small joke. Say if you'd rather drop it.
+
+---
+
+_**User (2026-10-29 13:11:00Z)**_
+
+having it on paper makes in hard to read and not eligible, which is bad UIUX. what would be the best approach and interaction for the experience and education part that fits my porfolio style/nature. list down ideas
+
+/caveman
+
+---
+
+_**User (2026-10-29 13:11:00Z)**_
+
+[Image: source: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\images\1.png]
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 13:11:25Z)**_
+
+Agreed. A canvas texture can't stay sharp. It gets resampled to fit the screen, and night lighting and screen size make it worse. The fix is to keep the paper as the animation but render the text as real HTML.
+
+**Ideas**
+
+1. **Paper becomes HTML (recommended).** The 3D sheet still flies up from the folder. When it lands, a real HTML page in the same paper style replaces it in place. Text is sharp at any size, selectable and readable by screen readers, it stays light in night mode, and it scrolls inside the paper with the same fades as the skills list. Closing reverses it: the HTML page fades out and the 3D sheet flies back into the folder.
+2. **Folder tabs: Experience | Education.** The open paper gets index tabs along its top edge, like a real file folder. One subject per page means bigger type and less crowding. It works together with idea 1.
+3. **Expandable roles.** Each role is one line (title, company, dates), and clicking opens 2–3 highlights plus the stack used. The stack chips link to the matching fish in the tank, the same way books link to fish. This needs new data: today each role has only a title, a company and a year, so the paper reads thin. I'd add `highlights` and `stack` fields to `experience`.
+4. **Index cards.** Each role is a card that fans out of the folder, and clicking one flips it for details. It's very "desk", but the cards are small, so it suits 2–4 roles at most and is weaker on phones.
+5. **Badges on the pegboard.** Each company is a lanyard ID badge hanging on the wall, and clicking one opens its detail card. It's fun and distinctive, but it splits the experience across the wall, and education doesn't fit the metaphor.
+6. **Timeline along the cutting mat's ruler.** Years sit as marks on the ruler, with roles pinned at their dates. It's clever, but text on the 3D mat has the same readability problem as the paper. Skip it.
+
+**Plan:** 1 + 2 + 3.
+- The 3D sheet flies up and becomes an HTML paper sheet with tabs along the top.
+- Body text is at least 16px, lines are capped around 60 characters, and the paper keeps its look: cream stock, mono labels, the serif italic for companies, and the stamp.
+- Each role opens to show highlights and stack chips that jump to the fish.
+- Phone: the sheet goes near full width with the controls stacked under it.
+
+**Bug in your screenshot:** a second copy of the sheet is poking in at the bottom-right corner. I'll find and fix it as part of this work.
+
+To build 3, I need the content: 2–3 highlight bullets per role and the tools you used at MoveForward and at Efunity. I can draft placeholders, but they'd be made up. Build 1 + 2 now, and add 3 once you send the highlights?
+
+---
+
+_**User (2026-10-29 13:12:58Z)**_
+
+try implementing 1-3 /caveman
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 13:13:42Z)**_
+
+Building 1–3:
+1. The 3D sheet flies up, then hands off to a real HTML sheet.
+2. The sheet gets folder tabs for Experience and Education.
+3. Roles expand to show highlights and stack chips.
+
+Reproducing the duplicate-sheet bug first, in night mode at your window size.
+
+_**Agent (claude-opus-5-5 2026-10-29 13:14:07Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Reproduce duplicate sheet at night
+
+```bash
+S="C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot"; cd "$S" && cat > dup.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  const page = await browser.newPage({ viewport: { width: 1500, height: 690 }, colorScheme: "dark" });
+  page.on("pageerror", (e) => console.log("PAGEERROR", e.message));
+  await page.goto("http://localhost:3000", { waitUntil: "load", timeout: 180000 });
+  await page.waitForSelector(".desk-loader", { timeout: 60000 });
+  await page.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+  await page.waitForTimeout(2000);
+  await page.evaluate(() => [...document.querySelectorAll(".desk-card button")].find((b) => b.textContent.trim().startsWith("Experience")).click());
+  await page.waitForTimeout(3500);
+  await page.screenshot({ path: "dup.png" });
+  await browser.close();
+})();
+EOF
+node dup.js 2>&1 | tail -3
+```
+
+```text
+Shell cwd was reset to C:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:14:10Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\dup.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:14:32Z)**_
+
+<think><details><summary>Thought Process</summary>
+Couldn't reproduce the duplicate sheet—a fresh load shows just one, likely a hot-reload artifact, and the 3D sheet will be hidden behind the HTML one after this change anyway. Building now, starting with draft role content.
+
+</details></think>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:14:33Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Show experience data
+
+`grep -n "export const experience" -A14 src/lib/content.ts`
+
+```text
+63:export const experience = [
+64-  {
+65-    year: "January 2025 – Present",
+66-    title: "Software Engineer",
+67-    place: "MoveForward Inc. Ventures",
+68-  },
+69-  {
+70-    year: "2023 - 2024",
+71-    title: "Software Developer",
+72-    place: "Efunity Pte Ltd",
+73-  },
+74-] as const;
+75-
+76-export const projects = [
+77-  {
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:14:48Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Add draft role data and landing callback
+
+```bash
+python - <<'PYEOF'
+p="src/lib/content.ts"; s=open(p,encoding="utf8").read()
+a=s.index("export const experience = [")
+b=s.index("] as const;",a)+len("] as const;")
+s=s[:a]+'''/*
+ * DRAFT highlights and stacks: placeholders written to fill the layout.
+ * Replace them with the real work before shipping. `stack` names that match
+ * a tech-stack skill become links to that fish in the aquarium.
+ */
+export const experience = [
+  {
+    year: "January 2025 – Present",
+    title: "Software Engineer",
+    place: "MoveForward Inc. Ventures",
+    highlights: [
+      "Builds and maintains customer-facing React interfaces end to end, from layout to API wiring.",
+      "Develops Spring Boot services and REST endpoints backed by MySQL.",
+      "Turns rough product ideas into shippable UI with attention to spacing, states, and motion.",
+    ],
+    stack: ["React", "JavaScript", "Spring Boot", "REST API", "MySQL"],
+  },
+  {
+    year: "2023 - 2024",
+    title: "Software Developer",
+    place: "Efunity Pte Ltd",
+    highlights: [
+      "Built web features across the front end and Java back end.",
+      "Worked on Spring services, data models, and the screens that use them.",
+      "Fixed bugs and shipped improvements in short release cycles.",
+    ],
+    stack: ["Java", "Spring", "HTML", "CSS", "JavaScript"],
+  },
+] as const;'''+s[b:]
+open(p,"w",encoding="utf8").write(s)
+PYEOF
+python - <<'PYEOF'
+p=r"C:/Portfolio/src/components/hero/desk/experience.tsx"; s=open(p,encoding="utf8").read()
+def r(a,b):
+    global s
+    assert s.count(a)==1, a
+    s=s.replace(a,b)
+r("""export class PaperLink {
+  p = 0;
+  anchor: THREE.Object3D | null = null;""","""export class PaperLink {
+  p = 0;
+  anchor: THREE.Object3D | null = null;
+  private landed = false;""")
+r("""  step(open: boolean, reduced: boolean, dt: number) {
+    const goal = open ? 1 : 0;
+    const step = reduced ? 1 : dt / OPEN_SECONDS;
+    this.p = goal > this.p ? Math.min(goal, this.p + step) : Math.max(goal, this.p - step * 1.3);
+  }""","""  /* returns true on the frame the sheet arrives in front of the camera */
+  step(open: boolean, reduced: boolean, dt: number) {
+    const goal = open ? 1 : 0;
+    const step = reduced ? 1 : dt / OPEN_SECONDS;
+    this.p = goal > this.p ? Math.min(goal, this.p + step) : Math.max(goal, this.p - step * 1.3);
+    const arrived = this.p === 1 && !this.landed;
+    this.landed = this.p === 1;
+    return arrived;
+  }""")
+r("""  link: PaperLink;
+  onClose: () => void;
+};
+
+/* Mutable flight state""","""  link: PaperLink;
+  onClose: () => void;
+  /* the sheet has landed: the page takes over with real, readable type */
+  onLanded: () => void;
+};
+
+/* Mutable flight state""")
+r("export function ExperiencePaper({ map, open, reduced, night, link, onClose }: PaperProps) {","export function ExperiencePaper({ map, open, reduced, night, link, onClose, onLanded }: PaperProps) {")
+r("""    link.step(open, reduced, Math.min(delta, 1 / 30));""","""    if (link.step(open, reduced, Math.min(delta, 1 / 30))) onLanded();""")
+open(p,"w",encoding="utf8").write(s)
+PYEOF
+grep -n "ExperiencePaper" src/components/hero/desk/DeskCanvas.tsx
+```
+
+```text
+15:import { ExperienceFolder, ExperiencePaper, PaperLink } from "./experience";
+304:      {tex && <ExperiencePaper map={tex.paper} open={experienceOpen} reduced={reduced} night={night} link={paper} onClose={onCloseExperience} />}
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:14:55Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Pass landing callback through canvas
+
+```bash
+python - <<'PYEOF'
+p="src/components/hero/desk/DeskCanvas.tsx"; s=open(p,encoding="utf8").read()
+def r(a,b):
+    global s
+    assert s.count(a)==1, a
+    s=s.replace(a,b)
+r("onClose={onCloseExperience} />}","onClose={onCloseExperience} onLanded={onExperienceLanded} />}")
+r("""  onOpenExperience: () => void;
+  onCloseExperience: () => void;""","""  onOpenExperience: () => void;
+  onCloseExperience: () => void;
+  onExperienceLanded: () => void;""")
+r("experienceOpen, onOpenExperience, onCloseExperience,","experienceOpen, onOpenExperience, onCloseExperience, onExperienceLanded,")
+open(p,"w",encoding="utf8").write(s)
+PYEOF
+grep -n "experienceOpen\|experienceScreen\|experienceActive\|closeExperience\|openExperience" src/components/hero/DeskHero.tsx
+```
+
+```text
+112:  const [experienceOpen, setExperienceOpen] = useState(false);
+113:  const experienceScreen = useRef<HTMLDivElement>(null);
+116:  const experienceActive = experienceOpen;
+118:  const openExperience = useCallback(() => {
+125:  const closeExperience = useCallback(() => setExperienceOpen(false), []);
+128:    if (!experienceOpen) return;
+132:        closeExperience();
+136:    experienceScreen.current?.querySelector<HTMLElement>("button, a[href]")?.focus({ preventScroll: true });
+141:  }, [experienceOpen, closeExperience]);
+155:    closeExperience();
+160:  }, [closeExperience, view]);
+241:          experienceOpen={experienceOpen}
+242:          onOpenExperience={openExperience}
+243:          onCloseExperience={closeExperience}
+271:      <div className="desk-ui pointer-events-none absolute inset-0 z-20" data-reading={reading || experienceActive || tankOpen ? "" : undefined}>
+338:              <button ref={experienceTrigger} type="button" className="desk-chip" onClick={openExperience}>
+386:      {experienceOpen && (
+387:        <div ref={experienceScreen} className="desk-reader desk-glass" role="dialog" aria-labelledby="desk-experience-title">
+404:            <button type="button" className="desk-chip" onClick={closeExperience}>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:15:26Z)**_
+
+Data and landing callback are in. Next: a shared scroll-fade hook, then the HTML record sheet.
+
+_**Agent (claude-opus-5-5 2026-10-29 13:15:50Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```typescript
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+
+/*
+ * For lists that scroll with their scrollbar hidden: reports which edges still
+ * have more beyond them, so the `.scroll-fade` mask can fade only those edges.
+ */
+export function useScrollFade<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [edges, setEdges] = useState({ top: false, bottom: false });
+
+  const measure = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    const top = el.scrollTop > 2;
+    const bottom = el.scrollTop + el.clientHeight < el.scrollHeight - 2;
+    setEdges((e) => (e.top === top && e.bottom === bottom ? e : { top, bottom }));
+  }, []);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    measure();
+    /* rows opening, closing, or swapping change the height without a scroll event */
+    const ro = new ResizeObserver(measure);
+    const watch = () => {
+      ro.disconnect();
+      ro.observe(el);
+      Array.from(el.children).forEach((c) => ro.observe(c));
+      measure();
+    };
+    watch();
+    const mo = new MutationObserver(watch);
+    mo.observe(el, { childList: true, subtree: true });
+    return () => {
+      ro.disconnect();
+      mo.disconnect();
+    };
+  }, [measure]);
+
+  return {
+    ref,
+    onScroll: measure,
+    fade: {
+      "data-fade-top": edges.top ? "" : undefined,
+      "data-fade-bottom": edges.bottom ? "" : undefined,
+    },
+    more: edges.bottom,
+  };
+}
+
+```
+
+```text
+File created successfully at: C:\Portfolio\src\hooks\useScrollFade.ts (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:15:51Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```typescript
+"use client";
+
+import { ArrowUpRight, ChevronDown, X } from "lucide-react";
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { education, experience, site } from "@/lib/content";
+import { skills } from "@/lib/skills";
+import { speciesOf } from "@/components/hero/desk/species";
+import { useScrollFade } from "@/hooks/useScrollFade";
+
+/*
+ * The work record, as a real page. The 3D sheet flies up from the folder and
+ * lands exactly where this sits, then hands over: same paper, but type that
+ * stays sharp, selectable, and readable at any size or time of day.
+ */
+
+export type SheetRect = { top: number; left: number; width: number; height: number };
+
+const TABS = [
+  { id: "experience", label: "Experience", count: experience.length },
+  { id: "education", label: "Education", count: education.length },
+] as const;
+type Tab = (typeof TABS)[number]["id"];
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+type Props = {
+  /* where the 3D sheet landed, and where to read it (larger on phones) */
+  landed: SheetRect;
+  reading: SheetRect;
+  closing: boolean;
+  onClose: () => void;
+  onExited: () => void;
+  onSkill: (index: number) => void;
+};
+
+export function WorkRecord({ landed, reading, closing, onClose, onExited, onSkill }: Props) {
+  const [tab, setTab] = useState<Tab>("experience");
+  const [openRole, setOpenRole] = useState<number | null>(0);
+  const [settled, setSettled] = useState(false);
+  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const body = useScrollFade<HTMLDivElement>();
+
+  /* start on the landed sheet, then unfold to the reading size */
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setSettled(true));
+    tabs.current[0]?.focus({ preventScroll: true });
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const onTabKey = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    e.preventDefault();
+    const next = tab === "experience" ? 1 : 0;
+    setTab(TABS[next].id);
+    tabs.current[next]?.focus();
+  };
+
+  const rect = settled && !closing ? reading : landed;
+  const title = TABS.find((t) => t.id === tab)!.label;
+
+  return (
+    <div
+      className="desk-sheet"
+      data-closing={closing ? "" : undefined}
+      style={rect as CSSProperties}
+      role="dialog"
+      aria-labelledby="desk-sheet-title"
+      onAnimationEnd={(e) => {
+        if (closing && e.target === e.currentTarget) onExited();
+      }}
+    >
+      <div className="desk-sheet__head">
+        <p className="desk-sheet__kicker">{site.name} · Work record</p>
+        <button type="button" className="desk-sheet__close" aria-label="Put the record back" onClick={onClose}>
+          <X aria-hidden />
+        </button>
+      </div>
+
+      {/* folder tabs: one subject per page keeps the type large */}
+      <div className="desk-sheet__tabs" role="tablist" aria-label="Record sections">
+        {TABS.map((t, i) => (
+          <button
+            key={t.id}
+            ref={(el) => {
+              tabs.current[i] = el;
+            }}
+            type="button"
+            role="tab"
+            id={`desk-sheet-tab-${t.id}`}
+            aria-controls="desk-sheet-panel"
+            aria-selected={tab === t.id}
+            tabIndex={tab === t.id ? 0 : -1}
+            onClick={() => setTab(t.id)}
+            onKeyDown={onTabKey}
+          >
+            {t.label} <span>{pad(t.count)}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="desk-sheet__title-row">
+        <h2 id="desk-sheet-title">{title}</h2>
+        <span className="desk-sheet__stamp" aria-hidden>
+          On file
+        </span>
+      </div>
+
+      <div
+        ref={body.ref}
+        onScroll={body.onScroll}
+        {...body.fade}
+        id="desk-sheet-panel"
+        className="desk-sheet__body scroll-fade"
+        role="tabpanel"
+        aria-labelledby={`desk-sheet-tab-${tab}`}
+        tabIndex={0}
+        data-lenis-prevent
+      >
+        {tab === "experience" ? (
+          <ol className="desk-sheet__roles">
+            {experience.map((role, i) => {
+              const open = openRole === i;
+              return (
+                <li key={`${role.title}-${role.year}`} data-open={open ? "" : undefined}>
+                  <button type="button" className="desk-sheet__role" aria-expanded={open} aria-controls={`desk-sheet-role-${i}`} onClick={() => setOpenRole(open ? null : i)}>
+                    <span className="desk-sheet__index">{pad(i + 1)}</span>
+                    <span className="desk-sheet__role-main">
+                      <span className="desk-sheet__dates">{role.year}</span>
+                      <span className="desk-sheet__role-title">{role.title}</span>
+                      <span className="desk-sheet__place">{role.place}</span>
+                    </span>
+                    <ChevronDown className="desk-sheet__chev" aria-hidden />
+                  </button>
+                  {open && (
+                    <div id={`desk-sheet-role-${i}`} className="desk-sheet__detail">
+                      <ul className="desk-sheet__highlights">
+                        {role.highlights.map((h) => (
+                          <li key={h}>{h}</li>
+                        ))}
+                      </ul>
+                      <p className="desk-sheet__label">Stack</p>
+                      <ul className="desk-sheet__stack">
+                        {role.stack.map((name) => {
+                          const k = skills.findIndex((s) => s.name === name);
+                          const sp = speciesOf(name);
+                          const fish = <span className="desk-tank__swatch" style={{ "--fish": sp.side, "--fin": sp.fin } as CSSProperties} aria-hidden />;
+                          return (
+                            <li key={name}>
+                              {k >= 0 ? (
+                                <button type="button" className="desk-sheet__chip" onClick={() => onSkill(k)} title={`See ${name} in the aquarium`}>
+                                  {fish}
+                                  {name}
+                                </button>
+                              ) : (
+                                <span className="desk-sheet__chip">{name}</span>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        ) : (
+          <ol className="desk-sheet__schools">
+            {education.map((item) => (
+              <li key={`${item.title}-${item.place}`}>
+                <span className="desk-sheet__dates">{item.year}</span>
+                <span className="desk-sheet__school-title">{item.title}</span>
+                <span className="desk-sheet__place">{item.place}</span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+      {body.more && <ChevronDown className="desk-sheet__more" aria-hidden />}
+
+      <div className="desk-sheet__foot">
+        <a href={`mailto:${site.email}`}>{site.email}</a>
+        <a className="desk-sheet__resume" href={site.resume} target="_blank" rel="noopener noreferrer">
+          Résumé <ArrowUpRight aria-hidden />
+        </a>
+      </div>
+    </div>
+  );
+}
+
+```
+
+```text
+File created successfully at: C:\Portfolio\src\components\hero\WorkRecord.tsx (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:15:53Z)**_
+
+Next, wiring the hero: the state machine, the sheet sizes, and moving the field guide onto the shared hook.
+
+_**Agent (claude-opus-5-5 2026-10-29 13:16:17Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```python
+p = r"C:\Portfolio\src\components\hero\DeskHero.tsx"
+s = open(p, encoding="utf8").read()
+
+
+def r(a, b):
+    global s
+    assert s.count(a) == 1, a
+    s = s.replace(a, b)
+
+
+a = s.index("  /* the work record is a sheet pulled from the folder")
+b = s.index("  }, [experienceOpen, closeExperience]);\n") + len("  }, [experienceOpen, closeExperience]);\n")
+s = s[:a] + '''  /*
+   * The work record: a sheet flies out of the folder (3D), lands, then the
+   * real page takes over (HTML). Closing fades the page, then the sheet flies home.
+   */
+  const [sheet, setSheet] = useState<"closed" | "opening" | "open" | "closing">("closed");
+  const experienceTrigger = useRef<HTMLButtonElement>(null);
+  const focusReturn = useRef<HTMLElement | null>(null);
+  const experienceOpen = sheet !== "closed";
+  const experienceActive = experienceOpen;
+
+  const openExperience = useCallback(() => {
+    const active = document.activeElement;
+    focusReturn.current = active instanceof HTMLElement && active !== document.body ? active : experienceTrigger.current;
+    setOpenProject(null);
+    setSheet((s) => (s === "closed" ? "opening" : s));
+  }, []);
+
+  const closeExperience = useCallback(() => {
+    setSheet((s) => (s === "open" && !reduce ? "closing" : "closed"));
+  }, [reduce]);
+
+  const experienceLanded = useCallback(() => setSheet((s) => (s === "opening" ? "open" : s)), []);
+  const experienceExited = useCallback(() => setSheet((s) => (s === "closing" ? "closed" : s)), []);
+
+  useEffect(() => {
+    if (!experienceOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeExperience();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      focusReturn.current?.focus({ preventScroll: true });
+    };
+  }, [experienceOpen, closeExperience]);
+
+  /* the hero's size, to place the page exactly where the 3D sheet lands */
+  const [hero, setHero] = useState({ w: 0, h: 0 });
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setHero({ w: e.contentRect.width, h: e.contentRect.height }));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const sheetRects = useMemo(() => {
+    /* mirrors the 3D framing: 80% of the height, or 90% of the width on tall screens, nudged up 5% */
+    const ratio = PAPER.h / PAPER.w;
+    const h = Math.min(0.8 * hero.h, 0.9 * hero.w * ratio);
+    const w = h / ratio;
+    const landed = { top: hero.h / 2 - h / 2 - 0.05 * h, left: (hero.w - w) / 2, width: w, height: h };
+    /* phones unfold the page to nearly full screen; an A4 at phone width is too small to read */
+    const phone = hero.w < 768;
+    const reading = phone ? { top: 72, left: 12, width: hero.w - 24, height: hero.h - 84 } : landed;
+    return { landed, reading };
+  }, [hero]);
+
+''' + s[b:]
+
+r('''          onCloseExperience={closeExperience}''', '''          onCloseExperience={closeExperience}
+          onExperienceLanded={experienceLanded}''')
+
+a = s.index("      {experienceOpen && (\n        <div ref={experienceScreen}")
+b = s.index("      {tankOpen && (")
+s = s[:a] + '''      {(sheet === "open" || sheet === "closing") && (
+        <WorkRecord
+          landed={sheetRects.landed}
+          reading={sheetRects.reading}
+          closing={sheet === "closing"}
+          onClose={closeExperience}
+          onExited={experienceExited}
+          onSkill={(i) => {
+            setSheet("closed");
+            openTank();
+            setActiveSkill(i);
+          }}
+        />
+      )}
+
+''' + s[b:]
+
+r('import { speciesOf } from "@/components/hero/desk/species";', 'import { speciesOf } from "@/components/hero/desk/species";\nimport { PAPER } from "@/components/hero/desk/experience";\nimport { WorkRecord } from "@/components/hero/WorkRecord";\nimport { useScrollFade } from "@/hooks/useScrollFade";')
+
+# field guide onto the shared hook
+a = s.index("  /* no scrollbar: the list fades out at whichever edge still has more to show */")
+b = s.index("  return (\n    <section className=\"desk-tank desk-glass\"")
+s = s[:a] + "  /* no scrollbar: the list fades out at whichever edge still has more to show */\n  const list = useScrollFade<HTMLDivElement>();\n\n" + s[b:]
+r('''        ref={list}
+        className="desk-tank__scroll"
+        data-fade-top={edges.top ? "" : undefined}
+        data-fade-bottom={edges.bottom ? "" : undefined}
+        onScroll={measure}
+        data-lenis-prevent''', '''        ref={list.ref}
+        className="desk-tank__scroll scroll-fade"
+        {...list.fade}
+        onScroll={list.onScroll}
+        data-lenis-prevent''')
+r("{edges.bottom && <ChevronDown", "{list.more && <ChevronDown")
+open(p, "w", encoding="utf8").write(s)
+
+# CSS: generic scroll-fade + the sheet
+c = r"C:\Portfolio\src\app\globals.css"
+s = open(c, encoding="utf8").read()
+r('''.desk-tank__scroll {
+  --fade-top: 0px;
+  --fade-bottom: 0px;
+  flex: 1;
+  min-height: 0;
+  margin-top: 0.4rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+  padding-bottom: 0.8rem;
+}
+
+.desk-tank__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.desk-tank__scroll[data-fade-top] {
+  --fade-top: 2.75rem;
+}
+
+.desk-tank__scroll[data-fade-bottom] {
+  --fade-bottom: 4rem;
+}
+''', '''.scroll-fade {
+  --fade-top: 0px;
+  --fade-bottom: 0px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+  transition: --fade-top 220ms ease, --fade-bottom 220ms ease;
+}
+
+.scroll-fade::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-fade[data-fade-top] {
+  --fade-top: 2.75rem;
+}
+
+.scroll-fade[data-fade-bottom] {
+  --fade-bottom: 4rem;
+}
+
+.desk-tank__scroll {
+  flex: 1;
+  min-height: 0;
+  margin-top: 0.4rem;
+  padding-bottom: 0.8rem;
+}
+''')
+r('''.desk-tank__scroll {
+  transition: --fade-top 220ms ease, --fade-bottom 220ms ease;
+}
+
+''', '')
+sheet_css = open(r"C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\sheet.css", encoding="utf8").read()
+r("/* name tag that rides above a fish in the tank */", sheet_css + "/* name tag that rides above a fish in the tank */")
+r('''  .desk-tank,
+  .desk-tank__detail,
+  .desk-tank__more {
+    animation: none;
+  }''', '''  .desk-tank,
+  .desk-tank__detail,
+  .desk-tank__more,
+  .desk-sheet,
+  .desk-sheet__detail,
+  .desk-sheet__more {
+    animation: none;
+    transition: none;
+  }''')
+open(c, "w", encoding="utf8").write(s)
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\hero_sheet.py (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:16:44Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```css
+/* ── Work record: the readable page that takes over from the 3D sheet ── */
+.desk-sheet {
+  position: absolute;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(1rem, 2.4vw, 1.6rem) clamp(1.1rem, 2.6vw, 1.9rem) 0.9rem;
+  border-radius: 3px;
+  background:
+    radial-gradient(120% 90% at 50% 40%, transparent 55%, rgb(150 112 58 / 0.14)),
+    repeating-linear-gradient(0deg, transparent 0 6px, rgb(80 58 30 / 0.018) 6px 7px),
+    #f6f0e2;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.6) inset,
+    0 30px 80px rgb(12 6 2 / 0.45);
+  color: var(--ink);
+  animation: sheet-in 180ms ease-out both;
+  transition:
+    top 380ms var(--ease-out),
+    left 380ms var(--ease-out),
+    width 380ms var(--ease-out),
+    height 380ms var(--ease-out);
+}
+
+.desk-sheet[data-closing] {
+  animation: sheet-out 160ms ease-in both;
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-out {
+  to {
+    opacity: 0;
+  }
+}
+
+.desk-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 2px solid var(--ink);
+}
+
+.desk-sheet__kicker {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.desk-sheet__close {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: -0.4rem -0.5rem -0.4rem 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.desk-sheet__close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.desk-sheet__tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.9rem;
+}
+
+.desk-sheet__tabs [role="tab"] {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.9rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem 0.55rem 0 0;
+  background: rgb(28 22 18 / 0.04);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.desk-sheet__tabs [role="tab"] span {
+  opacity: 0.6;
+}
+
+.desk-sheet__tabs [role="tab"][aria-selected="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #f6f0e2;
+}
+
+.desk-sheet :focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+.desk-sheet__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0 0.4rem;
+  border-top: 1px solid var(--ink);
+}
+
+.desk-sheet__title-row h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4.2vw, 2.9rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+}
+
+.desk-sheet__stamp {
+  flex: none;
+  padding: 0.35rem 0.55rem;
+  border: 2px solid rgb(232 93 44 / 0.8);
+  border-radius: 0.4rem;
+  color: rgb(232 93 44 / 0.9);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transform: rotate(-6deg);
+}
+
+.desk-sheet__body {
+  flex: 1;
+  min-height: 0;
+  margin: 0 -0.4rem;
+  padding: 0.2rem 0.4rem 1rem;
+}
+
+.desk-sheet__body:focus-visible {
+  outline-offset: -2px;
+}
+
+.desk-sheet__roles,
+.desk-sheet__schools,
+.desk-sheet__highlights,
+.desk-sheet__stack {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-sheet__roles > li,
+.desk-sheet__schools > li {
+  border-bottom: 1px solid var(--line);
+}
+
+.desk-sheet__role {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 0.9rem;
+  width: 100%;
+  padding: 0.95rem 0.2rem;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.desk-sheet__index,
+.desk-sheet__dates,
+.desk-sheet__label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.desk-sheet__index {
+  padding-top: 0.15rem;
+}
+
+.desk-sheet__role-main,
+.desk-sheet__schools > li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.desk-sheet__role-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.desk-sheet__place {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+}
+
+.desk-sheet__chev {
+  width: 18px;
+  height: 18px;
+  margin-top: 0.2rem;
+  transition: transform 220ms var(--ease-out);
+}
+
+.desk-sheet__roles > li[data-open] .desk-sheet__chev {
+  transform: rotate(180deg);
+}
+
+.desk-sheet__detail {
+  padding: 0 0.2rem 1.1rem 2.35rem;
+  animation: tank-detail-in 240ms var(--ease-out) both;
+}
+
+.desk-sheet__highlights li {
+  position: relative;
+  padding-left: 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.desk-sheet__highlights li + li {
+  margin-top: 0.4rem;
+}
+
+.desk-sheet__highlights li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.65em;
+  width: 0.4rem;
+  height: 2px;
+  background: var(--signal);
+}
+
+.desk-sheet__label {
+  margin: 1rem 0 0.45rem;
+}
+
+.desk-sheet__stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.desk-sheet__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2rem;
+  padding: 0.3rem 0.75rem 0.3rem 0.55rem;
+  border: 1px solid rgb(28 22 18 / 0.2);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.45);
+  color: inherit;
+  font-size: 0.85rem;
+  font-weight: 550;
+}
+
+button.desk-sheet__chip {
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.desk-sheet__chip .desk-tank__swatch {
+  transform: scale(0.8);
+  margin-right: 0.2rem;
+}
+
+.desk-sheet__schools > li {
+  padding: 0.85rem 0.2rem;
+}
+
+.desk-sheet__school-title {
+  font-size: 1.1rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.desk-sheet__more {
+  align-self: center;
+  width: 16px;
+  height: 16px;
+  margin-top: -1.3rem;
+  color: var(--ink-soft);
+  pointer-events: none;
+  animation: tank-more 1.6s ease-in-out infinite;
+}
+
+.desk-sheet__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+}
+
+.desk-sheet__foot a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.desk-sheet__resume {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #f6f0e2 !important;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.desk-sheet__resume svg {
+  width: 12px;
+  height: 12px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .desk-sheet__close:hover,
+  .desk-sheet__role:hover {
+    background: rgb(28 22 18 / 0.05);
+  }
+
+  button.desk-sheet__chip:hover {
+    background: #fff;
+    border-color: var(--ink);
+  }
+
+  .desk-sheet__tabs [role="tab"][aria-selected="false"]:hover {
+    color: var(--ink);
+  }
+}
+
+@media (max-width: 767px) {
+  .desk-sheet__foot > a:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .desk-sheet__detail {
+    padding-left: 0.2rem;
+  }
+}
+
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\sheet.css (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:17:12Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Apply hero/CSS edits, typecheck, lint
+
+`python "C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/hero_sheet.py" && npx tsc --noEmit -p . 2>&1 | head; npx eslint src 2>&1 | grep -B2 -A6 "error\|warning" | head -40`
+
+```text
+C:\Portfolio\src\components\hero\DeskHero.tsx
+    8:10  warning  'experience' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+  488:14  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\Portfolio\src\components\hero\DeskHero.tsx:488:14
+  486 |
+  487 |       <div
+--
+  490 |         {...list.fade}
+  491 |         onScroll={list.onScroll}                                                   react-hooks/refs
+  490:13  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\Portfolio\src\components\hero\DeskHero.tsx:490:13
+  488 |         ref={list.ref}
+  489 |         className="desk-tank__scroll scroll-fade"
+--
+  492 |         data-lenis-prevent
+  493 |       >                           react-hooks/refs
+  491:19  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\Portfolio\src\components\hero\DeskHero.tsx:491:19
+  489 |         className="desk-tank__scroll scroll-fade"
+  490 |         {...list.fade}
+--
+  493 |       >
+  494 |         {skillGroups.map((group) => (  react-hooks/refs
+  557:8   error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\Portfolio\src\components\hero\DeskHero.tsx:557:8
+  555 |         ))}
+  556 |       </div>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:17:15Z)**_
+
+The React lint rule treats the whole hook result as a ref. Destructuring it should fix that.
+
+_**Agent (claude-opus-5-5 2026-10-29 13:17:39Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Destructure hook results and relint
+
+```bash
+python - <<'PYEOF'
+def edit(p, pairs):
+    s=open(p,encoding="utf8").read()
+    for a,b in pairs:
+        assert s.count(a)==1, (p,a)
+        s=s.replace(a,b)
+    open(p,"w",encoding="utf8").write(s)
+edit("src/components/hero/DeskHero.tsx",[
+("  const list = useScrollFade<HTMLDivElement>();","  const { ref: listRef, onScroll, fade, more } = useScrollFade<HTMLDivElement>();"),
+("""        ref={list.ref}
+        className="desk-tank__scroll scroll-fade"
+        {...list.fade}
+        onScroll={list.onScroll}""","""        ref={listRef}
+        className="desk-tank__scroll scroll-fade"
+        {...fade}
+        onScroll={onScroll}"""),
+("{list.more && <ChevronDown","{more && <ChevronDown"),
+('import { experience, projects, site } from "@/lib/content";','import { projects, site } from "@/lib/content";'),
+])
+edit("src/components/hero/WorkRecord.tsx",[
+("  const body = useScrollFade<HTMLDivElement>();","  const { ref: bodyRef, onScroll, fade, more } = useScrollFade<HTMLDivElement>();"),
+("""        ref={body.ref}
+        onScroll={body.onScroll}
+        {...body.fade}""","""        ref={bodyRef}
+        onScroll={onScroll}
+        {...fade}"""),
+("{body.more && <ChevronDown","{more && <ChevronDown"),
+])
+PYEOF
+npx tsc --noEmit -p . 2>&1 | head; npx eslint src 2>&1 | grep -E "^\s+[0-9]+:[0-9]+" | head
+```
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:17:41Z)**_
+
+Types and lint pass. Screenshot pass next: the sheet open, a second role expanded, the Education tab, then phone and night mode.
+
+_**Agent (claude-opus-5-5 2026-10-29 13:18:17Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Screenshot work record flow on desktop
+
+```bash
+S="C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot"; cd "$S" && cat > sheet.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  const W = +(process.env.W || 1440), H = +(process.env.H || 900), P = process.env.P || "w";
+  const page = await browser.newPage({ viewport: { width: W, height: H }, colorScheme: process.env.DARK ? "dark" : "light" });
+  page.on("pageerror", (e) => console.log("PAGEERROR", e.message));
+  page.on("console", (m) => { if (m.type() === "error" && !m.text().includes("X4122")) console.log("CONSOLE", m.text().slice(0, 300)); });
+  await page.goto("http://localhost:3000", { waitUntil: "load", timeout: 180000 });
+  await page.waitForSelector(".desk-loader", { timeout: 60000 });
+  await page.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+  await page.waitForTimeout(2000);
+  await page.evaluate(() => [...document.querySelectorAll(".desk-card button")].find((b) => b.textContent.trim().startsWith("Experience")).click());
+  await page.waitForTimeout(1000);
+  await page.screenshot({ path: `${P}-1-flying.png` });
+  await page.waitForSelector(".desk-sheet", { timeout: 8000 });
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: `${P}-2-sheet.png` });
+  await page.click(".desk-sheet__roles > li:nth-child(2) .desk-sheet__role");
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: `${P}-3-role2.png` });
+  await page.click("#desk-sheet-tab-education");
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `${P}-4-edu.png` });
+  await page.click("#desk-sheet-tab-experience");
+  await page.waitForTimeout(300);
+  const chip = await page.$("button.desk-sheet__chip");
+  await chip.click();
+  await page.waitForTimeout(4500);
+  await page.screenshot({ path: `${P}-5-chip.png` });
+  await browser.close();
+})();
+EOF
+node sheet.js 2>&1 | tail -4
+```
+
+```text
+Shell cwd was reset to C:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:18:19Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\w-2-sheet.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:18:20Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\w-3-role2.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:18:22Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\w-4-edu.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:18:23Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\w-5-chip.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:18:28Z)**_
+
+<think><details><summary>Thought Process</summary>
+Desktop confirmed working end to end—sharp type, tabs, default role, and camera flythrough on stack chip clicks all function correctly. Next I'll check phone and night mode.
+
+</details></think>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:19:21Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Shoot phone and night variants
+
+`cd "C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot" && W=390 H=844 P=wp node sheet.js 2>&1 | tail -3; DARK=1 W=1500 H=690 P=wd node sheet.js 2>&1 | tail -3`
+
+```text
+Shell cwd was reset to C:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:19:23Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\wp-2-sheet.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:19:25Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\wd-2-sheet.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:19:28Z)**_
+
+Phone unfolds to near full screen and night mode stays readable. One fix: the header wraps on narrow sheets, so I'm switching it to your short name.
+
+_**Agent (claude-opus-5-5 2026-10-29 13:19:50Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Shorten sheet header and recheck
+
+`sed -i 's/<p className="desk-sheet__kicker">{site.name} · Work record<\/p>/<p className="desk-sheet__kicker">{site.shortName} · Work record<\/p>/' src/components/hero/WorkRecord.tsx && grep -c "site.shortName" src/components/hero/WorkRecord.tsx && npx tsc --noEmit -p . 2>&1 | head -3 && npx eslint src 2>&1 | grep -cE "error|warning"`
+
+```text
+1
+0
+[This command modified 1 file you've previously read: src\components\hero\WorkRecord.tsx. Call Read before editing.]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:19:59Z)**_
+
+I built all three: the paper flies up and becomes a real HTML page, the page has Experience and Education tabs, and each role opens to show highlights and its stack. I checked it in screenshots on desktop (1440×900), on a phone (390×844), and in night mode at your window size (1500×690). Types and lint pass.
+
+**Before you ship:** the role highlights and per-role stacks in `experience` in [content.ts](src/lib/content.ts) are drafts I wrote to fill the layout. A comment there marks them. Please replace them with your real work and the tools you actually used at MoveForward and Efunity.
+
+**How it works now**
+1. **Paper becomes HTML.** The 3D sheet still flies out of the folder. When it lands, a real page fades in at the same spot and size, so the handoff is invisible. Text is sharp, selectable and readable by screen readers, and it stays readable at night. Closing fades the page out, then the sheet flies back into the folder. On phones the page grows to nearly full screen after landing, because an A4 sheet at phone width is too small to read.
+2. **Folder tabs.** "Experience 02" and "Education 04" tabs sit along the top of the page. Arrow keys switch between them, and each tab shows one subject with large type.
+3. **Expandable roles.** Each role shows its number, dates, title and company in italic. Clicking a role opens:
+   - 2–3 highlights.
+   - Stack chips with the matching fish shape. Clicking a chip closes the record and takes you to that fish selected in the aquarium.
+
+The first role opens by default so the page doesn't look empty. Résumé ↗ and your email sit along the bottom. The page scrolls with the same edge fades as the skills list, and Escape, × or a click on the dimmed desk closes it.
+
+**The duplicate sheet in your screenshot:** I couldn't reproduce it in a fresh load at your window size in night mode. It was most likely left over from hot reload during my edits, so reload if you see it again. The HTML page now covers the 3D sheet once it lands either way.
+
+**Also changed**
+- The bottom bar that used to sit under the paper is gone; its controls moved onto the page itself.
+- The scroll-fade logic is now one shared hook, [useScrollFade.ts](src/hooks/useScrollFade.ts), used by both the skills list and the record.
+
+The new page is [WorkRecord.tsx](src/components/hero/WorkRecord.tsx), and its styles are under `.desk-sheet` in [globals.css](src/app/globals.css).
+
+---
+
+_**User (2026-10-29 13:31:29Z)**_
+
+why is the experience folder not clickable? when i click the folder the document should open/show but its so hard to trigger. also the transition between 3rd and html is not smooth is very visible. it should not be visible
+
+/caveman 
+
+i think im having a card time triggering the object because im having hard time opening the projects also, i moves but i cant open it. why is that. inspect if its just a laptop function issue or the code itself
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 13:32:22Z)**_
+
+Checking how pointer events and raycasting treat hidden meshes. That's the likely cause.
+
+_**Agent (claude-opus-5-5 2026-10-29 13:32:24Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Check whether raycasts skip hidden objects
+
+`grep -rn "visible" node_modules/@react-three/fiber/dist/events-*.esm.js | head; grep -n "intersectObject(object, recursive" -A12 node_modules/three/src/core/Raycaster.js | head -30`
+
+```text
+427:    if (prop === 'visible' && instance != null && instance.isHidden && instance.previousVisible !== undefined) {
+1013:        const h = 2 * Math.tan(fov / 2) * distance; // visible height
+4169:          mode: "visible",
+4175:          mode: "visible",
+4187:          mode: "visible",
+4553:          case "visible":
+4679:                if (r.flags |= 128, c = !0, t = t.updateQueue, r.updateQueue = t, Or(r, t), Br(l, !0), l.tail === null && l.tailMode !== "collapsed" && l.tailMode !== "visible" && !d.alternate && !ne) return ge(r), null;
+4695:              return l.rendering = t, l.tail = t.sibling, l.renderingStartTime = Tt(), t.sibling = null, d = Xn.current, d = c ? d & 1 | 2 : d & 1, l.tailMode === "visible" || l.tailMode === "collapsed" || !a || ne ? sl(r, d) : (a = d, Te(Zn, r), Te(Xn, a), lt === null && (lt = r)), ne && io(r, l.treeForkCount), t;
+11256:+ <Activity %s>`, o === !0 ? "hidden" : o === !1 ? "hidden={false}" : "hidden={...}", o ? 'mode="hidden"' : 'mode="visible"'), n = ld({
+11436:          mode: "visible",
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:32:28Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Inspect three.js raycaster visibility check
+
+`grep -n "function intersect\b\|intersectObject" -A10 node_modules/three/src/core/Raycaster.js | sed -n 1,60p | grep -n "layers\|visible\|raycast" `
+
+```text
+25:240:function intersect( object, raycaster, intersects, recursive ) {
+29:244-	if ( object.layers.test( raycaster.layers ) ) {
+31:246-		const result = object.raycast( raycaster, intersects );
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:33:28Z)**_
+
+<think><details><summary>Thought Process</summary>
+Found the bug: an invisible idle backdrop plane at the origin is still raycast-active and swallowing clicks on objects behind it, like the folder and books—hover works since it has no hover handler, but clicks hit the plane instead. Now checking for any other hidden blockers before fixing it.
+
+</details></think>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:33:29Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Find other hidden meshes that may catch clicks
+
+`grep -rn "visible={false}\|\.visible = " src/components/hero/desk/*.tsx | head -20`
+
+```text
+src/components/hero/desk/experience.tsx:73:    if (resting.current) resting.current.visible = link.p < 0.001;
+src/components/hero/desk/experience.tsx:150:    if (sheet) sheet.visible = live;
+src/components/hero/desk/experience.tsx:154:      dim.visible = live && s2 > 0.01;
+src/components/hero/desk/experience.tsx:204:      <group ref={sheet} visible={false} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+src/components/hero/desk/experience.tsx:217:        visible={false}
+src/components/hero/desk/room.tsx:379:      this.dim.visible = live;
+src/components/hero/desk/room.tsx:481:        visible={false}
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:33:35Z)**_
+
+<think><details><summary>Thought Process</summary>
+The experience paper's flying 3D sheet is causing a click-blocking and crossfade issue the shelf doesn't have, so I'll remove it and instead animate the HTML page directly from the paper's on-screen position to reading size, keeping the folder cover's 3D open and using an HTML backdrop for dimming.
+
+</details></think>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:33:51Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```typescript
+"use client";
+
+import { RoundedBox } from "@react-three/drei";
+import { useFrame, type ThreeEvent } from "@react-three/fiber";
+import { useRef } from "react";
+import * as THREE from "three";
+
+/*
+ * The work folder on the desk. The sheet inside is drawn here while it rests;
+ * once opened, the page itself (HTML) lifts off from exactly where this sheet
+ * sits on screen, so there is never a hand-over between two different sheets.
+ */
+
+/* A4 proportions, sized to sit inside the folder */
+export const PAPER = { w: 1.4, h: 1.98 };
+const FOLDER = { w: 1.55, d: 2.1 };
+const COVER_SECONDS = 0.55;
+const FLAT = -Math.PI / 2;
+/* the cover rests a touch open so the sheet inside shows */
+const AJAR = 0.09;
+
+const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+/* The resting sheet's place on screen, for the page to start its flight from. */
+export type SheetOrigin = { cx: number; cy: number; width: number; height: number; angle: number };
+
+/* Shared between the folder (3D) and the page (HTML). */
+export class PaperLink {
+  /* cover: 0 closed, 1 open */
+  cover = 0;
+  /* while the page is out, the resting sheet hides so there is only ever one */
+  out = false;
+  anchor: THREE.Object3D | null = null;
+  private v = new THREE.Vector3();
+
+  setAnchor(o: THREE.Object3D | null) {
+    this.anchor = o;
+  }
+
+  setOut(out: boolean) {
+    this.out = out;
+  }
+
+  step(open: boolean, reduced: boolean, dt: number) {
+    const goal = open ? 1 : 0;
+    const step = reduced ? 1 : dt / COVER_SECONDS;
+    this.cover = goal > this.cover ? Math.min(goal, this.cover + step) : Math.max(goal, this.cover - step);
+  }
+
+  /* project the sheet's edges to canvas pixels: centre, size and in-plane angle */
+  origin(camera: THREE.Camera, w: number, h: number): SheetOrigin | null {
+    const a = this.anchor;
+    if (!a) return null;
+    a.updateWorldMatrix(true, false);
+    const at = (x: number, y: number) => {
+      this.v.set(x, y, 0).applyMatrix4(a.matrixWorld).project(camera);
+      return { x: ((this.v.x + 1) / 2) * w, y: ((1 - this.v.y) / 2) * h };
+    };
+    const l = at(-PAPER.w / 2, 0);
+    const r = at(PAPER.w / 2, 0);
+    const b = at(0, -PAPER.h / 2);
+    const t = at(0, PAPER.h / 2);
+    const c = at(0, 0);
+    return {
+      cx: c.x,
+      cy: c.y,
+      width: Math.hypot(r.x - l.x, r.y - l.y),
+      height: Math.hypot(t.x - b.x, t.y - b.y),
+      angle: Math.atan2(r.y - l.y, r.x - l.x),
+    };
+  }
+}
+
+function Sheet({ map }: { map: THREE.Texture }) {
+  return (
+    <mesh castShadow receiveShadow>
+      <boxGeometry args={[PAPER.w, PAPER.h, 0.008]} />
+      {[0, 1, 2, 3, 5].map((k) => (
+        <meshStandardMaterial key={k} attach={`material-${k}`} color="#f2ecdd" roughness={0.9} />
+      ))}
+      <meshStandardMaterial attach="material-4" map={map} roughness={0.88} />
+    </mesh>
+  );
+}
+
+type FolderProps = {
+  cover: THREE.Texture;
+  paper: THREE.Texture;
+  link: PaperLink;
+  open: boolean;
+  reduced: boolean;
+  onOpen: () => void;
+};
+
+export function ExperienceFolder({ cover, paper, link, open, reduced, onOpen }: FolderProps) {
+  const flap = useRef<THREE.Group>(null);
+  const resting = useRef<THREE.Group>(null);
+
+  useFrame((_, delta) => {
+    link.step(open, reduced, Math.min(delta, 1 / 30));
+    if (flap.current) flap.current.rotation.z = THREE.MathUtils.lerp(AJAR, 2.75, ease(link.cover));
+    if (resting.current) resting.current.visible = !link.out;
+  });
+
+  /* a drag that ends on the folder is a move, not a request to read */
+  const onClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    if (e.delta > 10) return;
+    onOpen();
+  };
+
+  return (
+    <group onClick={onClick}>
+      {/* back panel, with the tab along the far edge */}
+      <RoundedBox args={[FOLDER.w, 0.02, FOLDER.d]} radius={0.01} smoothness={2} position={[0, 0.01, 0]} castShadow receiveShadow>
+        <meshStandardMaterial color="#c9a46a" roughness={0.92} />
+      </RoundedBox>
+      <RoundedBox args={[0.6, 0.02, 0.22]} radius={0.01} smoothness={2} position={[-0.32, 0.01, -FOLDER.d / 2 - 0.09]} castShadow>
+        <meshStandardMaterial color="#c9a46a" roughness={0.92} />
+      </RoundedBox>
+
+      {/* the sheet, pushed off-center so its edge and corner stick out of the folder */}
+      <group
+        ref={(g) => {
+          resting.current = g;
+          link.setAnchor(g);
+        }}
+        position={[0.2, 0.03, -0.2]}
+        rotation={[FLAT, 0, -0.06]}
+      >
+        <Sheet map={paper} />
+      </group>
+
+      {/* front cover, hinged on the spine at -x */}
+      <group ref={flap} position={[-FOLDER.w / 2, 0.045, 0]} rotation={[0, 0, AJAR]}>
+        <group position={[FOLDER.w / 2, 0, 0]}>
+          <RoundedBox args={[FOLDER.w, 0.016, FOLDER.d - 0.04]} radius={0.008} smoothness={2} castShadow receiveShadow>
+            <meshStandardMaterial color="#d4b07a" roughness={0.92} />
+          </RoundedBox>
+          <mesh position={[0, 0.0085, 0]} rotation={[FLAT, 0, 0]}>
+            <planeGeometry args={[FOLDER.w - 0.02, FOLDER.d - 0.06]} />
+            <meshStandardMaterial map={cover} roughness={0.9} />
+          </mesh>
+        </group>
+      </group>
+    </group>
+  );
+}
+
+```
+
+```text
+<tool_use_error>File has been modified since read, either by the user or by a linter. Read it again before attempting to write it.</tool_use_error>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:33:57Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Remove experience file before rewrite
+
+`git diff --stat -- src/components/hero/desk/experience.tsx; head -3 src/components/hero/desk/experience.tsx; rm src/components/hero/desk/experience.tsx`
+
+```text
+"use client";
+
+import { RoundedBox } from "@react-three/drei";
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:34:14Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```typescript
+"use client";
+
+import { RoundedBox } from "@react-three/drei";
+import { useFrame, type ThreeEvent } from "@react-three/fiber";
+import { useRef } from "react";
+import * as THREE from "three";
+
+/*
+ * The work folder on the desk. The sheet inside is drawn here while it rests;
+ * once opened, the page itself (HTML) lifts off from exactly where this sheet
+ * sits on screen, so there is never a hand-over between two different sheets.
+ */
+
+/* A4 proportions, sized to sit inside the folder */
+export const PAPER = { w: 1.4, h: 1.98 };
+const FOLDER = { w: 1.55, d: 2.1 };
+const COVER_SECONDS = 0.55;
+const FLAT = -Math.PI / 2;
+/* the cover rests a touch open so the sheet inside shows */
+const AJAR = 0.09;
+
+const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+/* The resting sheet's place on screen, for the page to start its flight from. */
+export type SheetOrigin = { cx: number; cy: number; width: number; height: number; angle: number };
+
+/* Shared between the folder (3D) and the page (HTML). */
+export class PaperLink {
+  /* cover: 0 closed, 1 open */
+  cover = 0;
+  /* while the page is out, the resting sheet hides so there is only ever one */
+  out = false;
+  anchor: THREE.Object3D | null = null;
+  private v = new THREE.Vector3();
+
+  setAnchor(o: THREE.Object3D | null) {
+    this.anchor = o;
+  }
+
+  setOut(out: boolean) {
+    this.out = out;
+  }
+
+  step(open: boolean, reduced: boolean, dt: number) {
+    const goal = open ? 1 : 0;
+    const step = reduced ? 1 : dt / COVER_SECONDS;
+    this.cover = goal > this.cover ? Math.min(goal, this.cover + step) : Math.max(goal, this.cover - step);
+  }
+
+  /* project the sheet's edges to canvas pixels: centre, size and in-plane angle */
+  origin(camera: THREE.Camera, w: number, h: number): SheetOrigin | null {
+    const a = this.anchor;
+    if (!a) return null;
+    a.updateWorldMatrix(true, false);
+    const at = (x: number, y: number) => {
+      this.v.set(x, y, 0).applyMatrix4(a.matrixWorld).project(camera);
+      return { x: ((this.v.x + 1) / 2) * w, y: ((1 - this.v.y) / 2) * h };
+    };
+    const l = at(-PAPER.w / 2, 0);
+    const r = at(PAPER.w / 2, 0);
+    const b = at(0, -PAPER.h / 2);
+    const t = at(0, PAPER.h / 2);
+    const c = at(0, 0);
+    return {
+      cx: c.x,
+      cy: c.y,
+      width: Math.hypot(r.x - l.x, r.y - l.y),
+      height: Math.hypot(t.x - b.x, t.y - b.y),
+      angle: Math.atan2(r.y - l.y, r.x - l.x),
+    };
+  }
+}
+
+function Sheet({ map }: { map: THREE.Texture }) {
+  return (
+    <mesh castShadow receiveShadow>
+      <boxGeometry args={[PAPER.w, PAPER.h, 0.008]} />
+      {[0, 1, 2, 3, 5].map((k) => (
+        <meshStandardMaterial key={k} attach={`material-${k}`} color="#f2ecdd" roughness={0.9} />
+      ))}
+      <meshStandardMaterial attach="material-4" map={map} roughness={0.88} />
+    </mesh>
+  );
+}
+
+type FolderProps = {
+  cover: THREE.Texture;
+  paper: THREE.Texture;
+  link: PaperLink;
+  open: boolean;
+  reduced: boolean;
+  onOpen: () => void;
+};
+
+export function ExperienceFolder({ cover, paper, link, open, reduced, onOpen }: FolderProps) {
+  const flap = useRef<THREE.Group>(null);
+  const resting = useRef<THREE.Group>(null);
+
+  useFrame((_, delta) => {
+    link.step(open, reduced, Math.min(delta, 1 / 30));
+    if (flap.current) flap.current.rotation.z = THREE.MathUtils.lerp(AJAR, 2.75, ease(link.cover));
+    if (resting.current) resting.current.visible = !link.out;
+  });
+
+  /* a drag that ends on the folder is a move, not a request to read */
+  const onClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    if (e.delta > 10) return;
+    onOpen();
+  };
+
+  return (
+    <group onClick={onClick}>
+      {/* back panel, with the tab along the far edge */}
+      <RoundedBox args={[FOLDER.w, 0.02, FOLDER.d]} radius={0.01} smoothness={2} position={[0, 0.01, 0]} castShadow receiveShadow>
+        <meshStandardMaterial color="#c9a46a" roughness={0.92} />
+      </RoundedBox>
+      <RoundedBox args={[0.6, 0.02, 0.22]} radius={0.01} smoothness={2} position={[-0.32, 0.01, -FOLDER.d / 2 - 0.09]} castShadow>
+        <meshStandardMaterial color="#c9a46a" roughness={0.92} />
+      </RoundedBox>
+
+      {/* the sheet, pushed off-center so its edge and corner stick out of the folder */}
+      <group
+        ref={(g) => {
+          resting.current = g;
+          link.setAnchor(g);
+        }}
+        position={[0.2, 0.03, -0.2]}
+        rotation={[FLAT, 0, -0.06]}
+      >
+        <Sheet map={paper} />
+      </group>
+
+      {/* front cover, hinged on the spine at -x */}
+      <group ref={flap} position={[-FOLDER.w / 2, 0.045, 0]} rotation={[0, 0, AJAR]}>
+        <group position={[FOLDER.w / 2, 0, 0]}>
+          <RoundedBox args={[FOLDER.w, 0.016, FOLDER.d - 0.04]} radius={0.008} smoothness={2} castShadow receiveShadow>
+            <meshStandardMaterial color="#d4b07a" roughness={0.92} />
+          </RoundedBox>
+          <mesh position={[0, 0.0085, 0]} rotation={[FLAT, 0, 0]}>
+            <planeGeometry args={[FOLDER.w - 0.02, FOLDER.d - 0.06]} />
+            <meshStandardMaterial map={cover} roughness={0.9} />
+          </mesh>
+        </group>
+      </group>
+    </group>
+  );
+}
+
+```
+
+```text
+File created successfully at: C:\Portfolio\src\components\hero\desk\experience.tsx (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:34:19Z)**_
+
+Next: rewiring the canvas side to the bridge.
+
+_**Agent (claude-opus-5-5 2026-10-29 13:34:28Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Wire paper bridge into canvas
+
+```bash
+python - <<'PYEOF'
+p="src/components/hero/desk/DeskCanvas.tsx"; s=open(p,encoding="utf8").read()
+def r(a,b):
+    global s
+    assert s.count(a)==1, a
+    s=s.replace(a,b)
+r('import { ExperienceFolder, ExperiencePaper, PaperLink } from "./experience";','import { ExperienceFolder, PaperLink, type SheetOrigin } from "./experience";')
+r('import { Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from "react";','import { Suspense, useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";')
+r("""export type DeskCommand = { type: "tidy" | "scatter"; n: number };""","""export type DeskCommand = { type: "tidy" | "scatter"; n: number };
+
+/* lets the HTML page find the folder's sheet on screen, and hide it while the page is out */
+export type PaperBridge = { origin: () => SheetOrigin | null; setOut: (out: boolean) => void };""")
+r("""  onCloseExperience: () => void;
+  onExperienceLanded: () => void;""","""  onCloseExperience: () => void;
+  paperBridge: RefObject<PaperBridge | null>;""")
+r("experienceOpen, onOpenExperience, onCloseExperience, onExperienceLanded,","experienceOpen, onOpenExperience, onCloseExperience, paperBridge,")
+r("""  paper: PaperLink,
+  onOpenExperience: () => void,""","""  paper: PaperLink,
+  folder: { open: boolean; reduced: boolean; onOpen: () => void },""")
+r("""        <ExperienceFolder cover={t.folderCover} paper={t.paper} link={paper} onOpen={onOpenExperience} />""","""        <ExperienceFolder cover={t.folderCover} paper={t.paper} link={paper} open={folder.open} reduced={folder.reduced} onOpen={folder.onOpen} />""")
+r("{renderModel(item.id, tex, night, paper, onOpenExperience)}","{renderModel(item.id, tex, night, paper, { open: experienceOpen, reduced, onOpen: onOpenExperience })}")
+i=s.index("      {tex && <ExperiencePaper"); j=s.index("\n",i)+1
+s=s[:i]+s[j:]
+r("""  const [paper] = useState(() => new PaperLink());""","""  const [paper] = useState(() => new PaperLink());
+
+  useEffect(() => {
+    paperBridge.current = {
+      origin: () => paper.origin(camera, size.width, size.height),
+      setOut: (out) => paper.setOut(out),
+    };
+  }, [paperBridge, paper, camera, size]);""")
+open(p,"w",encoding="utf8").write(s)
+PYEOF
+grep -n "onCloseExperience" src/components/hero/desk/DeskCanvas.tsx
+```
+
+```text
+44:  onCloseExperience: () => void;
+153:function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, experienceOpen, onOpenExperience, onCloseExperience, paperBridge, onHoverProject, skills, activeSkill, featuredSkills, labelledSkill, onSelectSkill, onHoverSkill, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active">) {
+285:          onCloseExperience();
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:34:43Z)**_
+
+Next, the hero state and the page's flight animation.
+
+_**Agent (claude-opus-5-5 2026-10-29 13:34:45Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Locate sheet state code in hero
+
+`grep -n "sheet\b\|setSheet\|experienceLanded\|experienceExited\|WorkRecord\|PAPER\|onExperienceLanded" src/components/hero/DeskHero.tsx | head -40`
+
+```text
+11:import { PAPER } from "@/components/hero/desk/experience";
+12:import { WorkRecord } from "@/components/hero/WorkRecord";
+115:   * The work record: a sheet flies out of the folder (3D), lands, then the
+116:   * real page takes over (HTML). Closing fades the page, then the sheet flies home.
+118:  const [sheet, setSheet] = useState<"closed" | "opening" | "open" | "closing">("closed");
+121:  const experienceOpen = sheet !== "closed";
+128:    setSheet((s) => (s === "closed" ? "opening" : s));
+132:    setSheet((s) => (s === "open" && !reduce ? "closing" : "closed"));
+135:  const experienceLanded = useCallback(() => setSheet((s) => (s === "opening" ? "open" : s)), []);
+136:  const experienceExited = useCallback(() => setSheet((s) => (s === "closing" ? "closed" : s)), []);
+153:  /* the hero's size, to place the page exactly where the 3D sheet lands */
+164:    const ratio = PAPER.h / PAPER.w;
+276:          onExperienceLanded={experienceLanded}
+419:      {(sheet === "open" || sheet === "closing") && (
+420:        <WorkRecord
+423:          closing={sheet === "closing"}
+425:          onExited={experienceExited}
+427:            setSheet("closed");
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:34:48Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Show sheet code blocks
+
+`sed -n 113,175p src/components/hero/DeskHero.tsx; sed -n 415,435p src/components/hero/DeskHero.tsx`
+
+```text
+  const featuredSkills = useMemo(() => (handProject === null ? NONE : projectSkills[handProject]), [handProject]);
+  /*
+   * The work record: a sheet flies out of the folder (3D), lands, then the
+   * real page takes over (HTML). Closing fades the page, then the sheet flies home.
+   */
+  const [sheet, setSheet] = useState<"closed" | "opening" | "open" | "closing">("closed");
+  const experienceTrigger = useRef<HTMLButtonElement>(null);
+  const focusReturn = useRef<HTMLElement | null>(null);
+  const experienceOpen = sheet !== "closed";
+  const experienceActive = experienceOpen;
+
+  const openExperience = useCallback(() => {
+    const active = document.activeElement;
+    focusReturn.current = active instanceof HTMLElement && active !== document.body ? active : experienceTrigger.current;
+    setOpenProject(null);
+    setSheet((s) => (s === "closed" ? "opening" : s));
+  }, []);
+
+  const closeExperience = useCallback(() => {
+    setSheet((s) => (s === "open" && !reduce ? "closing" : "closed"));
+  }, [reduce]);
+
+  const experienceLanded = useCallback(() => setSheet((s) => (s === "opening" ? "open" : s)), []);
+  const experienceExited = useCallback(() => setSheet((s) => (s === "closing" ? "closed" : s)), []);
+
+  useEffect(() => {
+    if (!experienceOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeExperience();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      focusReturn.current?.focus({ preventScroll: true });
+    };
+  }, [experienceOpen, closeExperience]);
+
+  /* the hero's size, to place the page exactly where the 3D sheet lands */
+  const [hero, setHero] = useState({ w: 0, h: 0 });
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setHero({ w: e.contentRect.width, h: e.contentRect.height }));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const sheetRects = useMemo(() => {
+    /* mirrors the 3D framing: 80% of the height, or 90% of the width on tall screens, nudged up 5% */
+    const ratio = PAPER.h / PAPER.w;
+    const h = Math.min(0.8 * hero.h, 0.9 * hero.w * ratio);
+    const w = h / ratio;
+    const landed = { top: hero.h / 2 - h / 2 - 0.05 * h, left: (hero.w - w) / 2, width: w, height: h };
+    /* phones unfold the page to nearly full screen; an A4 at phone width is too small to read */
+    const phone = hero.w < 768;
+    const reading = phone ? { top: 72, left: 12, width: hero.w - 24, height: hero.h - 84 } : landed;
+    return { landed, reading };
+  }, [hero]);
+
+
+  useEffect(() => {
+          </div>
+        </div>
+      )}
+
+      {(sheet === "open" || sheet === "closing") && (
+        <WorkRecord
+          landed={sheetRects.landed}
+          reading={sheetRects.reading}
+          closing={sheet === "closing"}
+          onClose={closeExperience}
+          onExited={experienceExited}
+          onSkill={(i) => {
+            setSheet("closed");
+            openTank();
+            setActiveSkill(i);
+          }}
+        />
+      )}
+
+      {tankOpen && (
+        <FieldGuide
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:34:59Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```python
+p = r"C:\Portfolio\src\components\hero\DeskHero.tsx"
+s = open(p, encoding="utf8").read()
+
+
+def r(a, b):
+    global s
+    assert s.count(a) == 1, a
+    s = s.replace(a, b)
+
+
+r('''  /*
+   * The work record: a sheet flies out of the folder (3D), lands, then the
+   * real page takes over (HTML). Closing fades the page, then the sheet flies home.
+   */
+  const [sheet, setSheet] = useState<"closed" | "opening" | "open" | "closing">("closed");''', '''  /*
+   * The work record: the folder's cover swings open (3D) and the page lifts off
+   * from exactly where its sheet sits on screen (HTML), so only one sheet ever moves.
+   */
+  const [sheet, setSheet] = useState<"closed" | "open" | "closing">("closed");
+  const [sheetOrigin, setSheetOrigin] = useState<SheetOrigin | null>(null);
+  const paperBridge = useRef<PaperBridge | null>(null);''')
+r('''    setOpenProject(null);
+    setSheet((s) => (s === "closed" ? "opening" : s));
+  }, []);''', '''    setOpenProject(null);
+    setSheetOrigin(paperBridge.current?.origin() ?? null);
+    setSheet((s) => (s === "closed" ? "open" : s));
+  }, []);''')
+r('''  const experienceLanded = useCallback(() => setSheet((s) => (s === "opening" ? "open" : s)), []);
+''', '')
+r('''    /* mirrors the 3D framing: 80% of the height, or 90% of the width on tall screens, nudged up 5% */''', '''    /* an A4 page: 80% of the height, or 90% of the width on tall screens, nudged up a little */''')
+r('''          onExperienceLanded={experienceLanded}''', '''          paperBridge={paperBridge}''')
+r('''        <WorkRecord
+          landed={sheetRects.landed}
+          reading={sheetRects.reading}
+          closing={sheet === "closing"}
+          onClose={closeExperience}
+          onExited={experienceExited}''', '''        <WorkRecord
+          origin={sheetOrigin}
+          landed={sheetRects.landed}
+          reading={sheetRects.reading}
+          closing={sheet === "closing"}
+          reduced={reduce}
+          onOut={(out) => paperBridge.current?.setOut(out)}
+          onClose={closeExperience}
+          onExited={experienceExited}''')
+r('''          onSkill={(i) => {
+            setSheet("closed");''', '''          onSkill={(i) => {
+            paperBridge.current?.setOut(false);
+            setSheet("closed");''')
+r('import { PAPER } from "@/components/hero/desk/experience";', 'import { PAPER, type SheetOrigin } from "@/components/hero/desk/experience";')
+r('import type { DeskCommand } from "@/components/hero/desk/DeskCanvas";', 'import type { DeskCommand, PaperBridge } from "@/components/hero/desk/DeskCanvas";')
+open(p, "w", encoding="utf8").write(s)
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\hero_flight.py (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:35:03Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Apply hero flight edits, show WorkRecord head
+
+`python "C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/hero_flight.py" && sed -n 1,75p src/components/hero/WorkRecord.tsx`
+
+```text
+"use client";
+
+import { ArrowUpRight, ChevronDown, X } from "lucide-react";
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { education, experience, site } from "@/lib/content";
+import { skills } from "@/lib/skills";
+import { speciesOf } from "@/components/hero/desk/species";
+import { useScrollFade } from "@/hooks/useScrollFade";
+
+/*
+ * The work record, as a real page. The 3D sheet flies up from the folder and
+ * lands exactly where this sits, then hands over: same paper, but type that
+ * stays sharp, selectable, and readable at any size or time of day.
+ */
+
+export type SheetRect = { top: number; left: number; width: number; height: number };
+
+const TABS = [
+  { id: "experience", label: "Experience", count: experience.length },
+  { id: "education", label: "Education", count: education.length },
+] as const;
+type Tab = (typeof TABS)[number]["id"];
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+type Props = {
+  /* where the 3D sheet landed, and where to read it (larger on phones) */
+  landed: SheetRect;
+  reading: SheetRect;
+  closing: boolean;
+  onClose: () => void;
+  onExited: () => void;
+  onSkill: (index: number) => void;
+};
+
+export function WorkRecord({ landed, reading, closing, onClose, onExited, onSkill }: Props) {
+  const [tab, setTab] = useState<Tab>("experience");
+  const [openRole, setOpenRole] = useState<number | null>(0);
+  const [settled, setSettled] = useState(false);
+  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const { ref: bodyRef, onScroll, fade, more } = useScrollFade<HTMLDivElement>();
+
+  /* start on the landed sheet, then unfold to the reading size */
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setSettled(true));
+    tabs.current[0]?.focus({ preventScroll: true });
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const onTabKey = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    e.preventDefault();
+    const next = tab === "experience" ? 1 : 0;
+    setTab(TABS[next].id);
+    tabs.current[next]?.focus();
+  };
+
+  const rect = settled && !closing ? reading : landed;
+  const title = TABS.find((t) => t.id === tab)!.label;
+
+  return (
+    <div
+      className="desk-sheet"
+      data-closing={closing ? "" : undefined}
+      style={rect as CSSProperties}
+      role="dialog"
+      aria-labelledby="desk-sheet-title"
+      onAnimationEnd={(e) => {
+        if (closing && e.target === e.currentTarget) onExited();
+      }}
+    >
+      <div className="desk-sheet__head">
+        <p className="desk-sheet__kicker">{site.shortName} · Work record</p>
+        <button type="button" className="desk-sheet__close" aria-label="Put the record back" onClick={onClose}>
+          <X aria-hidden />
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:35:27Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```python
+p = r"C:\Portfolio\src\components\hero\WorkRecord.tsx"
+s = open(p, encoding="utf8").read()
+
+
+def r(a, b):
+    global s
+    assert s.count(a) == 1, a
+    s = s.replace(a, b)
+
+
+r('import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";',
+  'import { useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";')
+r('import { speciesOf } from "@/components/hero/desk/species";',
+  'import { speciesOf } from "@/components/hero/desk/species";\nimport type { SheetOrigin } from "@/components/hero/desk/experience";')
+r('''/*
+ * The work record, as a real page. The 3D sheet flies up from the folder and
+ * lands exactly where this sits, then hands over: same paper, but type that
+ * stays sharp, selectable, and readable at any size or time of day.
+ */''', '''/*
+ * The work record, as a real page. It starts exactly over the folder's sheet
+ * on screen (same spot, size and angle), lifts to reading size, and on close
+ * flies back into the folder. Only this one sheet ever moves, so there is no
+ * hand-over to see; the type stays sharp and readable at any size or time of day.
+ */''')
+a = s.index("type Props = {")
+b = s.index("  const onTabKey = ")
+s = s[:a] + '''const OPEN_MS = 760;
+const CLOSE_MS = 520;
+const EASE_OUT = "cubic-bezier(0.22, 1, 0.36, 1)";
+const EASE_IN = "cubic-bezier(0.55, 0, 0.75, 0.2)";
+
+/* the transform that puts a page laid out at `rect` over the folder's sheet */
+function fromFolder(origin: SheetOrigin, rect: SheetRect) {
+  const dx = origin.cx - (rect.left + rect.width / 2);
+  const dy = origin.cy - (rect.top + rect.height / 2);
+  return `translate(${dx}px, ${dy}px) rotate(${origin.angle}rad) scale(${origin.width / rect.width}, ${origin.height / rect.height})`;
+}
+
+type Props = {
+  /* the folder's sheet on screen; null falls back to a plain fade */
+  origin: SheetOrigin | null;
+  /* the A4 page it lifts to, and where to read it (larger on phones) */
+  landed: SheetRect;
+  reading: SheetRect;
+  closing: boolean;
+  reduced: boolean;
+  /* hides the folder's own sheet while this page is out */
+  onOut: (out: boolean) => void;
+  onClose: () => void;
+  onExited: () => void;
+  onSkill: (index: number) => void;
+};
+
+export function WorkRecord({ origin, landed, reading, closing, reduced, onOut, onClose, onExited, onSkill }: Props) {
+  const [tab, setTab] = useState<Tab>("experience");
+  const [openRole, setOpenRole] = useState<number | null>(0);
+  const [settled, setSettled] = useState(false);
+  const page = useRef<HTMLDivElement>(null);
+  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const { ref: bodyRef, onScroll, fade, more } = useScrollFade<HTMLDivElement>();
+
+  /* lift off: swap with the folder's sheet before the first paint, then fly up */
+  useLayoutEffect(() => {
+    const el = page.current;
+    if (!el) return;
+    onOut(true);
+    const start = origin
+      ? [{ transform: fromFolder(origin, landed), boxShadow: "0 2px 6px rgb(12 6 2 / 0.25)" }]
+      : [{ opacity: 0, transform: "scale(0.96)" }];
+    const flight = el.animate([...start, { transform: "none", boxShadow: "0 30px 80px rgb(12 6 2 / 0.45)", opacity: 1 }], {
+      duration: reduced ? 0 : OPEN_MS,
+      /* the cover swings open first */
+      delay: reduced ? 0 : 140,
+      easing: EASE_OUT,
+      fill: "backwards",
+    });
+    flight.onfinish = () => setSettled(true);
+    tabs.current[0]?.focus({ preventScroll: true });
+    return () => flight.cancel();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once, on lift-off
+  }, []);
+
+  /* put it back: fold down to the A4 page, then fly into the folder */
+  useLayoutEffect(() => {
+    const el = page.current;
+    if (!closing || !el) return;
+    const shrink = settled && (reading.width !== landed.width || reading.height !== landed.height);
+    setSettled(false);
+    const end = origin ? [{ transform: fromFolder(origin, landed), boxShadow: "0 2px 6px rgb(12 6 2 / 0.25)" }] : [{ opacity: 0 }];
+    const back = el.animate([{ transform: "none" }, ...end], {
+      duration: reduced ? 0 : CLOSE_MS,
+      delay: reduced || !shrink ? 0 : 300,
+      easing: EASE_IN,
+      fill: "forwards",
+    });
+    /* show the folder's sheet again, and only drop this page once that frame has drawn */
+    back.onfinish = () => {
+      onOut(false);
+      requestAnimationFrame(() => requestAnimationFrame(onExited));
+    };
+    return () => back.cancel();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once, when closing starts
+  }, [closing]);
+
+''' + s[b:]
+r('''  const rect = settled && !closing ? reading : landed;''', '''  const rect = settled ? reading : landed;''')
+r('''    <div
+      className="desk-sheet"
+      data-closing={closing ? "" : undefined}
+      style={rect as CSSProperties}
+      role="dialog"
+      aria-labelledby="desk-sheet-title"
+      onAnimationEnd={(e) => {
+        if (closing && e.target === e.currentTarget) onExited();
+      }}
+    >''', '''    <>
+    <div className="desk-sheet-backdrop" data-closing={closing ? "" : undefined} onClick={onClose} aria-hidden />
+    <div ref={page} className="desk-sheet" style={rect as CSSProperties} role="dialog" aria-labelledby="desk-sheet-title">''')
+# close fragment at end of component
+i = s.rindex("    </div>\n  );\n}")
+s = s[:i] + "    </div>\n    </>\n  );\n}" + s[i + len("    </div>\n  );\n}"):]
+open(p, "w", encoding="utf8").write(s)
+
+c = r"C:\Portfolio\src\app\globals.css"
+s = open(c, encoding="utf8").read()
+r('''  color: var(--ink);
+  animation: sheet-in 180ms ease-out both;
+  transition:''', '''  color: var(--ink);
+  transform-origin: center;
+  transition:''')
+r('''.desk-sheet[data-closing] {
+  animation: sheet-out 160ms ease-in both;
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-out {
+  to {
+    opacity: 0;
+  }
+}''', '''/* dims the desk behind the page; click it to put the page back */
+.desk-sheet-backdrop {
+  position: absolute;
+  z-index: 29;
+  inset: 0;
+  background: rgb(18 10 4 / 0.55);
+  animation: sheet-dim-in 600ms ease both;
+}
+
+.desk-sheet-backdrop[data-closing] {
+  animation: sheet-dim-out 520ms ease both;
+}
+
+@keyframes sheet-dim-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-dim-out {
+  to {
+    opacity: 0;
+  }
+}''')
+r('''  .desk-sheet,
+  .desk-sheet__detail,''', '''  .desk-sheet,
+  .desk-sheet-backdrop,
+  .desk-sheet__detail,''')
+open(c, "w", encoding="utf8").write(s)
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\wr_flight.py (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:35:50Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Apply page flight edits, typecheck, lint
+
+`python "C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/wr_flight.py" && npx tsc --noEmit -p . 2>&1 | head; npx eslint src 2>&1 | grep -E "^\s+[0-9]+:[0-9]+|^C:" | head -20`
+
+```text
+C:\Portfolio\src\components\hero\desk\DeskCanvas.tsx
+  162:5  error  Error: This value cannot be modified
+C:\Portfolio\src\components\hero\desk\DeskCanvas.tsx:162:5
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:35:53Z)**_
+
+Lint won't let a child write to a parent's ref, so I'm switching to a callback prop.
+
+_**Agent (claude-opus-5-5 2026-10-29 13:36:20Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Switch bridge to callback prop, recheck
+
+```bash
+python - <<'PYEOF'
+def edit(p, pairs):
+    s=open(p,encoding="utf8").read()
+    for a,b in pairs:
+        assert s.count(a)==1, (p,a)
+        s=s.replace(a,b)
+    open(p,"w",encoding="utf8").write(s)
+edit("src/components/hero/desk/DeskCanvas.tsx",[
+("  paperBridge: RefObject<PaperBridge | null>;","  onPaperBridge: (bridge: PaperBridge | null) => void;"),
+("onCloseExperience, paperBridge,","onCloseExperience, onPaperBridge,"),
+("""  useEffect(() => {
+    paperBridge.current = {
+      origin: () => paper.origin(camera, size.width, size.height),
+      setOut: (out) => paper.setOut(out),
+    };
+  }, [paperBridge, paper, camera, size]);""","""  useEffect(() => {
+    onPaperBridge({
+      origin: () => paper.origin(camera, size.width, size.height),
+      setOut: (out) => paper.setOut(out),
+    });
+    return () => onPaperBridge(null);
+  }, [onPaperBridge, paper, camera, size]);"""),
+(", type ReactNode, type RefObject } from \"react\";",", type ReactNode } from \"react\";"),
+])
+edit("src/components/hero/DeskHero.tsx",[
+("""  const paperBridge = useRef<PaperBridge | null>(null);""","""  const paperBridge = useRef<PaperBridge | null>(null);
+  const onPaperBridge = useCallback((bridge: PaperBridge | null) => {
+    paperBridge.current = bridge;
+  }, []);"""),
+("""          paperBridge={paperBridge}""","""          onPaperBridge={onPaperBridge}"""),
+])
+PYEOF
+npx tsc --noEmit -p . 2>&1 | head; npx eslint src 2>&1 | grep -E "^\s+[0-9]+:[0-9]+|^C:" | head -20
+```
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:36:28Z)**_
+
+Clean. One more thing for a seamless lift-off: redrawing the folder sheet's artwork to match the HTML page's layout, so the swap is invisible even at the first frame.
+
+_**Agent (claude-opus-5-5 2026-10-29 13:36:29Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Locate paper texture function bounds
+
+`grep -n "^function experiencePaperTexture" src/components/hero/desk/textures.ts; grep -n "^function folderCoverTexture" src/components/hero/desk/textures.ts`
+
+```text
+448:function experiencePaperTexture(f: Fonts) {
+545:function folderCoverTexture(f: Fonts) {
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:36:51Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```typescript
+function experiencePaperTexture(f: Fonts) {
+  /*
+   * A miniature of the HTML work record as it first opens (Experience tab, first
+   * role expanded), laid out on the same grid. The page lifts off from this
+   * sheet, so the two must read as the same piece of paper.
+   */
+  const W = 1240;
+  const H = 1754;
+  const k = W / 509;
+  const px = (n: number) => n * k;
+  const { c, ctx } = surface(W, H);
+  ctx.fillStyle = "#f6f0e2";
+  ctx.fillRect(0, 0, W, H);
+  const edge = ctx.createRadialGradient(W / 2, H * 0.4, H * 0.3, W / 2, H * 0.4, H * 0.75);
+  edge.addColorStop(0, "rgba(0,0,0,0)");
+  edge.addColorStop(1, "rgba(150,112,58,0.14)");
+  ctx.fillStyle = edge;
+  ctx.fillRect(0, 0, W, H);
+
+  const left = px(31);
+  const right = W - px(31);
+  const role = experience[0];
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = INK;
+
+  /* head */
+  ctx.font = `500 ${px(10.5)}px ${f.mono}`;
+  ctx.fillText(`${site.shortName.toUpperCase()} · WORK RECORD`, left, px(40));
+  ctx.lineWidth = px(1.6);
+  ctx.strokeStyle = INK;
+  ctx.beginPath();
+  ctx.moveTo(right - px(14), px(30));
+  ctx.lineTo(right - px(4), px(40));
+  ctx.moveTo(right - px(4), px(30));
+  ctx.lineTo(right - px(14), px(40));
+  ctx.stroke();
+  ctx.fillRect(left, px(58), right - left, px(2));
+
+  /* tabs */
+  ctx.fillRect(left, px(75), px(131), px(36));
+  ctx.fillStyle = "rgba(28,22,18,0.05)";
+  ctx.fillRect(left + px(135), px(75), px(123), px(36));
+  ctx.font = `500 ${px(11)}px ${f.mono}`;
+  ctx.fillStyle = "#f6f0e2";
+  ctx.fillText(`EXPERIENCE ${String(experience.length).padStart(2, "0")}`, left + px(15), px(97));
+  ctx.fillStyle = "#5a5046";
+  ctx.fillText(`EDUCATION ${String(education.length).padStart(2, "0")}`, left + px(150), px(97));
+  ctx.fillStyle = INK;
+  ctx.fillRect(left, px(111), right - left, px(1));
+
+  /* title and stamp */
+  ctx.font = `800 ${px(46)}px ${f.display}`;
+  ctx.fillText("Experience", left, px(164));
+  ctx.save();
+  ctx.translate(right - px(38), px(147));
+  ctx.rotate(-0.1);
+  ctx.strokeStyle = "rgba(232,93,44,0.85)";
+  ctx.lineWidth = px(2);
+  ctx.strokeRect(-px(37), -px(14), px(74), px(28));
+  ctx.fillStyle = "rgba(232,93,44,0.9)";
+  ctx.font = `600 ${px(10)}px ${f.mono}`;
+  ctx.textAlign = "center";
+  ctx.fillText("ON FILE", 0, px(4));
+  ctx.restore();
+  ctx.fillStyle = INK;
+
+  /* first role, open */
+  ctx.font = `500 ${px(11)}px ${f.mono}`;
+  ctx.fillStyle = "#5a5046";
+  ctx.fillText("01", left + px(3), px(208));
+  ctx.fillText(role.year.toUpperCase(), left + px(33), px(206));
+  ctx.fillStyle = INK;
+  ctx.font = `700 ${px(21)}px ${f.display}`;
+  ctx.fillText(role.title, left + px(33), px(232));
+  ctx.font = `italic ${px(17)}px ${f.serif}`;
+  ctx.fillStyle = "#5a5046";
+  ctx.fillText(role.place, left + px(33), px(259));
+
+  ctx.font = `400 ${px(16)}px ${f.display}`;
+  let y = px(300);
+  role.highlights.forEach((h) => {
+    ctx.fillStyle = "#e85d2c";
+    ctx.fillRect(left + px(37), y - px(6), px(6), px(2));
+    ctx.fillStyle = INK;
+    wrapLines(ctx, h, right - left - px(54)).forEach((line) => {
+      ctx.fillText(line, left + px(54), y);
+      y += px(24);
+    });
+    y += px(6);
+  });
+
+  ctx.font = `500 ${px(11)}px ${f.mono}`;
+  ctx.fillStyle = "#5a5046";
+  y += px(10);
+  ctx.fillText("STACK", left + px(37), y);
+  y += px(14);
+  ctx.font = `550 ${px(13.5)}px ${f.display}`;
+  let x = left + px(37);
+  role.stack.forEach((name) => {
+    const w = ctx.measureText(name).width + px(48);
+    if (x + w > right) {
+      x = left + px(37);
+      y += px(39);
+    }
+    ctx.strokeStyle = "rgba(28,22,18,0.22)";
+    ctx.lineWidth = px(1);
+    ctx.fillStyle = "rgba(255,255,255,0.45)";
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, px(31), px(16));
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = INK;
+    ctx.fillText(name, x + px(36), y + px(20));
+    x += w + px(6);
+  });
+  y += px(52);
+  ctx.fillStyle = "rgba(28,22,18,0.12)";
+  ctx.fillRect(left, y, right - left, px(1));
+
+  /* next role, closed */
+  const next = experience[1];
+  if (next) {
+    ctx.font = `500 ${px(11)}px ${f.mono}`;
+    ctx.fillStyle = "#5a5046";
+    ctx.fillText("02", left + px(3), y + px(33));
+    ctx.fillText(next.year.toUpperCase(), left + px(33), y + px(31));
+    ctx.fillStyle = INK;
+    ctx.font = `700 ${px(21)}px ${f.display}`;
+    ctx.fillText(next.title, left + px(33), y + px(57));
+  }
+
+  /* foot */
+  ctx.fillStyle = INK;
+  ctx.fillRect(left, px(661), right - left, px(1));
+  ctx.font = `500 ${px(11)}px ${f.mono}`;
+  ctx.fillText(site.email, left, px(694));
+  ctx.beginPath();
+  ctx.roundRect(right - px(90), px(675), px(90), px(32), px(16));
+  ctx.fill();
+  ctx.fillStyle = "#f6f0e2";
+  ctx.fillText("RÉSUMÉ ↗", right - px(74), px(695));
+  return toTexture(c);
+}
+
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\paper2.ts (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:37:14Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Swap in matching paper texture, recheck
+
+```bash
+python - <<'PYEOF'
+p="src/components/hero/desk/textures.ts"; s=open(p,encoding="utf8").read()
+a=s.index("/*\n * The work record: one A4 sheet")  if "/*\n * The work record: one A4 sheet" in s else s.index("function experiencePaperTexture(")
+b=s.index("/* manila folder cover")
+new=open(r"C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/paper2.ts",encoding="utf8").read()
+s=s[:a]+new+s[b:]
+open(p,"w",encoding="utf8").write(s)
+PYEOF
+npx tsc --noEmit -p . 2>&1 | head -5; npx eslint src 2>&1 | grep -cE "error|warning"
+```
+
+```text
+0
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:37:18Z)**_
+
+Clean. Next, testing with real mouse clicks rather than scripted ones: the folder, then a book. I'm also capturing frames mid-flight.
+
+_**Agent (claude-opus-5-5 2026-10-29 13:37:51Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Test real clicks on folder and book with flight frames
+
+```bash
+S="C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot"; cd "$S" && cat > click.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  page.on("pageerror", (e) => console.log("PAGEERROR", e.message));
+  await page.goto("http://localhost:3000", { waitUntil: "load", timeout: 180000 });
+  await page.waitForSelector(".desk-loader", { timeout: 60000 });
+  await page.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+  await page.waitForTimeout(2500);
+  // real click on the folder (lower half, clear of the wordmark)
+  await page.mouse.move(560, 420);
+  await page.waitForTimeout(300);
+  await page.mouse.down(); await page.mouse.up();
+  for (const t of [120, 260, 420, 620, 900]) { await page.waitForTimeout(t === 120 ? 120 : 160); await page.screenshot({ path: `c-fly-${t}.png` }); }
+  console.log("sheet open:", !!(await page.$(".desk-sheet")));
+  await page.mouse.click(60, 450); // backdrop
+  for (const t of [150, 350, 600]) { await page.waitForTimeout(t === 150 ? 150 : 200); await page.screenshot({ path: `c-back-${t}.png` }); }
+  await page.waitForTimeout(1200);
+  console.log("sheet closed:", !(await page.$(".desk-sheet")));
+  // real click on a book spine
+  await page.mouse.move(1150, 120); await page.waitForTimeout(400);
+  await page.mouse.down(); await page.mouse.up();
+  await page.waitForTimeout(2600);
+  console.log("book reader open:", !!(await page.$(".desk-reader")));
+  await page.screenshot({ path: "c-book.png" });
+  await browser.close();
+})();
+EOF
+node click.js 2>&1 | tail -6
+```
+
+```text
+sheet open: true
+sheet closed: true
+book reader open: true
+Shell cwd was reset to C:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:37:52Z)**_
+
+Real clicks open both the folder and a book. Now checking the flight frames.
+
+_**Agent (claude-opus-5-5 2026-10-29 13:37:54Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\c-fly-120.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:37:55Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\c-fly-420.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:37:57Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\c-back-600.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:38:05Z)**_
+
+<think><details><summary>Thought Process</summary>
+Opening and closing now flow as one continuous sheet, lifting from and landing back into the folder correctly. One bug remains: closing after a folder-open shifts focus to the Experience chip with a stray ring, so I'll fix focus restoration to return to whatever previously had it.
+
+</details></think>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:38:27Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Fix focus return after folder open
+
+```bash
+python - <<'PYEOF'
+p="src/components/hero/DeskHero.tsx"; s=open(p,encoding="utf8").read()
+a="    focusReturn.current = active instanceof HTMLElement && active !== document.body ? active : experienceTrigger.current;\n    setOpenProject(null);\n    setSheetOrigin"
+assert s.count(a)==1
+s=s.replace(a,"    /* hand focus back only to whatever had it; a click on the 3D folder had none */\n    focusReturn.current = active instanceof HTMLElement && active !== document.body ? active : null;\n    setOpenProject(null);\n    setSheetOrigin")
+open(p,"w",encoding="utf8").write(s)
+PYEOF
+npx tsc --noEmit -p . 2>&1 | head -3; npx eslint src 2>&1 | grep -cE "error|warning"
+```
+
+```text
+0
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:38:36Z)**_
+
+Both problems were in my code, not your laptop. The folder and the books open on a real mouse click now, and the 3D-to-HTML switch is gone: one sheet moves from the folder to reading size and back. I tested with real mouse clicks at 1440×900 and captured frames mid-flight; types and lint pass.
+
+**Why the clicks failed.** three.js still checks hidden objects when it works out what's under the cursor. The 3D paper I added last round had a full-screen click-to-close backdrop. When idle it was hidden but parked at the centre of the scene. Every click on something behind it hit that hidden plane first, which swallowed the click:
+- The folder and the books sit behind that point from both the Top and Front views, so they couldn't open.
+- Hover has no handler on the plane, which is why things still moved on hover but wouldn't open.
+
+The bug came in with the paper change, so I removed the 3D flying sheet and its 3D backdrop entirely.
+
+**Why the transition showed.** Two different sheets swapped places: the 3D one, then the HTML one with a different layout. Now there's only one moving sheet:
+- **Opening:** the folder cover swings open in 3D. The HTML page appears exactly over the sheet in the folder, at the same screen position, size and tilt, and the folder's own sheet hides in that same frame. The page then lifts and turns up to reading size, with the desk dimming behind it.
+- **Closing:** the page flies back into the folder. The folder's sheet reappears only after that frame has drawn, then the cover closes. On phones the page shrinks back to A4 shape first.
+- **Matching artwork:** the folder's sheet is now drawn as a miniature of the HTML page (header, tabs, title, first role open, chips, footer), so even the first frame matches.
+
+**Also fixed:**
+- Opening from the 3D folder and then closing no longer moves focus to the Experience chip and leaves an orange ring. Focus only goes back to whatever had it before.
+- I raised the drag threshold on the folder from 6px to 10px, so a small wobble during a trackpad tap still counts as a click.
+
+The page animation is in [WorkRecord.tsx](src/components/hero/WorkRecord.tsx). The folder and its screen-position lookup are in [experience.tsx](src/components/hero/desk/experience.tsx).
+
+The role highlights and stacks in [content.ts](src/lib/content.ts) are still my drafts, so swap in your real ones before you ship.
+
+---
+
+_**User (2026-10-29 13:40:02Z)**_
+
+where is the best placement for the experience folder /caveman
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 13:40:20Z)**_
+
+Best spot: the middle of the cutting mat, just left of center, at about `fx: -0.02, fz: 0.1`. On a 1440×900 screen that puts the folder's center at roughly (660, 470).
+
+**Why the current spot is bad.** The folder sits at `fx: -0.25, fz: -0.25` in [items.ts](src/components/hero/desk/items.ts), right under the "JEANNE" and "Dominique Paloma" title text. The title covers most of the folder's label, so it reads as background and is hard to click. That's part of why opening it felt unreliable.
+
+**What's clear in the Top view:**
+- **Covered by text and panels:** the top-left (title), the right middle ("I design…" and "Say hello"), the bottom-left (intro card), the bottom-right (hover caption) and the bottom middle (view buttons).
+- **Clear:** the middle of the mat (roughly x 560–780, y 330–600) and the sticky note's spot near the books.
+
+**Options:**
+1. **Mat center, slightly tilted (recommended).** Nothing covers it, it's the first place the eye lands, and the paper flies a short, centered path to reading size. The camera and ruler sit just below, so nudge them down a little if they touch.
+2. **Swap with the sticky note, next to the books.** Experience would sit beside the projects as one "work" corner, which makes sense. But the spot is tight: the folder is taller than the note and would run into the "I design…" text. The folder would need to shrink about 15%.
+3. **With the photo and business card on the left.** It fits the "about me" documents, but the title and intro card cover that column. Skip it.
+
+**Phones:** the portrait layout uses a separate slot (`m: { fx: -0.45, fz: -0.2 }`). I'd check it in a phone screenshot after the move, since phones stack their panels differently.
+
+Move it to the mat center and tune the phone slot?
+
+---
+
+_**User (2026-10-29 13:41:58Z)**_
+
+put it there
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 13:42:02Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Show item layout slots
+
+`grep -n '"experience"\|"camera"\|"ruler"\|"note"\|"pen"\|"card"' src/components/hero/desk/items.ts`
+
+```text
+25:  { id: "experience", label: "Work folder", note: "Click to pull out my work record.", w: 1.55, d: 2.3, h: 0.12, fx: -0.25, fz: -0.25, rot: -0.08, m: { fx: -0.45, fz: -0.2 } },
+27:  { id: "note", label: "Sticky note", note: "Everything on this desk moves. Try it.", w: 1.2, d: 1.2, h: 0.013, fx: 0.22, fz: -0.66, rot: 0.06, m: { fx: -0.55, fz: -0.5 } },
+32:  { id: "pen", label: "Fountain pen", note: "For the notes that never become tickets.", w: 2.4, d: 0.16, h: 0.16, fx: -0.38, fz: 0.72, rot: 0.95, m: { fx: -0.25, fz: 0.72 } },
+34:  { id: "ruler", label: "Steel ruler", note: "Spacing is a system, not a vibe.", w: 3.4, d: 0.34, h: 0.025, fx: -0.12, fz: 0.68, rot: 0.22, m: { fx: -0.6, fz: 0.6 } },
+35:  { id: "camera", label: "Rangefinder", note: "Analog, on purpose.", w: 2.4, d: 1.5, h: 1.3, fx: -0.12, fz: 0.68, rot: 0.22, m: { fx: -0.6, fz: 0.6 } },
+37:  { id: "card", label: "Business card", note: site.email, href: `mailto:${site.email}`, w: 1.75, d: 1.0, h: 0.017, fx: -0.62, fz: 0.3, rot: -0.1, m: { fx: -0.6, fz: -0.72 } },
+50:} as Record<string, Pick<DeskItem, "id" | "label" | "note" | "href">>;
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:42:44Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Move folder to mat center and screenshot
+
+```bash
+sed -i 's/w: 1.55, d: 2.3, h: 0.12, fx: -0.25, fz: -0.25, rot: -0.08,/w: 1.55, d: 2.3, h: 0.12, fx: -0.08, fz: 0.02, rot: -0.12,/' src/components/hero/desk/items.ts && grep -c "fx: -0.08, fz: 0.02" src/components/hero/desk/items.ts && cd "C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot" && cat > place.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  for (const [W, H, P] of [[1440, 900, "pl-d"], [390, 844, "pl-m"]]) {
+    const page = await browser.newPage({ viewport: { width: W, height: H } });
+    await page.goto("http://localhost:3000", { waitUntil: "load", timeout: 180000 });
+    await page.waitForSelector(".desk-loader", { timeout: 60000 });
+    await page.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+    await page.waitForTimeout(3500);
+    await page.screenshot({ path: `${P}.png` });
+    await page.close();
+  }
+  await browser.close();
+})();
+EOF
+node place.js 2>&1 | tail -3
+```
+
+```text
+1
+Shell cwd was reset to C:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:42:46Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\pl-d.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:42:47Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\pl-m.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:43:15Z)**_
+
+<think><details><summary>Thought Process</summary>
+On desktop, the folder's placement is good except its label edge touches the "Paloma" script, so I'll nudge it down slightly; on phone, the portrait overlaps the books and Projects tag, so I'll move it to the empty mat center.
+
+</details></think>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:43:43Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Tune folder slots and reshoot
+
+`sed -i 's/fx: -0.08, fz: 0.02, rot: -0.12, m: { fx: -0.45, fz: -0.2 } }/fx: -0.07, fz: 0.05, rot: -0.12, m: { fx: 0.0, fz: 0.02 } }/' src/components/hero/desk/items.ts && grep -c "m: { fx: 0.0, fz: 0.02 }" src/components/hero/desk/items.ts && cd "C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot" && node place.js 2>&1 | tail -3`
+
+```text
+1
+Shell cwd was reset to C:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:43:46Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\pl-d.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:43:47Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\pl-m.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:43:56Z)**_
+
+Moved. In the Top view on desktop the folder now sits in the open middle of the cutting mat, and on phones in the middle of the mat as well. I checked both in screenshots at 1440×900 and 390×844.
+
+- **Desktop:** the folder sits just left of the mat's center, tilted slightly. The "Experience" label and the whole body of the folder are clear of the title, the "I design…" text, the intro card and the view buttons. Only the top edge sits under the thin "Paloma" script, and it doesn't touch the camera below it.
+- **Phone:** the folder sits in the empty middle of the mat, clear of the books, the Projects tag and the bottom panel. Its label reads sideways because the phone view turns the whole desk 90°; the tablet and books turn the same way.
+
+Both changes are in the `experience` entry in [items.ts](src/components/hero/desk/items.ts): desktop is `fx: -0.07, fz: 0.05` and phone is `m: { fx: 0.0, fz: 0.02 }`. "Tidy" and "Scatter" still move it around like everything else, and it comes back to this spot on reload.
+
+---
+
+_**User (2026-10-29 13:44:05Z)**_
+
+remove the reposibilities and and stack from the experience first. and put the education as continuation below it. when the user scrolls on the document, the tab will checnge to education. also the year of the education change it: for both lithan and Uinversity of cebu, it sodould be 2022-2026
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 13:44:15Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Portfolio\src\components\hero\WorkRecord.tsx`
+
+```text
+1	"use client";
+2	
+3	import { ArrowUpRight, ChevronDown, X } from "lucide-react";
+4	import { useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+5	import { education, experience, site } from "@/lib/content";
+6	import { skills } from "@/lib/skills";
+7	import { speciesOf } from "@/components/hero/desk/species";
+8	import type { SheetOrigin } from "@/components/hero/desk/experience";
+9	import { useScrollFade } from "@/hooks/useScrollFade";
+10	
+11	/*
+12	 * The work record, as a real page. It starts exactly over the folder's sheet
+13	 * on screen (same spot, size and angle), lifts to reading size, and on close
+14	 * flies back into the folder. Only this one sheet ever moves, so there is no
+15	 * hand-over to see; the type stays sharp and readable at any size or time of day.
+16	 */
+17	
+18	export type SheetRect = { top: number; left: number; width: number; height: number };
+19	
+20	const TABS = [
+21	  { id: "experience", label: "Experience", count: experience.length },
+22	  { id: "education", label: "Education", count: education.length },
+23	] as const;
+24	type Tab = (typeof TABS)[number]["id"];
+25	
+26	const pad = (n: number) => String(n).padStart(2, "0");
+27	
+28	const OPEN_MS = 760;
+29	const CLOSE_MS = 520;
+30	const EASE_OUT = "cubic-bezier(0.22, 1, 0.36, 1)";
+31	const EASE_IN = "cubic-bezier(0.55, 0, 0.75, 0.2)";
+32	
+33	/* the transform that puts a page laid out at `rect` over the folder's sheet */
+34	function fromFolder(origin: SheetOrigin, rect: SheetRect) {
+35	  const dx = origin.cx - (rect.left + rect.width / 2);
+36	  const dy = origin.cy - (rect.top + rect.height / 2);
+37	  return `translate(${dx}px, ${dy}px) rotate(${origin.angle}rad) scale(${origin.width / rect.width}, ${origin.height / rect.height})`;
+38	}
+39	
+40	type Props = {
+41	  /* the folder's sheet on screen; null falls back to a plain fade */
+42	  origin: SheetOrigin | null;
+43	  /* the A4 page it lifts to, and where to read it (larger on phones) */
+44	  landed: SheetRect;
+45	  reading: SheetRect;
+46	  closing: boolean;
+47	  reduced: boolean;
+48	  /* hides the folder's own sheet while this page is out */
+49	  onOut: (out: boolean) => void;
+50	  onClose: () => void;
+51	  onExited: () => void;
+52	  onSkill: (index: number) => void;
+53	};
+54	
+55	export function WorkRecord({ origin, landed, reading, closing, reduced, onOut, onClose, onExited, onSkill }: Props) {
+56	  const [tab, setTab] = useState<Tab>("experience");
+57	  const [openRole, setOpenRole] = useState<number | null>(0);
+58	  const [settled, setSettled] = useState(false);
+59	  const page = useRef<HTMLDivElement>(null);
+60	  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+61	  const { ref: bodyRef, onScroll, fade, more } = useScrollFade<HTMLDivElement>();
+62	
+63	  /* lift off: swap with the folder's sheet before the first paint, then fly up */
+64	  useLayoutEffect(() => {
+65	    const el = page.current;
+66	    if (!el) return;
+67	    onOut(true);
+68	    const start = origin
+69	      ? [{ transform: fromFolder(origin, landed), boxShadow: "0 2px 6px rgb(12 6 2 / 0.25)" }]
+70	      : [{ opacity: 0, transform: "scale(0.96)" }];
+71	    const flight = el.animate([...start, { transform: "none", boxShadow: "0 30px 80px rgb(12 6 2 / 0.45)", opacity: 1 }], {
+72	      duration: reduced ? 0 : OPEN_MS,
+73	      /* the cover swings open first */
+74	      delay: reduced ? 0 : 140,
+75	      easing: EASE_OUT,
+76	      fill: "backwards",
+77	    });
+78	    flight.onfinish = () => setSettled(true);
+79	    tabs.current[0]?.focus({ preventScroll: true });
+80	    return () => flight.cancel();
+81	    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once, on lift-off
+82	  }, []);
+83	
+84	  /* put it back: fold down to the A4 page, then fly into the folder */
+85	  useLayoutEffect(() => {
+86	    const el = page.current;
+87	    if (!closing || !el) return;
+88	    const shrink = settled && (reading.width !== landed.width || reading.height !== landed.height);
+89	    setSettled(false);
+90	    const end = origin ? [{ transform: fromFolder(origin, landed), boxShadow: "0 2px 6px rgb(12 6 2 / 0.25)" }] : [{ opacity: 0 }];
+91	    const back = el.animate([{ transform: "none" }, ...end], {
+92	      duration: reduced ? 0 : CLOSE_MS,
+93	      delay: reduced || !shrink ? 0 : 300,
+94	      easing: EASE_IN,
+95	      fill: "forwards",
+96	    });
+97	    /* show the folder's sheet again, and only drop this page once that frame has drawn */
+98	    back.onfinish = () => {
+99	      onOut(false);
+100	      requestAnimationFrame(() => requestAnimationFrame(onExited));
+101	    };
+102	    return () => back.cancel();
+103	    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once, when closing starts
+104	  }, [closing]);
+105	
+106	  const onTabKey = (e: KeyboardEvent<HTMLButtonElement>) => {
+107	    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+108	    e.preventDefault();
+109	    const next = tab === "experience" ? 1 : 0;
+110	    setTab(TABS[next].id);
+111	    tabs.current[next]?.focus();
+112	  };
+113	
+114	  const rect = settled ? reading : landed;
+115	  const title = TABS.find((t) => t.id === tab)!.label;
+116	
+117	  return (
+118	    <>
+119	    <div className="desk-sheet-backdrop" data-closing={closing ? "" : undefined} onClick={onClose} aria-hidden />
+120	    <div ref={page} className="desk-sheet" style={rect as CSSProperties} role="dialog" aria-labelledby="desk-sheet-title">
+121	      <div className="desk-sheet__head">
+122	        <p className="desk-sheet__kicker">{site.shortName} · Work record</p>
+123	        <button type="button" className="desk-sheet__close" aria-label="Put the record back" onClick={onClose}>
+124	          <X aria-hidden />
+125	        </button>
+126	      </div>
+127	
+128	      {/* folder tabs: one subject per page keeps the type large */}
+129	      <div className="desk-sheet__tabs" role="tablist" aria-label="Record sections">
+130	        {TABS.map((t, i) => (
+131	          <button
+132	            key={t.id}
+133	            ref={(el) => {
+134	              tabs.current[i] = el;
+135	            }}
+136	            type="button"
+137	            role="tab"
+138	            id={`desk-sheet-tab-${t.id}`}
+139	            aria-controls="desk-sheet-panel"
+140	            aria-selected={tab === t.id}
+141	            tabIndex={tab === t.id ? 0 : -1}
+142	            onClick={() => setTab(t.id)}
+143	            onKeyDown={onTabKey}
+144	          >
+145	            {t.label} <span>{pad(t.count)}</span>
+146	          </button>
+147	        ))}
+148	      </div>
+149	
+150	      <div className="desk-sheet__title-row">
+151	        <h2 id="desk-sheet-title">{title}</h2>
+152	        <span className="desk-sheet__stamp" aria-hidden>
+153	          On file
+154	        </span>
+155	      </div>
+156	
+157	      <div
+158	        ref={bodyRef}
+159	        onScroll={onScroll}
+160	        {...fade}
+161	        id="desk-sheet-panel"
+162	        className="desk-sheet__body scroll-fade"
+163	        role="tabpanel"
+164	        aria-labelledby={`desk-sheet-tab-${tab}`}
+165	        tabIndex={0}
+166	        data-lenis-prevent
+167	      >
+168	        {tab === "experience" ? (
+169	          <ol className="desk-sheet__roles">
+170	            {experience.map((role, i) => {
+171	              const open = openRole === i;
+172	              return (
+173	                <li key={`${role.title}-${role.year}`} data-open={open ? "" : undefined}>
+174	                  <button type="button" className="desk-sheet__role" aria-expanded={open} aria-controls={`desk-sheet-role-${i}`} onClick={() => setOpenRole(open ? null : i)}>
+175	                    <span className="desk-sheet__index">{pad(i + 1)}</span>
+176	                    <span className="desk-sheet__role-main">
+177	                      <span className="desk-sheet__dates">{role.year}</span>
+178	                      <span className="desk-sheet__role-title">{role.title}</span>
+179	                      <span className="desk-sheet__place">{role.place}</span>
+180	                    </span>
+181	                    <ChevronDown className="desk-sheet__chev" aria-hidden />
+182	                  </button>
+183	                  {open && (
+184	                    <div id={`desk-sheet-role-${i}`} className="desk-sheet__detail">
+185	                      <ul className="desk-sheet__highlights">
+186	                        {role.highlights.map((h) => (
+187	                          <li key={h}>{h}</li>
+188	                        ))}
+189	                      </ul>
+190	                      <p className="desk-sheet__label">Stack</p>
+191	                      <ul className="desk-sheet__stack">
+192	                        {role.stack.map((name) => {
+193	                          const k = skills.findIndex((s) => s.name === name);
+194	                          const sp = speciesOf(name);
+195	                          const fish = <span className="desk-tank__swatch" style={{ "--fish": sp.side, "--fin": sp.fin } as CSSProperties} aria-hidden />;
+196	                          return (
+197	                            <li key={name}>
+198	                              {k >= 0 ? (
+199	                                <button type="button" className="desk-sheet__chip" onClick={() => onSkill(k)} title={`See ${name} in the aquarium`}>
+200	                                  {fish}
+201	                                  {name}
+202	                                </button>
+203	                              ) : (
+204	                                <span className="desk-sheet__chip">{name}</span>
+205	                              )}
+206	                            </li>
+207	                          );
+208	                        })}
+209	                      </ul>
+210	                    </div>
+211	                  )}
+212	                </li>
+213	              );
+214	            })}
+215	          </ol>
+216	        ) : (
+217	          <ol className="desk-sheet__schools">
+218	            {education.map((item) => (
+219	              <li key={`${item.title}-${item.place}`}>
+220	                <span className="desk-sheet__dates">{item.year}</span>
+221	                <span className="desk-sheet__school-title">{item.title}</span>
+222	                <span className="desk-sheet__place">{item.place}</span>
+223	              </li>
+224	            ))}
+225	          </ol>
+226	        )}
+227	      </div>
+228	      {more && <ChevronDown className="desk-sheet__more" aria-hidden />}
+229	
+230	      <div className="desk-sheet__foot">
+231	        <a href={`mailto:${site.email}`}>{site.email}</a>
+232	        <a className="desk-sheet__resume" href={site.resume} target="_blank" rel="noopener noreferrer">
+233	          Résumé <ArrowUpRight aria-hidden />
+234	        </a>
+235	      </div>
+236	    </div>
+237	    </>
+238	  );
+239	}
+240
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:44:25Z)**_
+
+Rewriting the record as one scrolling page: the tabs follow the scroll and jump to each section when clicked.
+
+_**Agent (claude-opus-5-5 2026-10-29 13:44:32Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Drop draft role details, update education years
+
+```bash
+python - <<'PYEOF'
+p="src/lib/content.ts"; s=open(p,encoding="utf8").read()
+a=s.index("/*\n * DRAFT highlights")
+b=s.index("] as const;",a)+len("] as const;")
+s=s[:a]+'''export const experience = [
+  {
+    year: "January 2025 – Present",
+    title: "Software Engineer",
+    place: "MoveForward Inc. Ventures",
+  },
+  {
+    year: "2023 - 2024",
+    title: "Software Developer",
+    place: "Efunity Pte Ltd",
+  },
+] as const;'''+s[b:]
+for place in ["Lithan Academy", "University of Cebu - Banilad"]:
+    pass
+old1='''  {
+    year: "Now",
+    title: "Software Engineering",
+    place: "Lithan Academy",
+  },
+  {
+    year: "Now",
+    title: "Information Technology",
+    place: "University of Cebu - Banilad",
+  },'''
+assert old1 in s
+s=s.replace(old1,'''  {
+    year: "2022 – 2026",
+    title: "Software Engineering",
+    place: "Lithan Academy",
+  },
+  {
+    year: "2022 – 2026",
+    title: "Information Technology",
+    place: "University of Cebu - Banilad",
+  },''')
+open(p,"w",encoding="utf8").write(s)
+PYEOF
+grep -n "highlights\|stack:" src/lib/content.ts | head
+```
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:44:46Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```typescript
+  /* the tabs follow the reading: once Education reaches the upper part of the page, it takes over */
+  const sections = useRef<Record<Section, HTMLElement | null>>({ experience: null, education: null });
+  const spy = () => {
+    onScroll();
+    const body = bodyRef.current;
+    const edu = sections.current.education;
+    if (!body || !edu) return;
+    const atEnd = body.scrollTop + body.clientHeight >= body.scrollHeight - 4;
+    const reached = edu.offsetTop - body.scrollTop <= body.clientHeight * 0.45;
+    setSection(atEnd || reached ? "education" : "experience");
+  };
+
+  /* and a tab click scrolls to its section */
+  const jump = (id: Section) => {
+    const body = bodyRef.current;
+    const el = sections.current[id];
+    if (!body || !el) return;
+    body.scrollTo({ top: id === "experience" ? 0 : el.offsetTop - 4, behavior: reduced ? "auto" : "smooth" });
+    setSection(id);
+  };
+
+  const rect = settled ? reading : landed;
+
+  return (
+    <>
+    <div className="desk-sheet-backdrop" data-closing={closing ? "" : undefined} onClick={onClose} aria-hidden />
+    <div ref={page} className="desk-sheet" style={rect as CSSProperties} role="dialog" aria-label="Work record">
+      <div className="desk-sheet__head">
+        <p className="desk-sheet__kicker">{site.shortName} · Work record</p>
+        <button type="button" className="desk-sheet__close" aria-label="Put the record back" onClick={onClose}>
+          <X aria-hidden />
+        </button>
+      </div>
+
+      {/* folder tabs, kept in step with the scroll */}
+      <nav className="desk-sheet__tabs" aria-label="Record sections">
+        {SECTIONS.map((t, i) => (
+          <button
+            key={t.id}
+            ref={i === 0 ? first : undefined}
+            type="button"
+            aria-current={section === t.id ? "true" : undefined}
+            onClick={() => jump(t.id)}
+          >
+            {t.label} <span>{pad(t.count)}</span>
+          </button>
+        ))}
+      </nav>
+
+      <div ref={bodyRef} onScroll={spy} {...fade} className="desk-sheet__body scroll-fade" tabIndex={0} data-lenis-prevent>
+        <section
+          ref={(el) => {
+            sections.current.experience = el;
+          }}
+          aria-labelledby="desk-sheet-experience"
+        >
+          <div className="desk-sheet__title-row">
+            <h2 id="desk-sheet-experience">Experience</h2>
+            <span className="desk-sheet__stamp" aria-hidden>
+              On file
+            </span>
+          </div>
+          <ol className="desk-sheet__roles">
+            {experience.map((role, i) => (
+              <li key={`${role.title}-${role.year}`}>
+                <span className="desk-sheet__index">{pad(i + 1)}</span>
+                <span className="desk-sheet__role-main">
+                  <span className="desk-sheet__dates">{role.year}</span>
+                  <span className="desk-sheet__role-title">{role.title}</span>
+                  <span className="desk-sheet__place">{role.place}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section
+          ref={(el) => {
+            sections.current.education = el;
+          }}
+          className="desk-sheet__section"
+          aria-labelledby="desk-sheet-education"
+        >
+          <div className="desk-sheet__title-row">
+            <h2 id="desk-sheet-education">Education</h2>
+          </div>
+          <ol className="desk-sheet__schools">
+            {education.map((item) => (
+              <li key={`${item.title}-${item.place}`}>
+                <span className="desk-sheet__dates">{item.year}</span>
+                <span className="desk-sheet__school-title">{item.title}</span>
+                <span className="desk-sheet__place">{item.place}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      </div>
+      {more && <ChevronDown className="desk-sheet__more" aria-hidden />}
+
+      <div className="desk-sheet__foot">
+        <a href={`mailto:${site.email}`}>{site.email}</a>
+        <a className="desk-sheet__resume" href={site.resume} target="_blank" rel="noopener noreferrer">
+          Résumé <ArrowUpRight aria-hidden />
+        </a>
+      </div>
+    </div>
+    </>
+  );
+}
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\wr_body.tsx (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:45:40Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Apply single-page record, CSS cleanup, verify
+
+```bash
+python - <<'PYEOF'
+p="src/components/hero/WorkRecord.tsx"; s=open(p,encoding="utf8").read()
+def r(a,b):
+    global s
+    assert s.count(a)==1, a
+    s=s.replace(a,b)
+r('import { useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";','import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";')
+r('import { skills } from "@/lib/skills";\nimport { speciesOf } from "@/components/hero/desk/species";\n','')
+r('''const TABS = [
+  { id: "experience", label: "Experience", count: experience.length },
+  { id: "education", label: "Education", count: education.length },
+] as const;
+type Tab = (typeof TABS)[number]["id"];''','''/* one continuous page: Experience, then Education below it */
+const SECTIONS = [
+  { id: "experience", label: "Experience", count: experience.length },
+  { id: "education", label: "Education", count: education.length },
+] as const;
+type Section = (typeof SECTIONS)[number]["id"];''')
+r('''  onExited: () => void;
+  onSkill: (index: number) => void;
+};''','''  onExited: () => void;
+};''')
+r("export function WorkRecord({ origin, landed, reading, closing, reduced, onOut, onClose, onExited, onSkill }: Props) {","export function WorkRecord({ origin, landed, reading, closing, reduced, onOut, onClose, onExited }: Props) {")
+r('''  const [tab, setTab] = useState<Tab>("experience");
+  const [openRole, setOpenRole] = useState<number | null>(0);
+  const [settled, setSettled] = useState(false);
+  const page = useRef<HTMLDivElement>(null);
+  const tabs = useRef<(HTMLButtonElement | null)[]>([]);''','''  const [section, setSection] = useState<Section>("experience");
+  const [settled, setSettled] = useState(false);
+  const page = useRef<HTMLDivElement>(null);
+  const first = useRef<HTMLButtonElement>(null);''')
+r("    tabs.current[0]?.focus({ preventScroll: true });","    first.current?.focus({ preventScroll: true });")
+a=s.index("  const onTabKey = ")
+s=s[:a]+open(r"C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/wr_body.tsx",encoding="utf8").read()
+open(p,"w",encoding="utf8").write(s)
+
+p="src/components/hero/DeskHero.tsx"; s=open(p,encoding="utf8").read()
+a=s.index("          onSkill={(i) => {")
+b=s.index("          }}\n",a)+len("          }}\n")
+s=s[:a]+s[b:]
+open(p,"w",encoding="utf8").write(s)
+
+# CSS: tabs as nav, plain role rows, section spacing; drop expand/stack styles
+p="src/app/globals.css"; s=open(p,encoding="utf8").read()
+def cut(start, end_marker):
+    global s
+    a=s.index(start); b=s.index(end_marker,a)
+    s=s[:a]+s[b:]
+r('.desk-sheet__tabs [role="tab"] {','.desk-sheet__tabs button {')
+r('.desk-sheet__tabs [role="tab"] span {','.desk-sheet__tabs button span {')
+r('.desk-sheet__tabs [role="tab"][aria-selected="true"] {','.desk-sheet__tabs button[aria-current="true"] {')
+r('  .desk-sheet__tabs [role="tab"][aria-selected="false"]:hover {','  .desk-sheet__tabs button:not([aria-current]):hover {')
+r('''.desk-sheet__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0 0.4rem;
+  border-top: 1px solid var(--ink);
+}''','''.desk-sheet__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0 0.5rem;
+}
+
+/* Education continues below Experience on the same page */
+.desk-sheet__section {
+  margin-top: 1.6rem;
+  border-top: 1px solid var(--ink);
+}''')
+r('''.desk-sheet__body {
+  flex: 1;''','''.desk-sheet__body {
+  position: relative;
+  flex: 1;''')
+r('''.desk-sheet__tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.9rem;
+}''','''.desk-sheet__tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.9rem;
+  border-bottom: 1px solid var(--ink);
+}''')
+# role rows: plain grid, no button
+cut(".desk-sheet__role {", ".desk-sheet__index,")
+r('''.desk-sheet__roles > li,
+.desk-sheet__schools > li {
+  border-bottom: 1px solid var(--line);
+}''','''.desk-sheet__roles > li,
+.desk-sheet__schools > li {
+  border-bottom: 1px solid var(--line);
+}
+
+.desk-sheet__roles > li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.9rem;
+  padding: 0.95rem 0.2rem;
+}''')
+r('''.desk-sheet__index,
+.desk-sheet__dates,
+.desk-sheet__label {''','''.desk-sheet__index,
+.desk-sheet__dates {''')
+cut(".desk-sheet__chev {", ".desk-sheet__schools > li {\n  padding")
+r('''  .desk-sheet__close:hover,
+  .desk-sheet__role:hover {
+    background: rgb(28 22 18 / 0.05);
+  }
+
+  button.desk-sheet__chip:hover {
+    background: #fff;
+    border-color: var(--ink);
+  }
+''','''  .desk-sheet__close:hover {
+    background: rgb(28 22 18 / 0.05);
+  }
+''')
+r('''
+  .desk-sheet__detail {
+    padding-left: 0.2rem;
+  }''','')
+r('''  .desk-sheet-backdrop,
+  .desk-sheet__detail,''','''  .desk-sheet-backdrop,''')
+r('''  .desk-sheet__tabs button[aria-current="true"] {''','''  .desk-sheet__tabs button[aria-current="true"] {''') if False else None
+open(p,"w",encoding="utf8").write(s)
+PYEOF
+grep -n "desk-sheet__detail\|desk-sheet__chip\|desk-sheet__stack\|desk-sheet__highlights\|desk-sheet__label\|desk-sheet__chev\|desk-sheet__role " src/app/globals.css | head; npx tsc --noEmit -p . 2>&1 | head; npx eslint src 2>&1 | grep -E "^\s+[0-9]+:[0-9]+" | head
+```
+
+```text
+1109:.desk-sheet__highlights,
+1110:.desk-sheet__stack {
+src/components/hero/desk/textures.ts(524,8): error TS2339: Property 'highlights' does not exist on type '{ readonly year: "January 2025 – Present"; readonly title: "Software Engineer"; readonly place: "MoveForward Inc. Ventures"; }'.
+src/components/hero/desk/textures.ts(524,28): error TS7006: Parameter 'h' implicitly has an 'any' type.
+src/components/hero/desk/textures.ts(542,8): error TS2339: Property 'stack' does not exist on type '{ readonly year: "January 2025 – Present"; readonly title: "Software Engineer"; readonly place: "MoveForward Inc. Ventures"; }'.
+src/components/hero/desk/textures.ts(542,23): error TS7006: Parameter 'name' implicitly has an 'any' type.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:46:04Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```typescript
+function experiencePaperTexture(f: Fonts) {
+  /*
+   * A miniature of the HTML work record as it first opens, laid out on the
+   * same grid (509 × 720 css px). The page lifts off from this sheet, so the
+   * two must read as the same piece of paper.
+   */
+  const W = 1240;
+  const H = 1754;
+  const k = W / 509;
+  const px = (n: number) => n * k;
+  const { c, ctx } = surface(W, H);
+  ctx.fillStyle = "#f6f0e2";
+  ctx.fillRect(0, 0, W, H);
+  const edge = ctx.createRadialGradient(W / 2, H * 0.4, H * 0.3, W / 2, H * 0.4, H * 0.75);
+  edge.addColorStop(0, "rgba(0,0,0,0)");
+  edge.addColorStop(1, "rgba(150,112,58,0.14)");
+  ctx.fillStyle = edge;
+  ctx.fillRect(0, 0, W, H);
+
+  const left = px(31);
+  const right = W - px(31);
+  const SOFT = "#5a5046";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = INK;
+
+  /* head */
+  ctx.font = `500 ${px(10.5)}px ${f.mono}`;
+  ctx.fillText(`${site.shortName.toUpperCase()} · WORK RECORD`, left, px(40));
+  ctx.lineWidth = px(1.6);
+  ctx.strokeStyle = INK;
+  ctx.beginPath();
+  ctx.moveTo(right - px(14), px(30));
+  ctx.lineTo(right - px(4), px(40));
+  ctx.moveTo(right - px(4), px(30));
+  ctx.lineTo(right - px(14), px(40));
+  ctx.stroke();
+  ctx.fillRect(left, px(58), right - left, px(2));
+
+  /* tabs */
+  ctx.fillRect(left, px(75), px(131), px(36));
+  ctx.fillStyle = "rgba(28,22,18,0.05)";
+  ctx.fillRect(left + px(135), px(75), px(123), px(36));
+  ctx.font = `500 ${px(11)}px ${f.mono}`;
+  ctx.fillStyle = "#f6f0e2";
+  ctx.fillText(`EXPERIENCE ${String(experience.length).padStart(2, "0")}`, left + px(15), px(97));
+  ctx.fillStyle = SOFT;
+  ctx.fillText(`EDUCATION ${String(education.length).padStart(2, "0")}`, left + px(150), px(97));
+  ctx.fillStyle = INK;
+  ctx.fillRect(left, px(111), right - left, px(1));
+
+  /* experience */
+  ctx.font = `800 ${px(46)}px ${f.display}`;
+  ctx.fillText("Experience", left, px(164));
+  ctx.save();
+  ctx.translate(right - px(38), px(147));
+  ctx.rotate(-0.1);
+  ctx.strokeStyle = "rgba(232,93,44,0.85)";
+  ctx.lineWidth = px(2);
+  ctx.strokeRect(-px(37), -px(14), px(74), px(28));
+  ctx.fillStyle = "rgba(232,93,44,0.9)";
+  ctx.font = `600 ${px(10)}px ${f.mono}`;
+  ctx.textAlign = "center";
+  ctx.fillText("ON FILE", 0, px(4));
+  ctx.restore();
+
+  let y = px(185);
+  experience.forEach((role, i) => {
+    ctx.font = `500 ${px(11)}px ${f.mono}`;
+    ctx.fillStyle = SOFT;
+    ctx.fillText(String(i + 1).padStart(2, "0"), left + px(3), y + px(23));
+    ctx.fillText(role.year.toUpperCase(), left + px(33), y + px(21));
+    ctx.fillStyle = INK;
+    ctx.font = `700 ${px(21)}px ${f.display}`;
+    ctx.fillText(role.title, left + px(33), y + px(46));
+    ctx.font = `italic ${px(17)}px ${f.serif}`;
+    ctx.fillStyle = SOFT;
+    ctx.fillText(role.place, left + px(33), y + px(73));
+    y += px(96);
+    ctx.fillStyle = "rgba(28,22,18,0.12)";
+    ctx.fillRect(left, y - px(1), right - left, px(1));
+  });
+
+  /* education continues below */
+  y += px(26);
+  ctx.fillStyle = INK;
+  ctx.fillRect(left, y, right - left, px(1));
+  ctx.font = `800 ${px(46)}px ${f.display}`;
+  ctx.fillText("Education", left, y + px(54));
+  y += px(64);
+  education.forEach((item) => {
+    if (y > px(620)) return;
+    ctx.font = `500 ${px(11)}px ${f.mono}`;
+    ctx.fillStyle = SOFT;
+    ctx.fillText(item.year.toUpperCase(), left + px(3), y + px(18));
+    ctx.fillStyle = INK;
+    ctx.font = `650 ${px(17.5)}px ${f.display}`;
+    ctx.fillText(item.title, left + px(3), y + px(41), right - left);
+    ctx.font = `italic ${px(16)}px ${f.serif}`;
+    ctx.fillStyle = SOFT;
+    ctx.fillText(item.place, left + px(3), y + px(66));
+    y += px(96);
+  });
+  /* the page's scroll fade at the bottom of the body */
+  const fade = ctx.createLinearGradient(0, px(600), 0, px(658));
+  fade.addColorStop(0, "rgba(246,240,226,0)");
+  fade.addColorStop(1, "rgba(246,240,226,1)");
+  ctx.fillStyle = fade;
+  ctx.fillRect(0, px(600), W, px(60));
+
+  /* foot */
+  ctx.fillStyle = INK;
+  ctx.fillRect(left, px(661), right - left, px(1));
+  ctx.font = `500 ${px(11)}px ${f.mono}`;
+  ctx.fillText(site.email, left, px(694));
+  ctx.beginPath();
+  ctx.roundRect(right - px(90), px(675), px(90), px(32), px(16));
+  ctx.fill();
+  ctx.fillStyle = "#f6f0e2";
+  ctx.fillText("RÉSUMÉ ↗", right - px(74), px(695));
+  return toTexture(c);
+}
+
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\paper3.ts (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:46:45Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Update paper miniature and CSS, verify
+
+```bash
+python - <<'PYEOF'
+p="src/components/hero/desk/textures.ts"; s=open(p,encoding="utf8").read()
+a=s.index("function experiencePaperTexture("); b=s.index("/* manila folder cover")
+s=s[:a]+open(r"C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/paper3.ts",encoding="utf8").read()+s[b:]
+open(p,"w",encoding="utf8").write(s)
+p="src/app/globals.css"; s=open(p,encoding="utf8").read()
+old=""".desk-sheet__roles,
+.desk-sheet__schools,
+.desk-sheet__highlights,
+.desk-sheet__stack {"""
+assert old in s
+s=s.replace(old,""".desk-sheet__roles,
+.desk-sheet__schools {""")
+open(p,"w",encoding="utf8").write(s)
+PYEOF
+grep -n "desk-sheet__\(detail\|chip\|stack\|highlights\|label\|chev\)" src/app/globals.css | head; npx tsc --noEmit -p . 2>&1 | head; npx eslint src 2>&1 | grep -E "^\s+[0-9]+:[0-9]+" | head
+```
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:46:48Z)**_
+
+Clean. Screenshots next: the page open, scrolled down, and an Education tab click.
+
+_**Agent (claude-opus-5-5 2026-10-29 13:47:41Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Test scroll-synced tabs with screenshots
+
+```bash
+S="C:/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot"; cd "$S" && cat > rec.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  const W = +(process.env.W || 1440), H = +(process.env.H || 900), P = process.env.P || "r";
+  const page = await browser.newPage({ viewport: { width: W, height: H } });
+  page.on("pageerror", (e) => console.log("PAGEERROR", e.message));
+  await page.goto("http://localhost:3000", { waitUntil: "load", timeout: 180000 });
+  await page.waitForSelector(".desk-loader", { timeout: 60000 });
+  await page.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+  await page.waitForTimeout(2500);
+  await page.evaluate(() => [...document.querySelectorAll(".desk-card button")].find((b) => b.textContent.trim().startsWith("Experience")).click());
+  await page.waitForTimeout(150);
+  await page.screenshot({ path: `${P}-0-lift.png` });
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: `${P}-1-open.png` });
+  const box = await page.locator(".desk-sheet__body").boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.wheel(0, 260);
+  await page.waitForTimeout(700);
+  console.log("tab after scroll:", await page.evaluate(() => document.querySelector('.desk-sheet__tabs [aria-current="true"]')?.textContent));
+  await page.screenshot({ path: `${P}-2-scrolled.png` });
+  await page.evaluate(() => [...document.querySelectorAll(".desk-sheet__tabs button")][0].click());
+  await page.waitForTimeout(800);
+  console.log("tab after click:", await page.evaluate(() => document.querySelector('.desk-sheet__tabs [aria-current="true"]')?.textContent));
+  await browser.close();
+})();
+EOF
+node rec.js 2>&1 | tail -4
+```
+
+```text
+tab after scroll: Education 04
+tab after click: Experience 02
+Shell cwd was reset to C:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:47:43Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\r-1-open.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:47:45Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\r-2-scrolled.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:47:46Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\r-0-lift.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:47:54Z)**_
+
+<think><details><summary>Thought Process</summary>
+Scrolling between Experience and Education works, including tab switching and jumping back. One issue remains—the focus ring lingers on the old tab—so I'll move focus to the page itself to fix it.
+
+</details></think>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:48:25Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Focus the page instead of first tab
+
+```bash
+python - <<'PYEOF'
+def edit(p, pairs):
+    s=open(p,encoding="utf8").read()
+    for a,b in pairs:
+        assert s.count(a)==1, (p,a)
+        s=s.replace(a,b)
+    open(p,"w",encoding="utf8").write(s)
+edit("src/components/hero/WorkRecord.tsx",[
+("  const first = useRef<HTMLButtonElement>(null);\n",""),
+("    first.current?.focus({ preventScroll: true });","    /* focus the page itself: keyboard users tab on from here, and no tab wears a stray ring */\n    el.focus({ preventScroll: true });"),
+("            ref={i === 0 ? first : undefined}\n",""),
+("        {SECTIONS.map((t, i) => (","        {SECTIONS.map((t) => ("),
+('className="desk-sheet" style={rect as CSSProperties} role="dialog" aria-label="Work record">','className="desk-sheet" style={rect as CSSProperties} role="dialog" aria-label="Work record" tabIndex={-1}>'),
+])
+edit("src/app/globals.css",[
+(""".desk-sheet :focus-visible {""",""".desk-sheet:focus {
+  outline: none;
+}
+
+.desk-sheet :focus-visible {"""),
+])
+PYEOF
+npx tsc --noEmit -p . 2>&1 | head -3; npx eslint src 2>&1 | grep -cE "error|warning"
+```
+
+```text
+0
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 13:48:31Z)**_
+
+The work record is now one continuous page: your two roles, then Education below them. The responsibilities and stack are gone. I checked it in screenshots at 1440×900, with a real mouse-wheel scroll and a tab click, and types and lint pass.
+
+- **Tabs follow the scroll.** Experience is active at the top. The Education tab takes over once the Education heading reaches the top part of the page, or when you hit the bottom. Clicking either tab smoothly scrolls to its section.
+- **Roles are plain rows** with number, dates, title and company. They no longer expand, and the stack chips that linked to the aquarium are removed.
+- **Education years:** Software Engineering at Lithan Academy and Information Technology at the University of Cebu – Banilad now read 2022 – 2026. Google Cloud (2022) and the STEM strand (2020) are unchanged.
+- **The paper inside the folder** is redrawn to match the new layout, so the lift-off still lines up with the page.
+- **Focus:** the opened page itself now takes focus, instead of the first tab. Before, the Experience tab kept a stray orange ring after scrolling to Education, which looked like a second highlight.
+
+My draft highlights and stacks are deleted from [content.ts](src/lib/content.ts), so nothing made up is left there. The page is in [WorkRecord.tsx](src/components/hero/WorkRecord.tsx).
+
+---
+
+_**User (2026-10-29 13:48:31Z)**_
+
+<command-name>/compact</command-name>
+            <command-message>compact</command-message>
+            <command-args></command-args>
+
+---
+
+_**User (2026-10-29 13:48:31Z)**_
+
+<local-command-caveat>The command below was run directly in Claude Code, not sent to you as a request, and its output goes straight to the user. It's recorded here as context for later messages.</local-command-caveat>
+
+---
+
+_**User (2026-10-29 13:50:36Z)**_
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+<system-reminder>
+<tools-used-before-summary>Bash, Edit, PowerShell, Read, Skill, Write</tools-used-before-summary>
+</system-reminder>
+Summary:
+1. Primary Request and Intent:
+   - Add an aquarium to the 3D desk portfolio hero where each fish = a tech-stack skill, linked to project books.
+   - Move the tank onto a new L-shaped desk return on the left. Give it a dedicated close-up front camera view; the Skills nav, chip, or #skills pans the camera there.
+   - Make the fish and tank realistic, uniform with the other objects.
+   - Make the skills UI intuitive: all skills visible at once in the field-guide panel. Hide the panel's scrollbar and use top/bottom fades plus a chevron.
+   - Experience folder:
+     - It should look like a folder with the document peeking out.
+     - Clicking opens the document like the projects do, inside the paper, not a full page.
+     - The text must be readable, so it is an HTML page that flies up from the folder's sheet with no visible handoff.
+     - Placed at the cutting-mat center.
+   - Clicks on the folder and books must work. (They were blocked by an invisible raycast plane, which was my bug.)
+   - Latest request:
+     - Remove responsibilities/stack from experience.
+     - Education continues below Experience on the same scrolling document.
+     - Scrolling switches the tab to Education.
+     - Lithan Academy and University of Cebu (Information Technology) years become "2022 – 2026".
+   - The user uses /caveman (terse responses).
+
+2. Key Technical Concepts:
+   - Next.js 16.3.8. AGENTS.md says to read node_modules/next/dist/docs before writing Next code.
+   - React 19, @react-three/fiber 9, drei 10, three 0.186, lucide-react, motion.
+   - Mutable animation classes kept outside React, to satisfy the react-hooks lint rules:
+     - Mutating values returned from hooks is disallowed; use setter methods on class instances.
+     - A child can't write to a parent's ref; use a callback prop.
+     - An object returned from a hook that contains a ref is treated as a ref; destructure it.
+   - three.js Raycaster ignores `visible`; invisible meshes still intercept events. Use `raycast={() => null}`, or remove the mesh.
+   - Shader injection via onBeforeCompile with customProgramCacheKey: fish body bend, plant sway.
+   - WAAPI `el.animate` for the DOM sheet flight.
+   - Projecting world corners to screen (PaperLink.origin).
+   - ResizeObserver and MutationObserver for the scroll fades.
+   - CSS mask-image fades with @property transitions.
+   - Headless Chrome via playwright-core in the scratchpad for screenshot verification.
+
+3. Files and Code Sections:
+   - src/lib/content.ts
+     - techStack is annotated `readonly {name, icon, group: "Frontend"|"Backend"|"Data", also?: readonly string[]}[]`.
+       - `also`: React gets ["React JS"]; Java and Spring get ["Spring Boot","Spring Security"].
+     - experience is now plain: `{year,title,place}` × 2 (MoveForward Inc. Ventures, January 2025 – Present; Efunity Pte Ltd, 2023 - 2024). The draft highlights and stack were removed.
+     - education: Lithan "Software Engineering" and UC Banilad "Information Technology" have `year: "2022 – 2026"`. Google Cloud stays 2022 and STEM stays 2020.
+   - src/lib/skills.ts: `skills` (name, icon, group, projects indices), `skillGroups`, `projectSkills`.
+   - src/lib/chapters.ts:
+     - Added `skillsLink = { href: "#skills", label: "Skills" }`.
+     - Added `openSkills(e)`, which calls preventDefault and dispatches `desk:skills`.
+   - src/components/layout/Nav.tsx and MobileNav.tsx: Skills link after Intro, via Fragment.
+   - src/components/hero/desk/constants.ts:
+     - DESK
+     - `RETURN = { x0: -23, x1: -15, z0: -4.8, z1: 14.6 }`
+     - `SIDE_WALL_X`
+     - `TANK = { x: -21.2, z: 6.4, w: 5.4, d: 2.4, h: 3.3 }`
+   - src/components/hero/desk/room.tsx:
+     - ReturnDesk: oak `side` texture rotated, carcass, drawers, side wall.
+     - ProjectShelf has a `quiet` prop that hides the Projects tag while the experience sheet or tank view is open.
+     - The earlier lit-books change was reverted.
+   - src/components/hero/desk/species.ts: a species per skill. HTML red wag platy, CSS dwarf gourami, JS electric yellow cichlid, React neon tetra, Bootstrap betta, Java comet goldfish, Spring green tiger barb, Spring Boot green swordtail, REST API angelfish, MySQL blue discus. Exports `speciesOf`.
+   - src/components/hero/desk/aquarium.tsx:
+     - The realistic tank (group rotated π/2 to face +x) and School class with zones (show, back, front, free).
+     - Fish built with bodyGeometry/finsGeometry, `bendable` shader, physical material with iridescence.
+     - Gravel heightfield plus a separate cut-face mesh with no caustics; caustic emissiveMap.
+     - Stones, driftwood, merged swaying plants, Bubbles, LED bar plus a world spotLight.
+     - Html `tank-label`; Water class handles time and caustic drift.
+   - src/components/hero/desk/world.ts:
+     - ViewName includes "tank".
+     - Portrait tank view: pos (TANK.x+27, 2.4, TANK.z), target (TANK.x, -1.7, TANK.z).
+     - Landscape tank view: pos (TANK.x+12.5, 2.3, TANK.z+1.5), target (TANK.x, 1.55, TANK.z+1.5).
+   - src/components/hero/desk/DeskCanvas.tsx:
+     - Props include experienceOpen, onOpenExperience, onCloseExperience, `onPaperBridge: (bridge: PaperBridge | null) => void`, skills, activeSkill, featuredSkills, labelledSkill, onSelectSkill, onHoverSkill.
+     - Exports `PaperBridge = { origin: () => SheetOrigin | null; setOut: (out: boolean) => void }`.
+     - An effect calls onPaperBridge with `paper.origin(camera, size.width, size.height)`.
+     - renderModel takes `(id, t, night, paper, folder: {open, reduced, onOpen})`.
+     - Wheel zoom is blocked when experienceOpen or view==="tank".
+     - Renders Aquarium. The ExperiencePaper component was removed.
+   - src/components/hero/desk/experience.tsx (rewritten):
+     - Exports `PAPER = {w:1.4,h:1.98}` and `SheetOrigin {cx,cy,width,height,angle}`.
+     - `PaperLink` class: cover, out, anchor, setAnchor, setOut, step, and `origin(camera,w,h)`, which projects the sheet edges to pixels.
+     - `ExperienceFolder({cover,paper,link,open,reduced,onOpen})`:
+       - Portrait manila folder with a tab.
+       - Resting sheet offset at (0.2, 0.03, -0.2), rot -0.06; hidden while `link.out`.
+       - Cover hinged and ajar at 0.09, opening to 2.75.
+       - onClick ignores `e.delta > 10`.
+   - src/components/hero/desk/textures.ts:
+     - `experiencePaperTexture(f)`: a miniature of the HTML page on a 509×720 grid scaled to 1240×1754. It has the header, tabs (Experience dark), "Experience" with the ON FILE stamp, roles 01/02, an Education continuation, a bottom fade, and a footer with email and résumé pill.
+     - `folderCoverTexture(f)`: manila with a typed "Experience" label.
+     - buildTextures returns `paper` and `folderCover`.
+     - Imports education, experience and site.
+   - src/components/hero/desk/items.ts:
+     - The experience item is `w: 1.55, d: 2.3, h: 0.12, fx: -0.07, fz: 0.05, rot: -0.12, m: { fx: 0.0, fz: 0.02 }`, note "Click to pull out my work record."
+     - The aquarium entry was removed from deskItemMap.
+   - src/components/hero/desk/models.tsx: the old ExperienceFolder was removed.
+   - src/hooks/useScrollFade.ts: `useScrollFade<T>()` returns `{ ref, onScroll, fade: {"data-fade-top","data-fade-bottom"}, more }`, using ResizeObserver plus MutationObserver.
+   - src/components/hero/WorkRecord.tsx (current):
+     - Props: `{origin, landed, reading, closing, reduced, onOut, onClose, onExited}`.
+     - SECTIONS: experience and education, with counts.
+     - The open layout effect calls onOut(true), focuses the page element, and runs a WAAPI animation from `fromFolder(origin, landed)` to none (760ms, delay 140, fill backwards). onfinish sets settled.
+     - The close effect animates back to the folder (520ms, 300ms delay if the page had expanded on a phone), then calls onOut(false) and onExited after two rAFs.
+     - spy(): Education becomes current when `edu.offsetTop - scrollTop <= clientHeight*0.45` or the body is at the end.
+     - jump(id) calls body.scrollTo.
+     - Markup:
+       - Backdrop div (onClick close).
+       - `.desk-sheet` dialog: `aria-label="Work record"`, `tabIndex={-1}`, style=rect where rect = settled ? reading : landed.
+       - Head: kicker `{site.shortName} · Work record` and a close button.
+       - `nav.desk-sheet__tabs` of buttons with aria-current.
+       - Scroll body `.desk-sheet__body.scroll-fade` containing two sections. The Experience section has a title row with the stamp and roles `li` grid of index plus main. The Education section `.desk-sheet__section` has schools.
+       - More chevron.
+       - Footer with email and Résumé link.
+   - src/components/hero/DeskHero.tsx:
+     - Sheet state `"closed"|"open"|"closing"`, sheetOrigin, paperBridge ref plus onPaperBridge callback.
+     - openExperience captures `paperBridge.current?.origin()` and sets focusReturn to the active element or null.
+     - closeExperience: open becomes closing, or closed if reduced motion. experienceExited.
+     - Escape handling. Hero size via ResizeObserver; sheetRects:
+       - landed = A4, h = min(0.8H, 0.9W·ratio), nudged up 5%.
+       - reading = the phone rect (top 72, left 12, w-24, h-84) when w < 768, otherwise landed.
+     - Renders WorkRecord when sheet is open or closing. The reader bar for experience was removed.
+     - Tank state: tankOpen = view==="tank", viewBeforeTank, openTank/closeTank, desk:skills listener plus a #skills hash on ready.
+     - FieldGuide component: grouped rows with a fish swatch, icon, name, species and project dots. Rows expand to project buttons. It uses useScrollFade destructured.
+     - data-reading hides the desk UI when reading, experienceActive or tankOpen.
+     - featuredSkills comes from openProject ?? hoverProject; labelledSkill = hoverSkill ?? activeSkill.
+   - src/app/globals.css:
+     - `.desk-tank*` field guide styles.
+     - Generic `.scroll-fade` (mask, hidden scrollbar, data-fade-top 2.75rem / bottom 4rem, @property transitions).
+     - `.tank-label`.
+     - `.desk-sheet*`: paper, head, tabs `button[aria-current="true"]` dark, title-row, `.desk-sheet__section` margin-top 1.6rem with border-top, body `position: relative`, roles li grid, schools, more, foot, resume pill, `.desk-sheet:focus{outline:none}`.
+     - `.desk-sheet-backdrop` with fade in/out.
+     - Reduced-motion overrides.
+     - Removed: old desk-experience CSS, skill-caption CSS, and the detail/chip/stack/highlights/chev CSS.
+
+4. Errors and fixes:
+   - Pre-existing TS error at DeskCanvas (ExperienceFolder onOpen type): resolved when the folder was rewritten.
+   - Lint `react-hooks/immutability` (school.active =, tex.caustic.offset +=, time.value +=): moved into class methods (setActive, setFeatured, setHovered, the Water class).
+   - Lint "Cannot access refs during render" on `list.ref`/`body.ref`: destructured the useScrollFade result.
+   - Lint "value cannot be modified" (child setting paperBridge.current): switched to the `onPaperBridge` callback prop.
+   - A bash heredoc quoting failure: wrote python edit scripts to scratchpad files instead.
+   - Write tool "file modified since read": deleted and rewrote the files.
+   - Dev server port 3123 failed (lock; the user's next dev runs on port 3000): used localhost:3000 for screenshots.
+   - Tank cropped in the front view; old placement redone; caustics on the gravel cut face; stone veins: fixed.
+   - Phone: the Projects tag overlaid the paper → `quiet` prop.
+   - The big bug the user reported (folder and books hard to click): the invisible dim plane and flying sheet at the origin intercepted raycasts with stopPropagation. Fixed by removing the 3D flying sheet and dim plane.
+   - The visible 3D→HTML transition the user reported: replaced with a single-element DOM flight from the projected sheet rect, plus matching paper texture art.
+   - Focus ring landing on the Experience chip after a folder open: focusReturn falls back to null.
+   - The focus ring persisting on the first tab: the page container is now focused instead.
+
+5. Problem Solving:
+   - Verified real mouse clicks open the folder and the books (click.js: sheet open true, closed true, book reader open true).
+   - Verified the tab switches after scrolling ("Education 04") and after a click ("Experience 02").
+   - The duplicate sheet in the user's screenshot wasn't reproducible; likely an HMR leftover.
+
+6. All user messages:
+   - "im plannng to add an aquarium with fish in my portfolio. what could i do with it so that it has functionality. like projects where it is interacted through the books. what can we integrate it with that is useful to the portfolio"
+   - "lets implement that each fish is a skill"
+   - "it does not really show the skills/stack at first glance as i still need to hover for each, which can be bad for UX as the fish are also moving around. how can we improve this? /caveman"
+   - "put the fish tank on the a separate desk on the left side (the desk will be now L shape, with the aquarium on the L end as it willbe just added/connected to the current desk), this wuld be a different angle/camera view but just a front view and close up shot on the aquarium (unline the current where it is not close up). when skills nav menu, the camera angle will pan to the left, and a close up shot of the aquarium. improve the UIUX of the stack and skills display also make it intuitive / also improve the first, make it realistis so that it will be uniform with the other objects /caveman"
+   - "remove the scroll bar in the skills section of the aquarium. but make the UI and the use realize that the list is still scrollable, maybe a fade the item that is near the bottom/top of the list indicating is scrollable on top/down / the the folder object for the experiences. i actually want to be a folder that shows the document/file a bit. and what that document/file/paper/folder is clicked. it will have an animation like the user is viewing the document and that is where my experience details are at. its kinda simila to the projects. i dont want it to be a wole page page like it current is, i want it to be in the paper /caveman"
+   - (with screenshot) "having it on paper makes in hard to read and not eligible, which is bad UIUX. what would be the best approach and interaction for the experience and education part that fits my porfolio style/nature. list down ideas /caveman"
+   - "try implementing 1-3 /caveman"
+   - "why is the experience folder not clickable? when i click the folder the document should open/show but its so hard to trigger. also the transition between 3rd and html is not smooth is very visible. it should not be visible /caveman / i think im having a card time triggering the object because im having hard time opening the projects also, i moves but i cant open it. why is that. inspect if its just a laptop function issue or the code itself"
+   - "where is the best placement for the experience folder /caveman"
+   - "put it there"
+   - "remove the reposibilities and and stack from the experience first. and put the education as continuation below it. when the user scrolls on the document, the tab will checnge to education. also the year of the education change it: for both lithan and Uinversity of cebu, it sodould be 2022-2026"
+
+7. Pending Tasks:
+   - No explicit pending tasks beyond reporting completion of the latest request. Nothing has been committed. Committing happens only if the user asks; branch codex/experience-folder.
+
+8. Current Work:
+   - Just finished the latest request:
+     - content.ts: experience reduced to year/title/place; Lithan and UC IT set to "2022 – 2026".
+     - WorkRecord.tsx: a single scrolling page (Experience section, then Education section) with scroll-spy tabs (`spy()` and `jump()`) and nav buttons using aria-current.
+     - The onSkill prop was removed from DeskHero.
+     - CSS cleaned up (role rows as a grid, `.desk-sheet__section`, `position: relative` on the body).
+     - textures.ts experiencePaperTexture redrawn to match the new layout.
+   - Verified by screenshots: the tab becomes "Education 04" after scroll and "Experience 02" after a tab click.
+   - The last edit focuses the page container instead of the first tab:
+     - `el.focus({ preventScroll: true })`
+     - `tabIndex={-1}` on `.desk-sheet`
+     - `.desk-sheet:focus { outline: none; }`
+   - tsc and eslint report 0 issues.
+
+9. Optional Next Step:
+   - Report completion to the user in caveman style:
+     - Responsibilities/stack removed.
+     - Education continues below Experience.
+     - Tabs follow the scroll (verified "Education 04" after scroll) and jump on click.
+     - Lithan and UC Information Technology now show "2022 – 2026".
+     - The lift-off paper art was updated to match.
+     - Focus now lands on the page, so there's no stray tab ring.
+   - Optionally offer a phone screenshot check. No further changes unless the user asks.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: C:\Users\Jeanne\.claude\projects\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+The messages after this summary are the most recent messages from before compaction, kept verbatim. The summary was written without seeing them, so something it says has not happened yet may already have happened in them.
+
+---
+
+_**User (2026-10-29 13:50:37Z)**_
+
+<local-command-stdout>Compacted </local-command-stdout>
+
+---
+
+_**User (2026-10-29 13:50:38Z)**_
+
+<local-command-caveat>The command below was run directly in Claude Code, not sent to you as a request, and its output goes straight to the user. It's recorded here as context for later messages.</local-command-caveat>
+
+---
+
+_**User (2026-10-29 13:50:38Z)**_
+
+<command-name>/compact</command-name>
+            <command-message>compact</command-message>
+            <command-args></command-args>
+
+---
+
+_**User (2026-10-29 13:51:07Z)**_
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+<system-reminder>
+<tools-used-before-summary>Bash, Edit, PowerShell, Read, Skill, Write</tools-used-before-summary>
+</system-reminder>
+Summary:
+1. Primary Request and Intent:
+   - Add an aquarium to the 3D desk portfolio hero where each fish = a tech-stack skill, linked to project books.
+   - Move the tank onto a new L-shaped desk return on the left. Give it a dedicated close-up front camera view; the Skills nav, chip, or #skills pans the camera there.
+   - Make the fish and tank realistic, uniform with the other objects.
+   - Make the skills UI intuitive: all skills visible at once in the field-guide panel. Hide the panel's scrollbar and use top/bottom fades plus a chevron.
+   - Experience folder:
+     - It should look like a folder with the document peeking out.
+     - Clicking opens the document like the projects do, inside the paper, not a full page.
+     - The text must be readable, so it is an HTML page that flies up from the folder's sheet with no visible handoff.
+     - Placed at the cutting-mat center.
+   - Clicks on the folder and books must work. (They were blocked by an invisible raycast plane, which was my bug, now fixed.)
+   - Latest request (completed and reported):
+     - Remove responsibilities/stack from experience.
+     - Education continues below Experience on the same scrolling document.
+     - Scrolling switches the tab to Education.
+     - Lithan Academy and University of Cebu (Information Technology) years become "2022 – 2026".
+   - The user uses /caveman (terse responses).
+
+2. Key Technical Concepts:
+   - Next.js 16.3.8. AGENTS.md says to read node_modules/next/dist/docs before writing Next code.
+   - React 19, @react-three/fiber 9, drei 10, three 0.186, lucide-react, motion.
+   - Mutable animation state kept in classes with setter methods, to satisfy the react-hooks lint rules:
+     - No mutating values returned from hooks.
+     - A child can't write a parent's ref; use a callback prop.
+     - Destructure a hook's return when it contains a ref.
+   - three.js Raycaster ignores `visible`; invisible meshes still intercept events. Use `raycast={() => null}`, or remove the mesh.
+   - Shaders injected via onBeforeCompile with customProgramCacheKey: fish bend, plant sway.
+   - WAAPI `el.animate` for the DOM sheet flight from the projected 3D sheet rect (PaperLink.origin).
+   - ResizeObserver and MutationObserver for the scroll fades.
+   - CSS mask-image fades with @property transitions.
+   - Headless Chrome via playwright-core in the scratchpad for screenshot verification, against the user's dev server at localhost:3000.
+
+3. Files and Code Sections:
+   - src/lib/content.ts
+     - techStack carries group and an `also` list.
+     - experience is `{year,title,place}` × 2: MoveForward Inc. Ventures (January 2025 – Present) and Efunity Pte Ltd (2023 - 2024).
+     - education: Lithan Software Engineering and UC Banilad Information Technology are "2022 – 2026". Google Cloud stays 2022 and STEM stays 2020.
+   - src/lib/skills.ts: skills, skillGroups, projectSkills.
+   - src/lib/chapters.ts: skillsLink and openSkills, which dispatches `desk:skills`.
+   - Nav.tsx and MobileNav.tsx: the Skills link.
+   - desk/constants.ts:
+     - `RETURN = { x0: -23, x1: -15, z0: -4.8, z1: 14.6 }`
+     - `TANK = { x: -21.2, z: 6.4, w: 5.4, d: 2.4, h: 3.3 }`
+     - SIDE_WALL_X
+   - desk/room.tsx: ReturnDesk; ProjectShelf takes a `quiet` prop.
+   - desk/species.ts: one species per skill; exports `speciesOf`.
+   - desk/aquarium.tsx: the realistic tank, School class, fish shaders, gravel, plants, bubbles, LED, the tank-label Html, and the Water class.
+   - desk/world.ts: the "tank" view, with portrait and landscape camera poses.
+   - desk/DeskCanvas.tsx:
+     - Props: experienceOpen, onOpenExperience, onCloseExperience, onPaperBridge, the skill props.
+     - Exports `PaperBridge {origin(), setOut()}`.
+     - Wheel zoom is blocked when experienceOpen or in the tank view.
+   - desk/experience.tsx: `PAPER`, `SheetOrigin`, the `PaperLink` class, and `ExperienceFolder`. The folder cover is hinged; the sheet is hidden while the page is out; a click is ignored when `e.delta > 10`.
+   - desk/textures.ts:
+     - `experiencePaperTexture` mirrors the HTML page: header, tabs, Experience roles, the Education continuation, and a footer.
+     - `folderCoverTexture`.
+   - desk/items.ts: the experience item sits at the cutting-mat center (rot -0.12).
+   - src/hooks/useScrollFade.ts returns `{ref,onScroll,fade,more}`.
+   - src/components/hero/WorkRecord.tsx:
+     - Props: `{origin, landed, reading, closing, reduced, onOut, onClose, onExited}`.
+     - WAAPI flight in from the folder and back out on close.
+     - Scroll spy: Education becomes current when its offsetTop minus scrollTop is ≤ 45% of the client height, or at the bottom of the body.
+     - `jump(id)` scrolls to a section.
+     - Tabs are buttons with aria-current.
+     - Single scrolling body: the Experience section (stamp and plain role rows), then the Education section.
+     - Footer has the email and the Résumé link.
+     - The page container is focused (tabIndex -1, outline none).
+   - src/components/hero/DeskHero.tsx:
+     - Sheet state machine and the paperBridge callback.
+     - sheetRects: landed is A4; reading is the phone rect when width < 768.
+     - Tank open/close, the desk:skills listener and the #skills hash.
+     - The FieldGuide component; data-reading hides the desk UI.
+   - src/app/globals.css: .desk-tank*, .scroll-fade, .tank-label, .desk-sheet* (tabs, section, roles grid, schools, foot), the backdrop, and reduced-motion rules.
+
+4. Errors and fixes:
+   - Lint immutability errors: fixed by moving the mutations into class methods.
+   - Lint "Cannot access refs during render": fixed by destructuring the hook result.
+   - A child writing the parent's ref: replaced with the onPaperBridge callback.
+   - Bash heredoc quoting: fixed with python scripts written to the scratchpad.
+   - Write "modified since read": fixed by deleting and rewriting the files.
+   - Dev server port lock: used localhost:3000.
+   - Invisible dim plane and flying sheet intercepting raycasts, which blocked the folder and book clicks: removed.
+   - Visible 3D→HTML transition: replaced with a DOM flight from the projected rect, plus a matching paper texture.
+   - Focus ring problems: focusReturn falls back to null, and the page container is focused instead of the first tab.
+   - Projects tag overlapping the sheet on phones: fixed with the `quiet` prop.
+
+5. Problem Solving:
+   - Verified clicks open the folder and the books.
+   - Verified the tabs switch on scroll and on click.
+   - tsc and eslint are clean.
+
+6. All user messages:
+   - "im plannng to add an aquarium with fish in my portfolio. what could i do with it so that it has functionality. like projects where it is interacted through the books. what can we integrate it with that is useful to the portfolio"
+   - "lets implement that each fish is a skill"
+   - "it does not really show the skills/stack at first glance as i still need to hover for each, which can be bad for UX as the fish are also moving around. how can we improve this? /caveman"
+   - "put the fish tank on the a separate desk on the left side (the desk will be now L shape, with the aquarium on the L end as it willbe just added/connected to the current desk), this wuld be a different angle/camera view but just a front view and close up shot on the aquarium (unline the current where it is not close up). when skills nav menu, the camera angle will pan to the left, and a close up shot of the aquarium. improve the UIUX of the stack and skills display also make it intuitive / also improve the first, make it realistis so that it will be uniform with the other objects /caveman"
+   - "remove the scroll bar in the skills section of the aquarium. but make the UI and the use realize that the list is still scrollable, maybe a fade the item that is near the bottom/top of the list indicating is scrollable on top/down / the the folder object for the experiences. i actually want to be a folder that shows the document/file a bit. and what that document/file/paper/folder is clicked. it will have an animation like the user is viewing the document and that is where my experience details are at. its kinda simila to the projects. i dont want it to be a wole page page like it current is, i want it to be in the paper /caveman"
+   - (with screenshot) "having it on paper makes in hard to read and not eligible, which is bad UIUX. what would be the best approach and interaction for the experience and education part that fits my porfolio style/nature. list down ideas /caveman"
+   - "try implementing 1-3 /caveman"
+   - "why is the experience folder not clickable? when i click the folder the document should open/show but its so hard to trigger. also the transition between 3rd and html is not smooth is very visible. it should not be visible /caveman / i think im having a card time triggering the object because im having hard time opening the projects also, i moves but i cant open it. why is that. inspect if its just a laptop function issue or the code itself"
+   - "where is the best placement for the experience folder /caveman"
+   - "put it there"
+   - "remove the reposibilities and and stack from the experience first. and put the education as continuation below it. when the user scrolls on the document, the tab will checnge to education. also the year of the education change it: for both lithan and Uinversity of cebu, it sodould be 2022-2026"
+
+7. Pending Tasks:
+   - None. The latest request is done and reported. Nothing is committed (branch codex/experience-folder); commit only if the user asks.
+
+8. Current Work:
+   - Completed and reported the last request:
+     - Experience is simplified.
+     - Education continues on the same page.
+     - The scroll-spy tabs work.
+     - The years are updated.
+     - The paper texture is redrawn.
+     - Focus lands on the page container.
+
+9. Optional Next Step:
+   - None. Wait for the user's next instruction.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: C:\Users\Jeanne\.claude\projects\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+The messages after this summary are the most recent messages from before compaction, kept verbatim. The summary was written without seeing them, so something it says has not happened yet may already have happened in them.
+
+---
+
+_**User (2026-10-29 13:51:07Z)**_
+
+<local-command-stdout>Compacted </local-command-stdout>

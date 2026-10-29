@@ -12,6 +12,7 @@ import { Lighting } from "./lighting";
 import { Wall } from "./wall";
 import { Flashlight, SceneLink } from "./flashlight";
 import { Aquarium } from "./aquarium";
+import { ExperienceFolder, PaperLink, type SheetOrigin } from "./experience";
 import type { Skill } from "@/lib/skills";
 import type { BookProject } from "./textures";
 import { buildTextures, type DeskTextures } from "./textures";
@@ -22,6 +23,9 @@ Object.values(MODEL_URLS).forEach((url) => useGLTF.preload(url));
 OAK_MAPS.forEach((url) => useTexture.preload(url));
 
 export type DeskCommand = { type: "tidy" | "scatter"; n: number };
+
+/* lets the HTML page find the folder's sheet on screen, and hide it while the page is out */
+export type PaperBridge = { origin: () => SheetOrigin | null; setOut: (out: boolean) => void };
 
 type Props = {
   active: boolean;
@@ -35,12 +39,10 @@ type Props = {
   projects: readonly BookProject[];
   openProject: number | null;
   onOpenProject: (index: number | null) => void;
-  experienceActive: boolean;
-  experienceExtracting: boolean;
-  onOpenExperience: (origin: { x: number; y: number }) => void;
-  onExperienceExtracted: () => void;
-  onExperienceReturned: () => void;
+  experienceOpen: boolean;
+  onOpenExperience: () => void;
   onCloseExperience: () => void;
+  onPaperBridge: (bridge: PaperBridge | null) => void;
   onHoverProject: (index: number | null) => void;
   skills: readonly Skill[];
   activeSkill: number | null;
@@ -60,7 +62,8 @@ function renderModel(
   id: string,
   t: DeskTextures,
   night: boolean,
-  experienceProps: Pick<Props, "experienceExtracting" | "reduced" | "onOpenExperience" | "onExperienceExtracted" | "onExperienceReturned">,
+  paper: PaperLink,
+  folder: { open: boolean; reduced: boolean; onOpen: () => void },
 ): ReactNode {
   switch (id) {
     case "mat":
@@ -93,14 +96,7 @@ function renderModel(
       return <Model.Card map={t.card} />;
     case "experience":
       return (
-        <Model.ExperienceFolder
-          map={t.experience}
-          extracting={experienceProps.experienceExtracting}
-          reduced={experienceProps.reduced}
-          onOpen={experienceProps.onOpenExperience}
-          onExtracted={experienceProps.onExperienceExtracted}
-          onReturned={experienceProps.onExperienceReturned}
-        />
+        <ExperienceFolder cover={t.folderCover} paper={t.paper} link={paper} open={folder.open} reduced={folder.reduced} onOpen={folder.onOpen} />
       );
     case "clip-a":
       return <Model.PaperClip />;
@@ -154,12 +150,21 @@ function Warmup({ onDone, onProgress }: { onDone: () => void; onProgress?: (p: n
   return null;
 }
 
-function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, experienceActive, experienceExtracting, onOpenExperience, onExperienceExtracted, onExperienceReturned, onCloseExperience, onHoverProject, skills, activeSkill, featuredSkills, labelledSkill, onSelectSkill, onHoverSkill, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active">) {
+function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, experienceOpen, onOpenExperience, onCloseExperience, onPaperBridge, onHoverProject, skills, activeSkill, featuredSkills, labelledSkill, onSelectSkill, onHoverSkill, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active">) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const gl = useThree((s) => s.gl);
   const size = useThree((s) => s.size);
   const [world] = useState(() => new DeskWorld(reduced));
   const [link] = useState(() => new SceneLink());
+  const [paper] = useState(() => new PaperLink());
+
+  useEffect(() => {
+    onPaperBridge({
+      origin: () => paper.origin(camera, size.width, size.height),
+      setOut: (out) => paper.setOut(out),
+    });
+    return () => onPaperBridge(null);
+  }, [onPaperBridge, paper, camera, size]);
   const [tex, setTex] = useState<DeskTextures | null>(null);
   const [booksReady, setBooksReady] = useState(false);
   const onBooksLoaded = useCallback(() => setBooksReady(true), []);
@@ -233,7 +238,7 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
   useEffect(() => {
     const hero = gl.domElement.closest("section");
     const onWheel = (e: WheelEvent) => {
-      if (world.grabbing || openProject !== null || experienceActive || view === "tank") return;
+      if (world.grabbing || openProject !== null || experienceOpen || view === "tank") return;
       if (!hero || window.scrollY > 4 || !hero.contains(e.target as Node)) return;
       e.preventDefault();
       e.stopPropagation();
@@ -241,7 +246,7 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
     };
     window.addEventListener("wheel", onWheel, { capture: true, passive: false });
     return () => window.removeEventListener("wheel", onWheel, { capture: true });
-  }, [gl, world, openProject, experienceActive, view]);
+  }, [gl, world, openProject, experienceOpen, view]);
 
   useFrame((_, delta) => {
     world.stepCamera(camera, delta);
@@ -273,6 +278,7 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
       <ProjectShelf
         projects={projects}
         open={openProject}
+        quiet={experienceOpen || view === "tank"}
         reduced={reduced}
         night={night}
         link={link}
@@ -340,13 +346,7 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
                 if (!world.grabbing) setCursor("");
               }}
             >
-              {renderModel(item.id, tex, night, {
-                experienceExtracting,
-                reduced,
-                onOpenExperience,
-                onExperienceExtracted,
-                onExperienceReturned,
-              })}
+              {renderModel(item.id, tex, night, paper, { open: experienceOpen, reduced, onOpen: onOpenExperience })}
             </group>
           ))
         : null}

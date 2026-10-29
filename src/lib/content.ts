@@ -39,12 +39,12 @@ export const techStack: readonly { name: string; icon: string; group: "Frontend"
 
 export const education = [
   {
-    year: "Now",
+    year: "2022 – 2026",
     title: "Software Engineering",
     place: "Lithan Academy",
   },
   {
-    year: "Now",
+    year: "2022 – 2026",
     title: "Information Technology",
     place: "University of Cebu - Banilad",
   },

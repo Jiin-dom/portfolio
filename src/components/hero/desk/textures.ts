@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { experience, site } from "@/lib/content";
+import { education, experience, site } from "@/lib/content";
 
 type Fonts = { display: string; serif: string; mono: string };
 type Ctx = CanvasRenderingContext2D;
@@ -441,31 +441,158 @@ function rulerTexture(f: Fonts) {
   return toTexture(c);
 }
 
-function experienceFolderTexture(f: Fonts) {
-  const W = 768;
-  const H = 512;
+function experiencePaperTexture(f: Fonts) {
+  /*
+   * A miniature of the HTML work record as it first opens, laid out on the
+   * same grid (509 × 720 css px). The page lifts off from this sheet, so the
+   * two must read as the same piece of paper.
+   */
+  const W = 1240;
+  const H = 1754;
+  const k = W / 509;
+  const px = (n: number) => n * k;
   const { c, ctx } = surface(W, H);
-  ctx.fillStyle = "#f4ead7";
+  ctx.fillStyle = "#f6f0e2";
   ctx.fillRect(0, 0, W, H);
-  speckle(ctx, W, H, 1900, ["#fffaf0", "#b8a98f"], 0.7);
-  ctx.strokeStyle = "rgba(48, 35, 19, 0.16)";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(18, 18, W - 36, H - 36);
+  const edge = ctx.createRadialGradient(W / 2, H * 0.4, H * 0.3, W / 2, H * 0.4, H * 0.75);
+  edge.addColorStop(0, "rgba(0,0,0,0)");
+  edge.addColorStop(1, "rgba(150,112,58,0.14)");
+  ctx.fillStyle = edge;
+  ctx.fillRect(0, 0, W, H);
+
+  const left = px(31);
+  const right = W - px(31);
+  const SOFT = "#5a5046";
+  ctx.textBaseline = "alphabetic";
   ctx.fillStyle = INK;
-  ctx.font = `500 24px ${f.mono}`;
-  ctx.fillText("WORK RECORD", 48, 72);
-  ctx.fillRect(48, 92, W - 96, 2);
-  ctx.globalAlpha = 0.72;
-  experience.slice(0, 2).forEach((item, index) => {
-    const y = 166 + index * 150;
-    ctx.globalAlpha = index === 0 ? 1 : 0.72;
-    ctx.font = `800 30px ${f.display}`;
-    ctx.fillText(item.title.toUpperCase(), 48, y, W - 96);
-    ctx.font = `500 18px ${f.mono}`;
-    ctx.fillText(item.place.toUpperCase(), 48, y + 30, W - 96);
-    ctx.fillText(item.year.toUpperCase(), 48, y + 58, W - 96);
+
+  /* head */
+  ctx.font = `500 ${px(10.5)}px ${f.mono}`;
+  ctx.fillText(`${site.shortName.toUpperCase()} · WORK RECORD`, left, px(40));
+  ctx.lineWidth = px(1.6);
+  ctx.strokeStyle = INK;
+  ctx.beginPath();
+  ctx.moveTo(right - px(14), px(30));
+  ctx.lineTo(right - px(4), px(40));
+  ctx.moveTo(right - px(4), px(30));
+  ctx.lineTo(right - px(14), px(40));
+  ctx.stroke();
+  ctx.fillRect(left, px(58), right - left, px(2));
+
+  /* tabs */
+  ctx.fillRect(left, px(75), px(131), px(36));
+  ctx.fillStyle = "rgba(28,22,18,0.05)";
+  ctx.fillRect(left + px(135), px(75), px(123), px(36));
+  ctx.font = `500 ${px(11)}px ${f.mono}`;
+  ctx.fillStyle = "#f6f0e2";
+  ctx.fillText(`EXPERIENCE ${String(experience.length).padStart(2, "0")}`, left + px(15), px(97));
+  ctx.fillStyle = SOFT;
+  ctx.fillText(`EDUCATION ${String(education.length).padStart(2, "0")}`, left + px(150), px(97));
+  ctx.fillStyle = INK;
+  ctx.fillRect(left, px(111), right - left, px(1));
+
+  /* experience */
+  ctx.font = `800 ${px(46)}px ${f.display}`;
+  ctx.fillText("Experience", left, px(164));
+  ctx.save();
+  ctx.translate(right - px(38), px(147));
+  ctx.rotate(-0.1);
+  ctx.strokeStyle = "rgba(232,93,44,0.85)";
+  ctx.lineWidth = px(2);
+  ctx.strokeRect(-px(37), -px(14), px(74), px(28));
+  ctx.fillStyle = "rgba(232,93,44,0.9)";
+  ctx.font = `600 ${px(10)}px ${f.mono}`;
+  ctx.textAlign = "center";
+  ctx.fillText("ON FILE", 0, px(4));
+  ctx.restore();
+
+  let y = px(185);
+  experience.forEach((role, i) => {
+    ctx.font = `500 ${px(11)}px ${f.mono}`;
+    ctx.fillStyle = SOFT;
+    ctx.fillText(String(i + 1).padStart(2, "0"), left + px(3), y + px(23));
+    ctx.fillText(role.year.toUpperCase(), left + px(33), y + px(21));
+    ctx.fillStyle = INK;
+    ctx.font = `700 ${px(21)}px ${f.display}`;
+    ctx.fillText(role.title, left + px(33), y + px(46));
+    ctx.font = `italic ${px(17)}px ${f.serif}`;
+    ctx.fillStyle = SOFT;
+    ctx.fillText(role.place, left + px(33), y + px(73));
+    y += px(96);
+    ctx.fillStyle = "rgba(28,22,18,0.12)";
+    ctx.fillRect(left, y - px(1), right - left, px(1));
   });
-  ctx.globalAlpha = 1;
+
+  /* education continues below */
+  y += px(26);
+  ctx.fillStyle = INK;
+  ctx.fillRect(left, y, right - left, px(1));
+  ctx.font = `800 ${px(46)}px ${f.display}`;
+  ctx.fillText("Education", left, y + px(54));
+  y += px(64);
+  education.forEach((item) => {
+    if (y > px(620)) return;
+    ctx.font = `500 ${px(11)}px ${f.mono}`;
+    ctx.fillStyle = SOFT;
+    ctx.fillText(item.year.toUpperCase(), left + px(3), y + px(18));
+    ctx.fillStyle = INK;
+    ctx.font = `650 ${px(17.5)}px ${f.display}`;
+    ctx.fillText(item.title, left + px(3), y + px(41), right - left);
+    ctx.font = `italic ${px(16)}px ${f.serif}`;
+    ctx.fillStyle = SOFT;
+    ctx.fillText(item.place, left + px(3), y + px(66));
+    y += px(96);
+  });
+  /* the page's scroll fade at the bottom of the body */
+  const fade = ctx.createLinearGradient(0, px(600), 0, px(658));
+  fade.addColorStop(0, "rgba(246,240,226,0)");
+  fade.addColorStop(1, "rgba(246,240,226,1)");
+  ctx.fillStyle = fade;
+  ctx.fillRect(0, px(600), W, px(60));
+
+  /* foot */
+  ctx.fillStyle = INK;
+  ctx.fillRect(left, px(661), right - left, px(1));
+  ctx.font = `500 ${px(11)}px ${f.mono}`;
+  ctx.fillText(site.email, left, px(694));
+  ctx.beginPath();
+  ctx.roundRect(right - px(90), px(675), px(90), px(32), px(16));
+  ctx.fill();
+  ctx.fillStyle = "#f6f0e2";
+  ctx.fillText("RÉSUMÉ ↗", right - px(74), px(695));
+  return toTexture(c);
+}
+
+/* manila folder cover with a typed label */
+function folderCoverTexture(f: Fonts) {
+  const W = 620;
+  const H = 840;
+  const { c, ctx } = surface(W, H);
+  ctx.fillStyle = "#d4b07a";
+  ctx.fillRect(0, 0, W, H);
+  speckle(ctx, W, H, 2600, ["#e6c894", "#a8854f", "#c49d62"], 1.1);
+  /* a faint crease a little in from the spine */
+  ctx.fillStyle = "rgba(90,62,26,0.12)";
+  ctx.fillRect(34, 0, 3, H);
+
+  ctx.save();
+  ctx.translate(96, 110);
+  ctx.rotate(-0.02);
+  ctx.fillStyle = "#f7f1e3";
+  ctx.fillRect(0, 0, 430, 190);
+  ctx.strokeStyle = "rgba(28,22,18,0.25)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(10, 10, 410, 170);
+  ctx.fillStyle = INK;
+  ctx.font = `500 18px ${f.mono}`;
+  ctx.fillText("WORK RECORD · JD PALOMA", 30, 52);
+  ctx.font = `800 64px ${f.display}`;
+  ctx.fillText("Experience", 28, 130);
+  ctx.font = `italic 26px ${f.serif}`;
+  ctx.globalAlpha = 0.7;
+  ctx.fillText(`${experience.length} roles · résumé inside`, 30, 166);
+  ctx.restore();
+
   return toTexture(c);
 }
 
@@ -485,7 +612,8 @@ export async function buildTextures() {
     card: cardTexture(f),
     note: noteTexture(f),
     ruler: rulerTexture(f),
-    experience: experienceFolderTexture(f),
+    paper: experiencePaperTexture(f),
+    folderCover: folderCoverTexture(f),
   };
 }
 

@@ -4,12 +4,15 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { useReducedMotion } from "motion/react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Briefcase, Fish, Flashlight, LayoutGrid, Moon, MousePointer2, Shuffle, Sun, X } from "lucide-react";
-import { experience, projects, site } from "@/lib/content";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Briefcase, ChevronDown, Fish, Flashlight, LayoutGrid, Moon, MousePointer2, Shuffle, Sun, X } from "lucide-react";
+import { projects, site } from "@/lib/content";
 import { projectSkills, skillGroups, skills } from "@/lib/skills";
 import { speciesOf } from "@/components/hero/desk/species";
+import { PAPER, type SheetOrigin } from "@/components/hero/desk/experience";
+import { WorkRecord } from "@/components/hero/WorkRecord";
+import { useScrollFade } from "@/hooks/useScrollFade";
 import { deskItemMap } from "@/components/hero/desk/items";
-import type { DeskCommand } from "@/components/hero/desk/DeskCanvas";
+import type { DeskCommand, PaperBridge } from "@/components/hero/desk/DeskCanvas";
 import type { ViewName } from "@/components/hero/desk/world";
 
 const VIEWS: { id: ViewName; label: string }[] = [
@@ -108,42 +111,38 @@ export function DeskHero() {
   /* a book in hand calls its fish to the front glass */
   const handProject = openProject ?? hoverProject;
   const featuredSkills = useMemo(() => (handProject === null ? NONE : projectSkills[handProject]), [handProject]);
-  const [experienceState, setExperienceState] = useState<"closed" | "extracting" | "open" | "returning">("closed");
-  const [experienceOrigin, setExperienceOrigin] = useState({ x: 0, y: 0 });
-  const experienceScreen = useRef<HTMLElement>(null);
+  /*
+   * The work record: the folder's cover swings open (3D) and the page lifts off
+   * from exactly where its sheet sits on screen (HTML), so only one sheet ever moves.
+   */
+  const [sheet, setSheet] = useState<"closed" | "open" | "closing">("closed");
+  const [sheetOrigin, setSheetOrigin] = useState<SheetOrigin | null>(null);
+  const paperBridge = useRef<PaperBridge | null>(null);
+  const onPaperBridge = useCallback((bridge: PaperBridge | null) => {
+    paperBridge.current = bridge;
+  }, []);
   const experienceTrigger = useRef<HTMLButtonElement>(null);
   const focusReturn = useRef<HTMLElement | null>(null);
+  const experienceOpen = sheet !== "closed";
+  const experienceActive = experienceOpen;
 
-  const experienceActive = experienceState !== "closed";
-  const experienceExtracting = experienceState === "extracting" || experienceState === "open";
-
-  const openExperience = useCallback((origin?: { x: number; y: number }) => {
+  const openExperience = useCallback(() => {
     const active = document.activeElement;
-    focusReturn.current = active instanceof HTMLElement && active !== document.body ? active : experienceTrigger.current;
-    const bounds = root.current?.getBoundingClientRect();
-    setExperienceOrigin({
-      x: origin && bounds ? origin.x - bounds.left : (bounds?.width ?? 0) / 2,
-      y: origin && bounds ? origin.y - bounds.top : (bounds?.height ?? 0) / 2,
-    });
+    /* hand focus back only to whatever had it; a click on the 3D folder had none */
+    focusReturn.current = active instanceof HTMLElement && active !== document.body ? active : null;
     setOpenProject(null);
-    setExperienceState("extracting");
-  }, []);
-
-  const experienceExtracted = useCallback(() => {
-    setExperienceState((state) => state === "extracting" ? "open" : state);
-  }, []);
-
-  const experienceReturned = useCallback(() => {
-    setExperienceState((state) => state === "returning" ? "closed" : state);
+    setSheetOrigin(paperBridge.current?.origin() ?? null);
+    setSheet((s) => (s === "closed" ? "open" : s));
   }, []);
 
   const closeExperience = useCallback(() => {
-    setExperienceState((state) => state === "closed" || state === "returning" ? state : "returning");
-  }, []);
+    setSheet((s) => (s === "open" && !reduce ? "closing" : "closed"));
+  }, [reduce]);
+
+  const experienceExited = useCallback(() => setSheet((s) => (s === "closing" ? "closed" : s)), []);
 
   useEffect(() => {
-    if (!experienceActive) return;
-
+    if (!experienceOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -153,14 +152,31 @@ export function DeskHero() {
     window.addEventListener("keydown", onKeyDown);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      focusReturn.current?.focus();
+      focusReturn.current?.focus({ preventScroll: true });
     };
-  }, [experienceActive, closeExperience]);
+  }, [experienceOpen, closeExperience]);
 
+  /* the hero's size, to place the page exactly where the 3D sheet lands */
+  const [hero, setHero] = useState({ w: 0, h: 0 });
   useEffect(() => {
-    if (experienceState !== "open") return;
-    experienceScreen.current?.querySelector<HTMLElement>("button, a[href]")?.focus();
-  }, [experienceState]);
+    const el = root.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setHero({ w: e.contentRect.width, h: e.contentRect.height }));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const sheetRects = useMemo(() => {
+    /* an A4 page: 80% of the height, or 90% of the width on tall screens, nudged up a little */
+    const ratio = PAPER.h / PAPER.w;
+    const h = Math.min(0.8 * hero.h, 0.9 * hero.w * ratio);
+    const w = h / ratio;
+    const landed = { top: hero.h / 2 - h / 2 - 0.05 * h, left: (hero.w - w) / 2, width: w, height: h };
+    /* phones unfold the page to nearly full screen; an A4 at phone width is too small to read */
+    const phone = hero.w < 768;
+    const reading = phone ? { top: 72, left: 12, width: hero.w - 24, height: hero.h - 84 } : landed;
+    return { landed, reading };
+  }, [hero]);
+
 
   useEffect(() => {
     if (openProject === null) return;
@@ -260,12 +276,10 @@ export function DeskHero() {
           projects={projects}
           openProject={openProject}
           onOpenProject={setOpenProject}
-          experienceActive={experienceActive}
-          experienceExtracting={experienceExtracting}
+          experienceOpen={experienceOpen}
           onOpenExperience={openExperience}
-          onExperienceExtracted={experienceExtracted}
-          onExperienceReturned={experienceReturned}
           onCloseExperience={closeExperience}
+          onPaperBridge={onPaperBridge}
           onHoverProject={setHoverProject}
           skills={skills}
           activeSkill={activeSkill}
@@ -360,7 +374,7 @@ export function DeskHero() {
               <button type="button" className="desk-chip" onClick={() => send("tidy")}>
                 <LayoutGrid aria-hidden /> Tidy
               </button>
-              <button ref={experienceTrigger} type="button" className="desk-chip" onClick={(event) => openExperience({ x: event.clientX, y: event.clientY })}>
+              <button ref={experienceTrigger} type="button" className="desk-chip" onClick={openExperience}>
                 <Briefcase aria-hidden /> Experience
               </button>
               <button ref={tankTrigger} type="button" className="desk-chip" onClick={openTank}>
@@ -408,36 +422,17 @@ export function DeskHero() {
         </div>
       )}
 
-      {(experienceState === "open" || experienceState === "returning") && (
-        <section
-          ref={experienceScreen}
-          className="desk-experience"
-          data-state={experienceState}
-          style={{ "--paper-origin-x": `${experienceOrigin.x}px`, "--paper-origin-y": `${experienceOrigin.y}px` } as CSSProperties}
-          aria-labelledby="desk-experience-title"
-        >
-          <div className="desk-experience__head">
-            <p className="desk-reader__count">Work record · {String(experience.length).padStart(2, "0")}</p>
-            <button type="button" className="desk-chip" onClick={closeExperience}>
-              <ArrowLeft aria-hidden /> Back to desk
-            </button>
-          </div>
-          <div className="desk-experience__content">
-            <h2 id="desk-experience-title" className="desk-experience__title">Experience</h2>
-            <ol className="desk-experience__list">
-              {experience.map((item) => (
-                <li key={`${item.title}-${item.year}`} className="desk-experience__entry">
-                  <p className="desk-experience__date">{item.year}</p>
-                  <h3>{item.title}</h3>
-                  <p className="desk-experience__place">{item.place}</p>
-                </li>
-              ))}
-            </ol>
-            <a className="desk-chip desk-experience__resume" href={site.resume} target="_blank" rel="noopener noreferrer">
-              Résumé <ArrowUpRight aria-hidden />
-            </a>
-          </div>
-        </section>
+      {(sheet === "open" || sheet === "closing") && (
+        <WorkRecord
+          origin={sheetOrigin}
+          landed={sheetRects.landed}
+          reading={sheetRects.reading}
+          closing={sheet === "closing"}
+          reduced={reduce}
+          onOut={(out) => paperBridge.current?.setOut(out)}
+          onClose={closeExperience}
+          onExited={experienceExited}
+        />
       )}
 
       {tankOpen && (
@@ -479,8 +474,11 @@ function FieldGuide({
   onOpenProject: (i: number) => void;
   onClose: () => void;
 }) {
+  /* no scrollbar: the list fades out at whichever edge still has more to show */
+  const { ref: listRef, onScroll, fade, more } = useScrollFade<HTMLDivElement>();
+
   return (
-    <section className="desk-tank desk-glass" data-hidden={hidden ? "" : undefined} aria-labelledby="desk-tank-title" data-lenis-prevent>
+    <section className="desk-tank desk-glass" data-hidden={hidden ? "" : undefined} aria-labelledby="desk-tank-title">
       <div className="desk-tank__head">
         <p className="desk-tank__kicker">Field guide · {String(skills.length).padStart(2, "0")} species</p>
         <button type="button" className="desk-chip" onClick={onClose}>
@@ -490,68 +488,77 @@ function FieldGuide({
       <h2 id="desk-tank-title" className="desk-tank__title">The stack, alive</h2>
       <p className="desk-tank__lede">Each fish is a tool I build with. Pick one to see the projects it swims through.</p>
 
-      {skillGroups.map((group) => (
-        <div key={group} className="desk-tank__group">
-          <h3 className="desk-tank__group-name">{group}</h3>
-          <ul className="desk-tank__list">
-            {skills.map((s, i) => {
-              if (s.group !== group) return null;
-              const sp = speciesOf(s.name);
-              const open = active === i;
-              const n = s.projects.length;
-              return (
-                <li key={s.name} data-open={open ? "" : undefined}>
-                  <button
-                    type="button"
-                    className="desk-tank__row"
-                    aria-expanded={open}
-                    data-hover={hovered === i ? "" : undefined}
-                    onClick={() => onSelect(open ? null : i)}
-                    onPointerEnter={() => onHover(i)}
-                    onPointerLeave={() => onHover(null)}
-                    onFocus={() => onHover(i)}
-                    onBlur={() => onHover(null)}
-                  >
-                    <span className="desk-tank__swatch" style={{ "--fish": sp.side, "--fin": sp.fin } as CSSProperties} aria-hidden />
-                    <Image src={s.icon} alt="" width={22} height={22} className="desk-tank__icon" />
-                    <span className="desk-tank__name">
-                      {s.name}
-                      <span className="desk-tank__species">{sp.common}</span>
-                    </span>
-                    <span className="desk-tank__uses" aria-label={`Used in ${n} of ${projects.length} projects`}>
-                      {projects.map((_, k) => (
-                        <span key={k} data-on={k < n ? "" : undefined} />
-                      ))}
-                    </span>
-                  </button>
-                  {open && (
-                    <div className="desk-tank__detail">
-                      {n === 0 ? (
-                        <p>No project on the shelf uses it yet.</p>
-                      ) : (
-                        <>
-                          <p>
-                            Swims through {n} of {projects.length} projects:
-                          </p>
-                          <ul>
-                            {s.projects.map((p) => (
-                              <li key={p}>
-                                <button type="button" className="desk-tank__project" onClick={() => onOpenProject(p)}>
-                                  {projects[p].title} <ArrowUpRight aria-hidden />
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ))}
+      <div
+        ref={listRef}
+        className="desk-tank__scroll scroll-fade"
+        {...fade}
+        onScroll={onScroll}
+        data-lenis-prevent
+      >
+        {skillGroups.map((group) => (
+          <div key={group} className="desk-tank__group">
+            <h3 className="desk-tank__group-name">{group}</h3>
+            <ul className="desk-tank__list">
+              {skills.map((s, i) => {
+                if (s.group !== group) return null;
+                const sp = speciesOf(s.name);
+                const open = active === i;
+                const n = s.projects.length;
+                return (
+                  <li key={s.name} data-open={open ? "" : undefined}>
+                    <button
+                      type="button"
+                      className="desk-tank__row"
+                      aria-expanded={open}
+                      data-hover={hovered === i ? "" : undefined}
+                      onClick={() => onSelect(open ? null : i)}
+                      onPointerEnter={() => onHover(i)}
+                      onPointerLeave={() => onHover(null)}
+                      onFocus={() => onHover(i)}
+                      onBlur={() => onHover(null)}
+                    >
+                      <span className="desk-tank__swatch" style={{ "--fish": sp.side, "--fin": sp.fin } as CSSProperties} aria-hidden />
+                      <Image src={s.icon} alt="" width={22} height={22} className="desk-tank__icon" />
+                      <span className="desk-tank__name">
+                        {s.name}
+                        <span className="desk-tank__species">{sp.common}</span>
+                      </span>
+                      <span className="desk-tank__uses" aria-label={`Used in ${n} of ${projects.length} projects`}>
+                        {projects.map((_, k) => (
+                          <span key={k} data-on={k < n ? "" : undefined} />
+                        ))}
+                      </span>
+                    </button>
+                    {open && (
+                      <div className="desk-tank__detail">
+                        {n === 0 ? (
+                          <p>No project on the shelf uses it yet.</p>
+                        ) : (
+                          <>
+                            <p>
+                              Swims through {n} of {projects.length} projects:
+                            </p>
+                            <ul>
+                              {s.projects.map((p) => (
+                                <li key={p}>
+                                  <button type="button" className="desk-tank__project" onClick={() => onOpenProject(p)}>
+                                    {projects[p].title} <ArrowUpRight aria-hidden />
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
+      {more && <ChevronDown className="desk-tank__more" aria-hidden />}
     </section>
   );
 }
