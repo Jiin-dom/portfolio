@@ -2,7 +2,7 @@
 
 import { Fragment } from "react";
 import { site } from "@/lib/content";
-import { chapters, openSkills, skillsLink } from "@/lib/chapters";
+import { chapters, goHome, openSkills, skillsLink } from "@/lib/chapters";
 import { useActiveChapter, useTankOpen } from "@/hooks/useActiveChapter";
 import { MobileNav } from "./MobileNav";
 
@@ -18,9 +18,11 @@ export function Nav() {
       }`}
       style={{ height: "var(--nav-h)" }}
     >
-      <div className="section-pad mx-auto flex h-full max-w-[var(--max)] items-center justify-between gap-6">
+      {/* full width, hugging the screen edges like the hero type, not the centred content column */}
+      <div className="flex h-full items-center justify-between gap-6 px-[var(--page-pad)]">
         <a
           href="#intro"
+          onClick={goHome}
           className={`pointer-events-auto text-[0.8rem] font-semibold tracking-[0.18em] uppercase transition-colors ${
             darkText ? "text-ink" : "text-cream"
           }`}
@@ -36,6 +38,7 @@ export function Nav() {
                 href={chapter.href}
                 className={`chapter-link ${darkText ? "chapter-link-dark" : ""}`}
                 aria-current={active === chapter.id && !(tank && chapter.id === "intro") ? "page" : undefined}
+                onClick={chapter.id === "intro" ? goHome : undefined}
               >
                 {chapter.label}
               </a>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { site } from "@/lib/content";
-import { chapters, openSkills, skillsLink, type ChapterId } from "@/lib/chapters";
+import { chapters, goHome, openSkills, skillsLink, type ChapterId } from "@/lib/chapters";
 import { ease } from "@/lib/easings";
 import { useTankOpen } from "@/hooks/useActiveChapter";
 
@@ -55,7 +55,10 @@ export function MobileNav({ active, dark }: Props) {
                   href={link.href}
                   className="chapter-link text-sm tracking-[0.12em]"
                   aria-current={active === link.id && !(tank && link.id === "intro") ? "page" : undefined}
-                  onClick={() => setOpen(false)}
+                  onClick={() => {
+                    setOpen(false);
+                    if (link.id === "intro") goHome();
+                  }}
                   initial={reduce ? false : { opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.2, delay: i * 0.04, ease: ease.out }}

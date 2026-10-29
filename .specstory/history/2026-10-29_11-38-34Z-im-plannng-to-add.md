@@ -19293,3 +19293,2298 @@ Nothing is committed. All of today's UI edits are on `fix/drop-ponytail-gitlink`
 ```
 git switch -c ui/trim-and-polish
 ```
+
+---
+
+_**User (2026-10-29 14:49:59Z)**_
+
+the jd paloma in the navv should go back to the home, replace the intro with home as well
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 14:50:07Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Find intro references in nav code
+
+`grep -n "intro\|Intro" src/components/layout/*.tsx src/lib/chapters.ts src/components/layout/Footer.tsx; sed -n 20,40p src/components/layout/MobileNav.tsx`
+
+```text
+src/components/layout/MobileNav.tsx:57:                  aria-current={active === link.id && !(tank && link.id === "intro") ? "page" : undefined}
+src/components/layout/Nav.tsx:23:          href="#intro"
+src/components/layout/Nav.tsx:38:                aria-current={active === chapter.id && !(tank && chapter.id === "intro") ? "page" : undefined}
+src/lib/chapters.ts:2:  { id: "intro", href: "#intro", label: "Intro" },
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  return (
+    <div>
+      <button
+        type="button"
+        className={`btn !min-h-9 !px-3 !py-2 !text-[0.62rem] ${
+          dark ? "btn-ghost-ink" : "btn-ghost-cream"
+        }`}
+        aria-expanded={open}
+        aria-controls="mobile-menu"
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? "Close" : "Menu"}
+      </button>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:50:19Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```python
+R = "C:\\Portfolio\\src"
+
+
+def edit(path, pairs):
+    p = R + path
+    s = open(p, encoding="utf8").read()
+    for a, b in pairs:
+        assert s.count(a) == 1, (path, a[:70])
+        s = s.replace(a, b)
+    open(p, "w", encoding="utf8").write(s)
+
+
+edit("\\lib\\chapters.ts", [
+  ('''  { id: "intro", href: "#intro", label: "Intro" },''', '''  { id: "intro", href: "#intro", label: "Home" },'''),
+  ('''export const openSkills''', '''/* home: the link scrolls to the top, and the desk puts away whatever is open */
+export const goHome = () => {
+  window.dispatchEvent(new Event("desk:home"));
+};
+
+export const openSkills'''),
+])
+
+edit("\\components\\layout\\Nav.tsx", [
+  ('''import { chapters, openSkills, skillsLink } from "@/lib/chapters";''', '''import { chapters, goHome, openSkills, skillsLink } from "@/lib/chapters";'''),
+  ('''          href="#intro"
+''', '''          href="#intro"
+          onClick={goHome}
+'''),
+  ('''                aria-current={active === chapter.id && !(tank && chapter.id === "intro") ? "page" : undefined}
+''', '''                aria-current={active === chapter.id && !(tank && chapter.id === "intro") ? "page" : undefined}
+                onClick={chapter.id === "intro" ? goHome : undefined}
+'''),
+])
+
+edit("\\components\\layout\\MobileNav.tsx", [
+  ('''import { chapters, openSkills, skillsLink, type ChapterId } from "@/lib/chapters";''', '''import { chapters, goHome, openSkills, skillsLink, type ChapterId } from "@/lib/chapters";'''),
+  ('''                  onClick={() => setOpen(false)}''', '''                  onClick={() => {
+                    setOpen(false);
+                    if (link.id === "intro") goHome();
+                  }}'''),
+])
+
+edit("\\components\\hero\\DeskHero.tsx", [
+  ('''  useEffect(() => {
+    if (ready && window.location.hash === "#skills")''', '''  /* Home (nav or logo) puts everything away and returns to the desk */
+  useEffect(() => {
+    const home = () => {
+      closeExperience();
+      setOpenProject(null);
+      setFocusId(null);
+      setActiveSkill(null);
+      setHoverSkill(null);
+      if (tankOpen) setView(viewBeforeTank);
+    };
+    window.addEventListener("desk:home", home);
+    return () => window.removeEventListener("desk:home", home);
+  }, [closeExperience, tankOpen, viewBeforeTank]);
+
+  useEffect(() => {
+    if (ready && window.location.hash === "#skills")'''),
+])
+print("ok")
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\home.py (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:50:42Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Apply home changes, typecheck, lint
+
+`python /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/home.py && grep -n "onClick" src/components/layout/MobileNav.tsx | head -3 && npx tsc --noEmit && npx eslint src && echo OK`
+
+```text
+ok
+36:        onClick={() => setOpen((v) => !v)}
+58:                  onClick={() => {
+73:                onClick={(e) => {
+OK
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:50:43Z)**_
+
+Quick check in the browser: open the tank, then click the logo.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:50:53Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Verify Home link and logo behavior
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && cat > home.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const b = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  await p.goto("http://localhost:3000", { waitUntil: "load", timeout: 240000 });
+  await p.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+  await p.waitForTimeout(2000);
+  const nav = () => p.evaluate(() => [...document.querySelectorAll('nav[aria-label="Chapters"] a')].map((a) => a.textContent + (a.getAttribute("aria-current") ? "*" : "")));
+  console.log("links:", await nav());
+  await p.evaluate(() => [...document.querySelectorAll(".desk-card button")].find((x) => x.textContent.includes("Skills")).click());
+  await p.waitForTimeout(3500);
+  console.log("tank:", !!(await p.$(".desk-tank")), await nav());
+  await p.click('a[aria-label$="home"]');
+  await p.waitForTimeout(3500);
+  console.log("after logo:", !!(await p.$(".desk-tank")), await nav());
+  await p.evaluate(() => window.scrollTo(0, 3000)); await p.waitForTimeout(1500);
+  await p.click('nav[aria-label="Chapters"] a[href="#intro"]'); await p.waitForTimeout(3000);
+  console.log("scrollY after Home:", await p.evaluate(() => window.scrollY), await nav());
+  await b.close();
+})();
+EOF
+node home.js
+```
+
+```text
+Exit code 1
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/
+Call log:
+  - navigating to "http://localhost:3000/", waiting until "load"**
+
+    at C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\home.js:5:11 {
+  name: 'Error'
+}
+
+Node.js v22.22.3
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:50:54Z)**_
+
+Dev server died. Restarting it.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:51:34Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Restart dev server and rerun check
+
+`tail -5 /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/dev.log; (npm run dev > /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/dev.log 2>&1 &); for i in $(seq 1 60); do curl -s -o /dev/null http://localhost:3000 && break; sleep 2; done; cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && node home.js`
+
+```text
+(209,39-65): warning X4122: sum of 1 and -1.49272e-017 cannot be represented accurately in double precision
+(210,87-113): warning X4122: sum of 1 and -1.49272e-017 cannot be represented accurately in double precision
+(209,39-65): warning X4122: sum of 1 and -1.66644e-018 cannot be represented accurately in double precision
+(210,87-113): warning X4122: sum of 1 and -1.66644e-018 cannot be represented accurately in double precision (../../C:/Portfolio/src/components/hero/desk/DeskCanvas.tsx:133:73)
+[?25h
+links: [ 'Home*', 'Skills', 'Features', 'Product', 'Contact' ]
+tank: true [ 'Home', 'Skills*', 'Features', 'Product', 'Contact' ]
+after logo: false [ 'Home*', 'Skills', 'Features', 'Product', 'Contact' ]
+scrollY after Home: 0 [ 'Home*', 'Skills', 'Features', 'Product', 'Contact' ]
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:51:38Z)**_
+
+"Intro" now reads "Home" in the desktop nav and the phone menu. Clicking "JD PALOMA" or Home goes back to the desk. That also closes the aquarium, the work folder, any open project book and the hover caption.
+
+I checked it in the browser. From the aquarium, clicking the logo returned to the desk and Home was highlighted again. Clicking Home from the Features section scrolled back to the top. tsc and eslint pass.
+
+- Changes are in [chapters.ts](src/lib/chapters.ts), [Nav.tsx](src/components/layout/Nav.tsx), [MobileNav.tsx](src/components/layout/MobileNav.tsx) and [DeskHero.tsx](src/components/hero/DeskHero.tsx).
+- The section is still `#intro` in the code. Only the visible label changed, so existing links keep working.
+
+Nothing is committed yet. These edits are still on `fix/drop-ponytail-gitlink` with the earlier UI work.
+
+---
+
+_**User (2026-10-29 14:56:46Z)**_
+
+the light mode is too bright and white. it should be similar to orzyo.ai https://oryzo.ai/ 
+there shadow also moves like its shadows of leaves
+
+/caveman find and use necessary skillls to achieve this
+
+---
+
+_**User (2026-10-29 14:56:46Z)**_
+
+[Image: source: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\images\3.png]
+
+[Image: source: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\images\4.png]
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 14:56:57Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Find lighting setup
+
+`ls src/components/hero/desk/ && grep -n "Light\|toneMapping\|exposure\|Environment\|night" src/components/hero/desk/DeskCanvas.tsx | head -60`
+
+```text
+DeskCanvas.tsx
+FitModel.tsx
+aquarium.tsx
+constants.ts
+experience.tsx
+flashlight.tsx
+items.ts
+lighting.tsx
+models.tsx
+room.tsx
+species.ts
+textures.ts
+wall.tsx
+world.ts
+4:import { Environment, Lightformer, PerformanceMonitor, useGLTF, useProgress, useTexture } from "@react-three/drei";
+11:import { Lighting } from "./lighting";
+35:  night: boolean;
+64:  night: boolean,
+72:      return <Model.Tablet map={night ? t.tabletNight : t.tablet} />;
+76:      return <Model.NothingPhone map={t.nothing} glow={night ? 0.55 : 0} />;
+153:function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, experienceOpen, onOpenExperience, onCloseExperience, onPaperBridge, onHoverProject, skills, activeSkill, featuredSkills, labelledSkill, onSelectSkill, onHoverSkill, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active">) {
+269:        night={night}
+283:        night={night}
+298:        night={night}
+349:              {renderModel(item.id, tex, night, paper, { open: experienceOpen, reduced, onOpen: onOpenExperience })}
+405:      <Lighting night={props.night} reduced={props.reduced} />
+406:      <Environment resolution={256} frames={1}>
+407:        <Lightformer form="rect" intensity={2.2} position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[12, 6, 1]} />
+408:        <Lightformer form="rect" intensity={1.2} position={[-8, 3, 4]} rotation-y={Math.PI / 2.5} scale={[6, 3, 1]} color="#ffe2c4" />
+409:        <Lightformer form="ring" intensity={0.8} position={[7, 4, -5]} scale={3} />
+410:      </Environment>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:01Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read lighting component and canvas setup
+
+`cat src/components/hero/desk/lighting.tsx; sed -n 380,440p src/components/hero/desk/DeskCanvas.tsx; grep -n "desk-vignette" -A12 src/app/globals.css | head -40`
+
+```text
+"use client";
+
+import { useFrame, useThree } from "@react-three/fiber";
+import { useMemo, useState } from "react";
+import * as THREE from "three";
+
+/*
+ * Desk lamp placement. In the glTF the shade points along local -z and the
+ * bulb sits ~6.5 units up once the model is scaled to 7.5 units tall.
+ */
+const LAMP_POS = new THREE.Vector3(-7.8, 0, -3.3);
+const LAMP_AIM = new THREE.Vector3(1.6, 0, 0.6);
+const BULB_LOCAL = new THREE.Vector3(0.13, 6.5, -1.6);
+
+export const LAMP = (() => {
+  const dx = LAMP_AIM.x - LAMP_POS.x;
+  const dz = LAMP_AIM.z - LAMP_POS.z;
+  const yaw = Math.atan2(-dx, -dz);
+  const bulb = BULB_LOCAL.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw).add(LAMP_POS);
+  return { pos: LAMP_POS, yaw, bulb, aim: LAMP_AIM };
+})();
+
+const DAY = {
+  hemiSky: new THREE.Color("#ffe6c8"),
+  hemiGround: new THREE.Color("#6a4226"),
+  hemi: 1.05,
+  sunColor: new THREE.Color("#ffe4c4"),
+  sun: 2.8,
+  env: 1,
+};
+
+const NIGHT = {
+  hemiSky: new THREE.Color("#3c4a68"),
+  hemiGround: new THREE.Color("#1a120c"),
+  hemi: 0.12,
+  sunColor: new THREE.Color("#8ea4d6"),
+  sun: 0.22,
+  env: 0.12,
+};
+
+/* a few quick stutters when the lamp switches on, like an old bulb */
+const FLICKER = [1, 0.15, 0.9, 0.3, 1, 0.6, 1];
+
+/* Mutable light rig, stepped every frame. */
+class LightRig {
+  hemi: THREE.HemisphereLight | null = null;
+  sun: THREE.DirectionalLight | null = null;
+  spot: THREE.SpotLight | null = null;
+  glow: THREE.PointLight | null = null;
+  bulbMat: THREE.MeshStandardMaterial | null = null;
+  private mix = 0;
+  private lamp = 0;
+  private onAt = -1;
+  private clock = 0;
+
+  attach(kind: "hemi" | "sun" | "glow", light: THREE.Light | null) {
+    if (kind === "hemi") this.hemi = light as THREE.HemisphereLight | null;
+    if (kind === "sun") this.sun = light as THREE.DirectionalLight | null;
+    if (kind === "glow") this.glow = light as THREE.PointLight | null;
+  }
+
+  /* the spot's target lives outside the scene graph, so keep its matrix fresh */
+  attachSpot(spot: THREE.SpotLight | null) {
+    this.spot = spot;
+    if (!spot) return;
+    spot.target.position.copy(LAMP.aim);
+    spot.target.updateMatrixWorld();
+  }
+
+  findBulb(scene: THREE.Scene) {
+    if (this.bulbMat) return;
+    scene.getObjectByName("desk-lamp")?.traverse((o) => {
+      const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
+      if (m && m.name?.endsWith("_light")) {
+        m.emissive = new THREE.Color("#ffb46b");
+        this.bulbMat = m;
+      }
+    });
+  }
+
+  step(scene: THREE.Scene, night: boolean, reduced: boolean, delta: number) {
+    const dt = Math.min(delta, 1 / 30);
+    this.clock += dt;
+    const goal = night ? 1 : 0;
+    this.mix = reduced ? goal : THREE.MathUtils.damp(this.mix, goal, 2.4, dt);
+
+    if (night && this.onAt < 0) this.onAt = this.clock + (reduced ? 0 : 0.35);
+    if (!night) this.onAt = -1;
+    let lampGoal = 0;
+    if (night && this.clock >= this.onAt) {
+      const step = Math.floor((this.clock - this.onAt) / 0.07);
+      lampGoal = reduced ? 1 : (FLICKER[step] ?? 1);
+    }
+    this.lamp = reduced || lampGoal > this.lamp ? lampGoal : THREE.MathUtils.damp(this.lamp, lampGoal, 6, dt);
+
+    const m = this.mix;
+    if (this.hemi) {
+      this.hemi.intensity = THREE.MathUtils.lerp(DAY.hemi, NIGHT.hemi, m);
+      this.hemi.color.lerpColors(DAY.hemiSky, NIGHT.hemiSky, m);
+      this.hemi.groundColor.lerpColors(DAY.hemiGround, NIGHT.hemiGround, m);
+    }
+    if (this.sun) {
+      this.sun.intensity = THREE.MathUtils.lerp(DAY.sun, NIGHT.sun, m);
+      this.sun.color.lerpColors(DAY.sunColor, NIGHT.sunColor, m);
+    }
+    scene.environmentIntensity = THREE.MathUtils.lerp(DAY.env, NIGHT.env, m);
+    if (this.spot) {
+      this.spot.intensity = 30 * this.lamp;
+      /*
+       * Skip the lamp's shadow pass while it is dark. castShadow stays on so no
+       * shader recompiles, and the map must exist first: lit materials sample it.
+       */
+      this.spot.shadow.autoUpdate = this.lamp > 0 || this.spot.shadow.map === null;
+    }
+    if (this.glow) this.glow.intensity = 9 * this.lamp;
+    if (this.bulbMat) this.bulbMat.emissiveIntensity = 6 * this.lamp;
+  }
+}
+
+export function Lighting({ night, reduced }: { night: boolean; reduced: boolean }) {
+  const scene = useThree((s) => s.scene);
+  const [rig] = useState(() => new LightRig());
+  const shadowSize = useMemo(() => [1024, 1024] as [number, number], []);
+
+  useFrame((_, delta) => {
+    rig.findBulb(scene);
+    rig.step(scene, night, reduced, delta);
+  });
+
+  return (
+    <>
+      <hemisphereLight ref={(l) => rig.attach("hemi", l)} args={[DAY.hemiSky, DAY.hemiGround, DAY.hemi]} />
+      <directionalLight
+        ref={(l) => rig.attach("sun", l)}
+        castShadow
+        position={[-9, 20, 12]}
+        intensity={DAY.sun}
+        color={DAY.sunColor}
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-left={-26}
+        shadow-camera-right={26}
+        shadow-camera-top={26}
+        shadow-camera-bottom={-26}
+        shadow-camera-near={1}
+        shadow-camera-far={70}
+        shadow-bias={-0.0004}
+        shadow-normalBias={0.02}
+        shadow-radius={10}
+      />
+
+      {/* desk lamp: warm 2700K cone onto the objects, plus a soft glow around the shade */}
+      <spotLight
+        ref={(l) => rig.attachSpot(l)}
+        position={LAMP.bulb.toArray()}
+        color="#ffb46b"
+        intensity={0}
+        angle={0.7}
+        penumbra={0.9}
+        decay={1}
+        distance={40}
+        castShadow
+        shadow-mapSize={shadowSize}
+        shadow-bias={-0.0006}
+        shadow-normalBias={0.03}
+        shadow-radius={6}
+      />
+      <pointLight ref={(l) => rig.attach("glow", l)} position={LAMP.bulb.clone().add(new THREE.Vector3(0, 0.6, 0)).toArray()} color="#ffae5e" intensity={0} distance={9} decay={2} />
+    </>
+  );
+}
+  );
+}
+
+const MAX_DPR = 2;
+
+export function DeskCanvas({ active, ...props }: Props) {
+  /* full sharpness by default; only steps down if the device can't hold the frame rate */
+  const [ceiling] = useState(() => Math.min(window.devicePixelRatio || 1, MAX_DPR));
+  const [dpr, setDpr] = useState(ceiling);
+
+  return (
+    <Canvas
+      shadows="percentage"
+      dpr={dpr}
+      frameloop={active ? "always" : "never"}
+      camera={{ fov: 28, near: 0.5, far: 120, position: [0, 20, 9] }}
+      gl={{ antialias: true, alpha: true }}
+      style={{ touchAction: "none" }}
+    >
+      <PerformanceMonitor
+        factor={1}
+        flipflops={3}
+        onChange={({ factor }) => setDpr(Math.max(1, Math.round((1 + (ceiling - 1) * factor) * 4) / 4))}
+        onFallback={() => setDpr(1)}
+      />
+      <Lighting night={props.night} reduced={props.reduced} />
+      <Environment resolution={256} frames={1}>
+        <Lightformer form="rect" intensity={2.2} position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[12, 6, 1]} />
+        <Lightformer form="rect" intensity={1.2} position={[-8, 3, 4]} rotation-y={Math.PI / 2.5} scale={[6, 3, 1]} color="#ffe2c4" />
+        <Lightformer form="ring" intensity={0.8} position={[7, 4, -5]} scale={3} />
+      </Environment>
+
+      <WindowShadow />
+
+      <Desk {...props} />
+    </Canvas>
+  );
+}
+422:.desk-vignette {
+423-  background:
+424-    radial-gradient(ellipse 85% 75% at 55% 50%, transparent 55%, rgb(40 20 8 / 0.42) 100%),
+425-    linear-gradient(180deg, rgb(40 20 8 / 0.18), transparent 22%);
+426-  transition: opacity 1.2s var(--ease-out);
+427-}
+428-
+429-/* night: deeper room, warmer lamp-lit glass */
+430-.desk-hero {
+431-  transition: background-color 1.2s var(--ease-out);
+432-}
+433-
+434-.desk-hero[data-night] {
+--
+439:.desk-hero[data-night] .desk-vignette {
+440-  background:
+441-    radial-gradient(ellipse 70% 65% at 45% 55%, transparent 40%, rgb(8 4 2 / 0.6) 100%),
+442-    linear-gradient(180deg, rgb(8 4 2 / 0.35), transparent 25%);
+443-}
+444-
+445-.desk-hero[data-night] .desk-lede mark {
+446-  background: #c9692c;
+447-}
+448-
+449-.desk-ui {
+450-  text-shadow: 0 1px 18px rgb(40 20 8 / 0.25);
+451-}
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:05Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read existing WindowShadow
+
+`grep -n "function WindowShadow" -A60 src/components/hero/desk/*.tsx | head -90; grep -rn "toneMapping" src | head`
+
+```text
+src/components/hero/desk/DeskCanvas.tsx:361:function WindowShadow() {
+src/components/hero/desk/DeskCanvas.tsx-362-  const bars: [number, number, number, number][] = [
+src/components/hero/desk/DeskCanvas.tsx-363-    [0, 0, 0.28, 26],
+src/components/hero/desk/DeskCanvas.tsx-364-    [0, 3.4, 26, 0.28],
+src/components/hero/desk/DeskCanvas.tsx-365-  ];
+src/components/hero/desk/DeskCanvas.tsx-366-  return (
+src/components/hero/desk/DeskCanvas.tsx-367-    <group position={[-6.2, 10.5, 1.4]} rotation={[0, 0.42, 0]}>
+src/components/hero/desk/DeskCanvas.tsx-368-      {bars.map(([x, z, w, d], i) => (
+src/components/hero/desk/DeskCanvas.tsx-369-        <mesh key={i} position={[x, 0, z]} castShadow>
+src/components/hero/desk/DeskCanvas.tsx-370-          <boxGeometry args={[w, 0.1, d]} />
+src/components/hero/desk/DeskCanvas.tsx-371-          <meshBasicMaterial colorWrite={false} depthWrite={false} />
+src/components/hero/desk/DeskCanvas.tsx-372-        </mesh>
+src/components/hero/desk/DeskCanvas.tsx-373-      ))}
+src/components/hero/desk/DeskCanvas.tsx-374-      {/* window edge: everything beyond the frame is wall */}
+src/components/hero/desk/DeskCanvas.tsx-375-      <mesh position={[0, 0, -16]} castShadow>
+src/components/hero/desk/DeskCanvas.tsx-376-        <boxGeometry args={[40, 0.1, 13]} />
+src/components/hero/desk/DeskCanvas.tsx-377-        <meshBasicMaterial colorWrite={false} depthWrite={false} />
+src/components/hero/desk/DeskCanvas.tsx-378-      </mesh>
+src/components/hero/desk/DeskCanvas.tsx-379-    </group>
+src/components/hero/desk/DeskCanvas.tsx-380-  );
+src/components/hero/desk/DeskCanvas.tsx-381-}
+src/components/hero/desk/DeskCanvas.tsx-382-
+src/components/hero/desk/DeskCanvas.tsx-383-const MAX_DPR = 2;
+src/components/hero/desk/DeskCanvas.tsx-384-
+src/components/hero/desk/DeskCanvas.tsx-385-export function DeskCanvas({ active, ...props }: Props) {
+src/components/hero/desk/DeskCanvas.tsx-386-  /* full sharpness by default; only steps down if the device can't hold the frame rate */
+src/components/hero/desk/DeskCanvas.tsx-387-  const [ceiling] = useState(() => Math.min(window.devicePixelRatio || 1, MAX_DPR));
+src/components/hero/desk/DeskCanvas.tsx-388-  const [dpr, setDpr] = useState(ceiling);
+src/components/hero/desk/DeskCanvas.tsx-389-
+src/components/hero/desk/DeskCanvas.tsx-390-  return (
+src/components/hero/desk/DeskCanvas.tsx-391-    <Canvas
+src/components/hero/desk/DeskCanvas.tsx-392-      shadows="percentage"
+src/components/hero/desk/DeskCanvas.tsx-393-      dpr={dpr}
+src/components/hero/desk/DeskCanvas.tsx-394-      frameloop={active ? "always" : "never"}
+src/components/hero/desk/DeskCanvas.tsx-395-      camera={{ fov: 28, near: 0.5, far: 120, position: [0, 20, 9] }}
+src/components/hero/desk/DeskCanvas.tsx-396-      gl={{ antialias: true, alpha: true }}
+src/components/hero/desk/DeskCanvas.tsx-397-      style={{ touchAction: "none" }}
+src/components/hero/desk/DeskCanvas.tsx-398-    >
+src/components/hero/desk/DeskCanvas.tsx-399-      <PerformanceMonitor
+src/components/hero/desk/DeskCanvas.tsx-400-        factor={1}
+src/components/hero/desk/DeskCanvas.tsx-401-        flipflops={3}
+src/components/hero/desk/DeskCanvas.tsx-402-        onChange={({ factor }) => setDpr(Math.max(1, Math.round((1 + (ceiling - 1) * factor) * 4) / 4))}
+src/components/hero/desk/DeskCanvas.tsx-403-        onFallback={() => setDpr(1)}
+src/components/hero/desk/DeskCanvas.tsx-404-      />
+src/components/hero/desk/DeskCanvas.tsx-405-      <Lighting night={props.night} reduced={props.reduced} />
+src/components/hero/desk/DeskCanvas.tsx-406-      <Environment resolution={256} frames={1}>
+src/components/hero/desk/DeskCanvas.tsx-407-        <Lightformer form="rect" intensity={2.2} position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[12, 6, 1]} />
+src/components/hero/desk/DeskCanvas.tsx-408-        <Lightformer form="rect" intensity={1.2} position={[-8, 3, 4]} rotation-y={Math.PI / 2.5} scale={[6, 3, 1]} color="#ffe2c4" />
+src/components/hero/desk/DeskCanvas.tsx-409-        <Lightformer form="ring" intensity={0.8} position={[7, 4, -5]} scale={3} />
+src/components/hero/desk/DeskCanvas.tsx-410-      </Environment>
+src/components/hero/desk/DeskCanvas.tsx-411-
+src/components/hero/desk/DeskCanvas.tsx-412-      <WindowShadow />
+src/components/hero/desk/DeskCanvas.tsx-413-
+src/components/hero/desk/DeskCanvas.tsx-414-      <Desk {...props} />
+src/components/hero/desk/DeskCanvas.tsx-415-    </Canvas>
+src/components/hero/desk/DeskCanvas.tsx-416-  );
+src/components/hero/desk/DeskCanvas.tsx-417-}
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:26Z)**_
+
+Plan: (1) leaf shadows = swaying alpha-cut leaf planes that only cast the sun's shadow, (2) warmer, dimmer day light and a heavier vignette. Writing the foliage first.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:45Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```typescript
+"use client";
+
+import { useFrame } from "@react-three/fiber";
+import { useMemo, useRef } from "react";
+import * as THREE from "three";
+
+/*
+ * Dappled light: leafy branches outside the window, between the sun and the
+ * desk. They never draw (no colour, no depth); they only cast the sun's soft
+ * shadow, and sway a little so the shade moves across the desk like a breeze.
+ */
+
+/* the sun sits at (-9, 20, 12) aiming at the origin: a desk point (x, z) is shaded from height h at this offset */
+const SUN = new THREE.Vector3(-9, 20, 12).normalize();
+const overDesk = (x: number, z: number, h: number) => [x + (SUN.x / SUN.y) * h, h, z + (SUN.z / SUN.y) * h] as const;
+
+/* a small seeded random, so every visit draws the same tree */
+function rng(seed: number) {
+  let s = seed;
+  return () => {
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+function branchTexture(seed: number) {
+  const size = 1024;
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const ctx = c.getContext("2d")!;
+  const rand = rng(seed);
+  ctx.fillStyle = "#000";
+  ctx.strokeStyle = "#000";
+  ctx.lineCap = "round";
+
+  const leaf = (x: number, y: number, a: number, l: number) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(a);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(l * 0.5, -l * 0.32, l, 0);
+    ctx.quadraticCurveTo(l * 0.5, l * 0.32, 0, 0);
+    ctx.fill();
+    ctx.restore();
+  };
+
+  const branch = (x: number, y: number, a: number, len: number, w: number, depth: number) => {
+    const steps = 9;
+    let px = x;
+    let py = y;
+    let ang = a;
+    for (let i = 0; i < steps; i++) {
+      ang += (rand() - 0.5) * 0.25;
+      const nx = px + Math.cos(ang) * (len / steps);
+      const ny = py + Math.sin(ang) * (len / steps);
+      ctx.lineWidth = w * (1 - i / steps) + 1;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(nx, ny);
+      ctx.stroke();
+      /* leaves on both sides, denser towards the tip */
+      if (i > 1) {
+        for (const side of [-1, 1]) {
+          if (rand() < 0.85) leaf(nx, ny, ang + side * (0.6 + rand() * 0.6), 34 + rand() * 30);
+        }
+      }
+      if (depth > 0 && i > 2 && rand() < 0.3) branch(nx, ny, ang + (rand() < 0.5 ? -1 : 1) * (0.5 + rand() * 0.4), len * 0.5, w * 0.5, depth - 1);
+      px = nx;
+      py = ny;
+    }
+    leaf(px, py, ang, 44);
+  };
+
+  /* boughs reach in from one edge, so the shade falls in from beyond the frame */
+  for (let i = 0; i < 3; i++) {
+    branch(0, size * (0.2 + i * 0.3 + rand() * 0.1), -0.2 + rand() * 0.4, size * (0.75 + rand() * 0.2), 14, 2);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.NoColorSpace;
+  return tex;
+}
+
+/* where each bough sits: desk point it shades, height, size, turn, sway phase */
+const BOUGHS = [
+  { at: [-9, -4.5], h: 11, size: 12, rot: 0.3, phase: 0 },
+  { at: [-6, 3.5], h: 13, size: 11, rot: -0.5, phase: 1.7 },
+  { at: [4, -6], h: 12, size: 10, rot: 2.4, phase: 3.1 },
+] as const;
+
+export function Foliage({ reduced }: { reduced: boolean }) {
+  const groups = useRef<(THREE.Group | null)[]>([]);
+  const parts = useMemo(
+    () =>
+      BOUGHS.map((b, i) => {
+        const map = branchTexture(7 + i * 131);
+        return {
+          ...b,
+          pos: overDesk(b.at[0], b.at[1], b.h),
+          depth: new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, alphaMap: map, alphaTest: 0.5, side: THREE.DoubleSide }),
+          alpha: map,
+        };
+      }),
+    [],
+  );
+
+  useFrame(({ clock }) => {
+    if (reduced) return;
+    const t = clock.elapsedTime;
+    parts.forEach((p, i) => {
+      const g = groups.current[i];
+      if (!g) return;
+      /* a slow lean with a quicker flutter on top, never quite repeating */
+      const gust = Math.sin(t * 0.35 + p.phase) * 0.5 + 0.5;
+      g.rotation.y = p.rot + Math.sin(t * 0.6 + p.phase) * 0.035 + Math.sin(t * 1.9 + p.phase * 2) * 0.012 * gust;
+      g.position.x = p.pos[0] + Math.sin(t * 0.45 + p.phase) * 0.18;
+      g.position.z = p.pos[2] + Math.sin(t * 0.7 + p.phase * 1.3) * 0.12 * (0.4 + gust);
+    });
+  });
+
+  return (
+    <>
+      {parts.map((p, i) => (
+        <group key={i} ref={(g) => void (groups.current[i] = g)} position={p.pos as unknown as THREE.Vector3Tuple} rotation-y={p.rot}>
+          <mesh rotation-x={-Math.PI / 2} castShadow customDepthMaterial={p.depth}>
+            <planeGeometry args={[p.size, p.size]} />
+            <meshBasicMaterial colorWrite={false} depthWrite={false} alphaMap={p.alpha} alphaTest={0.5} transparent />
+          </mesh>
+        </group>
+      ))}
+    </>
+  );
+}
+
+```
+
+```text
+File created successfully at: C:\Portfolio\src\components\hero\desk\foliage.tsx (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:49Z)**_
+
+alphaMap reads the green channel, so the leaves have to be white on black. Fixing that.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:53Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\hero\desk\foliage.tsx has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:54Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\hero\desk\DeskCanvas.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:55Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\hero\desk\DeskCanvas.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:57:56Z)**_
+
+Now dimmer, warmer day light and a heavier day vignette.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:58:07Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\hero\desk\lighting.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:58:08Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\app\globals.css has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:58:50Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Typecheck, lint, screenshot leaf shadows
+
+```bash
+npx tsc --noEmit && npx eslint src/components/hero/desk && echo OK; cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && cat > leaf.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const b = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  p.on("pageerror", (e) => console.log("PAGEERROR", e.message));
+  p.on("console", (m) => { if (m.type() === "error" && !m.text().includes("X4122")) console.log("CONSOLE", m.text().slice(0, 300)); });
+  await p.goto("http://localhost:3000", { waitUntil: "load", timeout: 240000 });
+  await p.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+  await p.waitForTimeout(2500);
+  await p.screenshot({ path: "l-0.png" });
+  await p.waitForTimeout(2500);
+  await p.screenshot({ path: "l-1.png" });
+  await b.close();
+})();
+EOF
+node leaf.js
+```
+
+```text
+OK
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:58:53Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:58:58Z)**_
+
+Day light is warmer and dimmer now, but the leaf shadows don't show. Making the leaf planes visible for one shot to debug.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:59:26Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Temporarily show leaf planes and screenshot
+
+`sed -i 's|<meshBasicMaterial colorWrite={false} depthWrite={false} alphaMap={p.alpha} alphaTest={0.5} transparent />|<meshBasicMaterial color="red" alphaMap={p.alpha} alphaTest={0.5} transparent />|' src/components/hero/desk/foliage.tsx && grep -n 'color="red"' src/components/hero/desk/foliage.tsx && cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js`
+
+```text
+130:            <meshBasicMaterial color="red" alphaMap={p.alpha} alphaTest={0.5} transparent />
+Shell cwd was reset to c:\Portfolio
+[This command modified 1 file you've previously read: src\components\hero\desk\foliage.tsx. Call Read before editing.]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:59:28Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:59:42Z)**_
+
+Only a red sliver shows: the planes sit off-frame and the shadow is too weak to see. Moving the boughs over the visible desk and making the sun dominate the fill light.
+
+_**Agent (claude-opus-5-5 2026-10-29 14:59:43Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Portfolio\src\components\hero\desk\foliage.tsx`
+
+```text
+88	const BOUGHS = [
+89	  { at: [-9, -4.5], h: 11, size: 12, rot: 0.3, phase: 0 },
+90	  { at: [-6, 3.5], h: 13, size: 11, rot: -0.5, phase: 1.7 },
+91	  { at: [4, -6], h: 12, size: 10, rot: 2.4, phase: 3.1 },
+92	] as const;
+93	
+94	export function Foliage({ reduced }: { reduced: boolean }) {
+95	  const groups = useRef<(THREE.Group | null)[]>([]);
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:59:52Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\hero\desk\foliage.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 14:59:53Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\hero\desk\lighting.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:00:17Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Screenshot with repositioned boughs
+
+`cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js`
+
+```text
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:00:20Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:00:24Z)**_
+
+The planes and alpha cut-out work, but the boughs are too sparse. Making the foliage denser and hiding the planes again.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:00:30Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Densify foliage and restore invisible planes
+
+`sed -i 's|<meshBasicMaterial color="red" alphaMap={p.alpha} alphaTest={0.5} transparent />|<meshBasicMaterial colorWrite={false} depthWrite={false} />|' src/components/hero/desk/foliage.tsx && sed -i 's|if (rand() < 0.85) leaf(nx, ny, ang + side \* (0.6 + rand() \* 0.6), 34 + rand() \* 30);|leaf(nx, ny, ang + side * (0.5 + rand() * 0.7), 60 + rand() * 45);\n          if (rand() < 0.6) leaf(nx, ny, ang + side * (1.1 + rand() * 0.5), 45 + rand() * 35);|' src/components/hero/desk/foliage.tsx && sed -i 's|depth > 0 \&\& i > 2 \&\& rand() < 0.3|depth > 0 \&\& i > 1 \&\& rand() < 0.45|; s|for (let i = 0; i < 3; i++) {|for (let i = 0; i < 5; i++) {|; s|branch(0, size \* (0.2 + i \* 0.3 + rand() \* 0.1)|branch(0, size * (0.1 + i * 0.2 + rand() * 0.08)|' src/components/hero/desk/foliage.tsx && grep -n "leaf(nx\|depth > 0\|i < 5\|0.1 + i\|colorWrite" src/components/hero/desk/foliage.tsx`
+
+```text
+68:          leaf(nx, ny, ang + side * (0.5 + rand() * 0.7), 60 + rand() * 45);
+69:          if (rand() < 0.6) leaf(nx, ny, ang + side * (1.1 + rand() * 0.5), 45 + rand() * 35);
+72:      if (depth > 0 && i > 1 && rand() < 0.45) branch(nx, ny, ang + (rand() < 0.5 ? -1 : 1) * (0.5 + rand() * 0.4), len * 0.5, w * 0.5, depth - 1);
+80:  for (let i = 0; i < 5; i++) {
+81:    branch(0, size * (0.1 + i * 0.2 + rand() * 0.08), -0.2 + rand() * 0.4, size * (0.75 + rand() * 0.2), 14, 2);
+131:            <meshBasicMaterial colorWrite={false} depthWrite={false} />
+[This command modified 1 file you've previously read: src\components\hero\desk\foliage.tsx. Call Read before editing.]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:00:58Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Screenshot leaf shadows
+
+`cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js`
+
+```text
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:01:00Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:01:04Z)**_
+
+Leaf shade now shows on the wood, the mat and the folder. Checking that it moves, then lint.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:01:28Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Confirm shadow motion, typecheck, lint
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && python -c "
+from PIL import Image, ImageChops
+a=Image.open('l-0.png').convert('L'); b=Image.open('l-1.png').convert('L')
+d=ImageChops.difference(a,b); print('mean diff', sum(d.getdata())/(d.width*d.height))
+"; cd /c/Portfolio && npx tsc --noEmit && npx eslint src && echo OK
+```
+
+```text
+<string>:4: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  d=ImageChops.difference(a,b); print('mean diff', sum(d.getdata())/(d.width*d.height))
+mean diff 0.0020609567901234568
+OK
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:01:32Z)**_
+
+The frames are identical, so the shadow isn't moving. Checking whether shadow-map updates are frozen somewhere.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:01:33Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ path `C:\Portfolio\src\components\hero\desk` pattern `autoUpdate|needsUpdate = true|shadowMap`
+
+```text
+src\components\hero\desk\lighting.tsx:114:      this.spot.shadow.autoUpdate = this.lamp > 0 || this.spot.shadow.map === null;
+src\components\hero\desk\room.tsx:29:        c.needsUpdate = true;
+src\components\hero\desk\flashlight.tsx:210:      this.spot.shadow.autoUpdate = this.spot.intensity > 0 || this.spot.shadow.map === null;
+src\components\hero\desk\aquarium.tsx:958:    mesh.instanceMatrix.needsUpdate = true;
+src\components\hero\desk\wall.tsx:83:    m.instanceMatrix.needsUpdate = true;
+src\components\hero\desk\wall.tsx:84:    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:02:05Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Retest motion with motion allowed
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sed -i 's|const p = await b.newPage({ viewport: { width: 1440, height: 900 } });|const p = await b.newPage({ viewport: { width: 1440, height: 900 }, reducedMotion: "no-preference" });\n  await p.emulateMedia({ reducedMotion: "no-preference" });|' leaf.js && node -e "
+" && node leaf.js && python -c "
+from PIL import Image, ImageChops
+a=Image.open('l-0.png').convert('L'); b=Image.open('l-1.png').convert('L')
+d=ImageChops.difference(a,b); import statistics; print('mean diff', sum(d.get_flattened_data())/(d.width*d.height), d.getbbox())
+"
+```
+
+```text
+mean diff 0.0026419753086419752 (1208, 272, 1326, 299)
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:02:07Z)**_
+
+Only the badge changed, so the canvas isn't redrawing when idle. Checking for a render-on-demand gate.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:02:08Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ path `C:\Portfolio\src\components\hero` pattern `frameloop|invalidate|setFrameloop|demand`
+
+```text
+src\components\hero\desk\DeskCanvas.tsx:395:      frameloop={active ? "always" : "never"}
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:02:44Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Test with exaggerated sway
+
+```bash
+sed -i 's|Math.sin(t \* 0.6 + p.phase) \* 0.035|Math.sin(t * 0.6 + p.phase) * 0.6|' src/components/hero/desk/foliage.tsx && grep -c "\* 0.6 +" src/components/hero/desk/foliage.tsx; cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js && python -c "
+from PIL import Image, ImageChops
+a=Image.open('l-0.png').convert('L'); b=Image.open('l-1.png').convert('L')
+d=ImageChops.difference(a,b); print('mean diff', sum(d.get_flattened_data())/(d.width*d.height), d.getbbox())
+"
+```
+
+```text
+1
+mean diff 0.0029776234567901235 (1210, 274, 1326, 299)
+Shell cwd was reset to c:\Portfolio
+[This command modified 1 file you've previously read: src\components\hero\desk\foliage.tsx. Call Read before editing.]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:02:49Z)**_
+
+Still frozen even with a big sway. Checking whether the whole canvas is static in headless (fish test).
+
+_**Agent (claude-opus-5-5 2026-10-29 15:03:15Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Measure rAF rate and frame change
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && cat > fishmove.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const b = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  await p.goto("http://localhost:3000", { waitUntil: "load", timeout: 240000 });
+  await p.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+  await p.waitForTimeout(2000);
+  const fps = await p.evaluate(() => new Promise((r) => { let n = 0; const t0 = performance.now(); const f = () => { n++; if (performance.now() - t0 < 1000) requestAnimationFrame(f); else r(n); }; requestAnimationFrame(f); }));
+  console.log("rAF/s", fps);
+  await p.screenshot({ path: "m-0.png" });
+  await p.mouse.move(300, 300); await p.waitForTimeout(1500); await p.mouse.move(310, 310);
+  await p.screenshot({ path: "m-1.png" });
+  await b.close();
+})();
+EOF
+node fishmove.js && python -c "
+from PIL import Image, ImageChops
+a=Image.open('m-0.png').convert('L'); b=Image.open('m-1.png').convert('L')
+d=ImageChops.difference(a,b); print('mean diff', sum(d.get_flattened_data())/(d.width*d.height), d.getbbox())
+"
+```
+
+```text
+rAF/s 103
+mean diff 1.1157993827160493 (32, 210, 1403, 900)
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:03:17Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\m-1.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:03:21Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ path `C:\Portfolio\src` pattern `shadowMap|shadow\.autoUpdate|matrixAutoUpdate|matrixWorldAutoUpdate`
+
+```text
+src\components\hero\desk\flashlight.tsx:210:      this.spot.shadow.autoUpdate = this.spot.intensity > 0 || this.spot.shadow.map === null;
+src\components\hero\desk\lighting.tsx:114:      this.spot.shadow.autoUpdate = this.lamp > 0 || this.spot.shadow.map === null;
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:03:26Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Portfolio\src\components\hero\desk\foliage.tsx`
+
+```text
+94	
+95	export function Foliage({ reduced }: { reduced: boolean }) {
+96	  const groups = useRef<(THREE.Group | null)[]>([]);
+97	  const parts = useMemo(
+98	    () =>
+99	      BOUGHS.map((b, i) => {
+100	        const map = branchTexture(7 + i * 131);
+101	        return {
+102	          ...b,
+103	          pos: overDesk(b.at[0], b.at[1], b.h),
+104	          depth: new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, alphaMap: map, alphaTest: 0.5, side: THREE.DoubleSide }),
+105	          alpha: map,
+106	        };
+107	      }),
+108	    [],
+109	  );
+110	
+111	  useFrame(({ clock }) => {
+112	    if (reduced) return;
+113	    const t = clock.elapsedTime;
+114	    parts.forEach((p, i) => {
+115	      const g = groups.current[i];
+116	      if (!g) return;
+117	      /* a slow lean with a quicker flutter on top, never quite repeating */
+118	      const gust = Math.sin(t * 0.35 + p.phase) * 0.5 + 0.5;
+119	      g.rotation.y = p.rot + Math.sin(t * 0.6 + p.phase) * 0.6 + Math.sin(t * 1.9 + p.phase * 2) * 0.012 * gust;
+120	      g.position.x = p.pos[0] + Math.sin(t * 0.45 + p.phase) * 0.18;
+121	      g.position.z = p.pos[2] + Math.sin(t * 0.7 + p.phase * 1.3) * 0.12 * (0.4 + gust);
+122	    });
+123	  });
+124	
+125	  return (
+126	    <>
+127	      {parts.map((p, i) => (
+128	        <group key={i} ref={(g) => void (groups.current[i] = g)} position={p.pos as unknown as THREE.Vector3Tuple} rotation-y={p.rot}>
+129	          <mesh rotation-x={-Math.PI / 2} castShadow customDepthMaterial={p.depth}>
+130	            <planeGeometry args={[p.size, p.size]} />
+131	            <meshBasicMaterial colorWrite={false} depthWrite={false} />
+132	          </mesh>
+133	        </group>
+134	      ))}
+135	    </>
+136	  );
+137	}
+138
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:04:01Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Debug: visible planes, check movement
+
+```bash
+sed -i 's|<meshBasicMaterial colorWrite={false} depthWrite={false} />|<meshBasicMaterial color="red" alphaMap={p.alpha} alphaTest={0.5} transparent />|' src/components/hero/desk/foliage.tsx && cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js && python -c "
+from PIL import Image, ImageChops
+a=Image.open('l-0.png').convert('L'); b=Image.open('l-1.png').convert('L')
+d=ImageChops.difference(a,b); print('mean diff', sum(d.get_flattened_data())/(d.width*d.height), d.getbbox())
+"
+```
+
+```text
+mean diff 13.99186188271605 (0, 0, 1440, 900)
+Shell cwd was reset to c:\Portfolio
+[This command modified 1 file you've previously read: src\components\hero\desk\foliage.tsx. Call Read before editing.]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:04:04Z)**_
+
+The planes move, so the sun's shadow map must be frozen. Looking for drei's BakeShadows.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:04:05Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ path `C:\Portfolio\src` pattern `BakeShadows|SoftShadows|AccumulativeShadows|ContactShadows`
+
+```text
+No matches found
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:04:24Z)**_
+
+Planes move but the shade seems static. Running a controlled A/B with Foliage removed, to confirm the streaks really come from it.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:04:51Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Screenshot without Foliage for A/B
+
+`sed -i 's|<meshBasicMaterial color="red" alphaMap={p.alpha} alphaTest={0.5} transparent />|<meshBasicMaterial colorWrite={false} depthWrite={false} />|' src/components/hero/desk/foliage.tsx && sed -i 's|      <Foliage reduced={props.reduced} />|      {/* <Foliage reduced={props.reduced} /> */}|' src/components/hero/desk/DeskCanvas.tsx && cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js && cp l-0.png nofol.png`
+
+```text
+Shell cwd was reset to c:\Portfolio
+[This command modified 2 files you've previously read: src\components\hero\desk\DeskCanvas.tsx, src\components\hero\desk\foliage.tsx. Call Read before editing.]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:04:54Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\nofol.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:04:59Z)**_
+
+The streaks are just the window-bar shadow, so the foliage casts nothing. Checking how three r186 builds the shadow depth material.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:05:01Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read three getDepthMaterial source
+
+`grep -n "function getDepthMaterial" -A50 node_modules/three/src/renderers/webgl/WebGLShadowMap.js | head -70`
+
+```text
+429:	function getDepthMaterial( object, material, light, type ) {
+430-
+431-		let result = null;
+432-
+433-		const customMaterial = ( light.isPointLight === true ) ? object.customDistanceMaterial : object.customDepthMaterial;
+434-
+435-		if ( customMaterial !== undefined ) {
+436-
+437-			result = customMaterial;
+438-
+439-		} else {
+440-
+441-			result = ( light.isPointLight === true ) ? _distanceMaterial : _depthMaterial;
+442-
+443-			if ( ( renderer.localClippingEnabled && material.clipShadows === true && Array.isArray( material.clippingPlanes ) && material.clippingPlanes.length !== 0 ) ||
+444-				( material.displacementMap && material.displacementScale !== 0 ) ||
+445-				( material.alphaMap && material.alphaTest > 0 ) ||
+446-				( material.map && material.alphaTest > 0 ) ||
+447-				( material.alphaToCoverage === true ) ) {
+448-
+449-				// in this case we need a unique material instance reflecting the
+450-				// appropriate state
+451-
+452-				const keyA = result.uuid, keyB = material.uuid;
+453-
+454-				let materialsForVariant = _materialCache[ keyA ];
+455-
+456-				if ( materialsForVariant === undefined ) {
+457-
+458-					materialsForVariant = {};
+459-					_materialCache[ keyA ] = materialsForVariant;
+460-
+461-				}
+462-
+463-				let cachedMaterial = materialsForVariant[ keyB ];
+464-
+465-				if ( cachedMaterial === undefined ) {
+466-
+467-					cachedMaterial = result.clone();
+468-					materialsForVariant[ keyB ] = cachedMaterial;
+469-					material.addEventListener( 'dispose', onMaterialDispose );
+470-
+471-				}
+472-
+473-				result = cachedMaterial;
+474-
+475-			}
+476-
+477-		}
+478-
+479-		result.visible = material.visible;
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:05:05Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read rest of depth material logic
+
+`sed -n 479,520p node_modules/three/src/renderers/webgl/WebGLShadowMap.js; grep -n "renderObject( object, camera, shadowCamera" -A30 node_modules/three/src/renderers/webgl/WebGLShadowMap.js | grep -n "castShadow\|visible\|frustum" `
+
+```text
+		result.visible = material.visible;
+		result.wireframe = material.wireframe;
+
+		if ( type === VSMShadowMap ) {
+
+			result.side = ( material.shadowSide !== null ) ? material.shadowSide : material.side;
+
+		} else {
+
+			result.side = ( material.shadowSide !== null ) ? material.shadowSide : shadowSide[ material.side ];
+
+		}
+
+		result.alphaMap = material.alphaMap;
+		result.alphaTest = ( material.alphaToCoverage === true ) ? 0.5 : material.alphaTest; // approximate alphaToCoverage by using a fixed alphaTest value
+		result.map = material.map;
+
+		result.clipShadows = material.clipShadows;
+		result.clippingPlanes = material.clippingPlanes;
+		result.clipIntersection = material.clipIntersection;
+
+		result.displacementMap = material.displacementMap;
+		result.displacementScale = material.displacementScale;
+		result.displacementBias = material.displacementBias;
+
+		result.wireframeLinewidth = material.wireframeLinewidth;
+		result.linewidth = material.linewidth;
+
+		if ( light.isPointLight === true && result.isMeshDistanceMaterial === true ) {
+
+			const materialProperties = renderer.properties.get( result );
+			materialProperties.light = light;
+
+		}
+
+		return result;
+
+	}
+
+	function renderObject( object, camera, shadowCamera, light, type ) {
+
+		if ( object.visible === false ) return;
+3:520-		if ( object.visible === false ) return;
+5:522-		const visible = object.layers.test( camera.layers );
+7:524-		if ( visible && ( object.isMesh || object.isLine || object.isPoints ) ) {
+9:526-			if ( ( object.castShadow || ( object.receiveShadow && type === VSMShadowMap ) ) && ( ! object.frustumCulled || object.intersectsFrustum( _frustum ) ) ) {
+25:542-						if ( groupMaterial && groupMaterial.visible ) {
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:05:12Z)**_
+
+<think><details><summary>Thought Process</summary>
+Found it: in three r186 the shadow pass copies `alphaMap`, `alphaTest`, and `side` from the mesh's own material, overriding the custom depth material and culling the front-facing plane. I'll fix this by setting alpha and DoubleSide directly on the mesh material.
+
+</details></think>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:05:43Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Fix shadow material, restore Foliage, retest
+
+```bash
+python - <<'EOF'
+p = r"C:\Portfolio\src\components\hero\desk\foliage.tsx"
+s = open(p, encoding="utf8").read()
+pairs = [
+ ('''        const map = branchTexture(7 + i * 131);
+        return {
+          ...b,
+          pos: overDesk(b.at[0], b.at[1], b.h),
+          depth: new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, alphaMap: map, alphaTest: 0.5, side: THREE.DoubleSide }),
+          alpha: map,
+        };''', '''        return { ...b, pos: overDesk(b.at[0], b.at[1], b.h), alpha: branchTexture(7 + i * 131) };'''),
+ ('''          <mesh rotation-x={-Math.PI / 2} castShadow customDepthMaterial={p.depth}>
+            <planeGeometry args={[p.size, p.size]} />
+            <meshBasicMaterial colorWrite={false} depthWrite={false} />''', '''          <mesh rotation-x={-Math.PI / 2} castShadow>
+            <planeGeometry args={[p.size, p.size]} />
+            {/* the shadow pass takes its cut-out and sides from this material, so they live here */}
+            <meshBasicMaterial colorWrite={false} depthWrite={false} alphaMap={p.alpha} alphaTest={0.5} side={THREE.DoubleSide} />'''),
+ ('''Math.sin(t * 0.6 + p.phase) * 0.6 +''', '''Math.sin(t * 0.6 + p.phase) * 0.035 +'''),
+]
+for a, b in pairs:
+    assert s.count(a) == 1, a[:50]
+    s = s.replace(a, b)
+open(p, "w", encoding="utf8").write(s)
+d = r"C:\Portfolio\src\components\hero\desk\DeskCanvas.tsx"
+s = open(d, encoding="utf8").read()
+a = "      {/* <Foliage reduced={props.reduced} /> */}"
+assert s.count(a) == 1
+open(d, "w", encoding="utf8").write(s.replace(a, "      <Foliage reduced={props.reduced} />"))
+print("ok")
+EOF
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js && python -c "
+from PIL import Image, ImageChops
+a=Image.open('l-0.png').convert('L'); b=Image.open('l-1.png').convert('L')
+d=ImageChops.difference(a,b); print('mean diff', sum(d.get_flattened_data())/(d.width*d.height), d.getbbox())
+"
+```
+
+```text
+ok
+mean diff 2.3774212962962964 (0, 0, 1440, 900)
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:05:46Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:05:50Z)**_
+
+The leaves cast now, but the canopy covers too much of the desk. Thinning it and keeping the centre in sunlight.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:06:24Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Thin foliage, lift fill light, reshoot
+
+```bash
+python - <<'EOF'
+p = r"C:\Portfolio\src\components\hero\desk\foliage.tsx"
+s = open(p, encoding="utf8").read()
+pairs = [
+ ("leaf(nx, ny, ang + side * (0.5 + rand() * 0.7), 60 + rand() * 45);", "if (rand() < 0.8) leaf(nx, ny, ang + side * (0.5 + rand() * 0.7), 44 + rand() * 34);"),
+ ("if (rand() < 0.6) leaf(nx, ny, ang + side * (1.1 + rand() * 0.5), 45 + rand() * 35);", "if (rand() < 0.25) leaf(nx, ny, ang + side * (1.1 + rand() * 0.5), 36 + rand() * 26);"),
+ ("depth > 0 && i > 1 && rand() < 0.45", "depth > 0 && i > 2 && rand() < 0.3"),
+ ("for (let i = 0; i < 5; i++) {", "for (let i = 0; i < 3; i++) {"),
+ ("branch(0, size * (0.1 + i * 0.2 + rand() * 0.08)", "branch(0, size * (0.15 + i * 0.32 + rand() * 0.08)"),
+ ("""  { at: [-6, -1], h: 8, size: 12, rot: 0.3, phase: 0 },
+  { at: [-2, 4], h: 9, size: 11, rot: -0.5, phase: 1.7 },
+  { at: [6, -3], h: 8.5, size: 11, rot: 2.6, phase: 3.1 },""", """  { at: [-9, 0], h: 8, size: 12, rot: 0.2, phase: 0 },
+  { at: [-3, 6], h: 9, size: 10, rot: -0.6, phase: 1.7 },
+  { at: [9, -4], h: 8.5, size: 11, rot: 2.8, phase: 3.1 },"""),
+]
+for a, b in pairs:
+    assert s.count(a) == 1, a[:50]
+    s = s.replace(a, b)
+open(p, "w", encoding="utf8").write(s)
+l = r"C:\Portfolio\src\components\hero\desk\lighting.tsx"
+s = open(l, encoding="utf8").read()
+for a, b in [("  hemi: 0.42,\n", "  hemi: 0.55,\n"), ("  env: 0.4,\n", "  env: 0.5,\n")]:
+    assert s.count(a) == 1, a
+    s = s.replace(a, b)
+open(l, "w", encoding="utf8").write(s)
+print("ok")
+EOF
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js
+```
+
+```text
+ok
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:06:26Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:06:29Z)**_
+
+Close to the Oryzo look: dappled shade at the edges, sunlit middle. Final checks.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:06:51Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Typecheck, lint, show changed files
+
+`npx tsc --noEmit && npx eslint src && echo OK && git status --short`
+
+```text
+OK
+ M .specstory/history/2026-10-29_11-38-34Z-im-plannng-to-add.md
+ M src/app/globals.css
+ M src/components/hero/DeskHero.tsx
+ M src/components/hero/desk/DeskCanvas.tsx
+ M src/components/hero/desk/lighting.tsx
+ M src/components/layout/MobileNav.tsx
+ M src/components/layout/Nav.tsx
+ M src/lib/chapters.ts
+?? src/components/hero/desk/foliage.tsx
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:07:00Z)**_
+
+The day view is now warm and dim like Oryzo, and leaf shadows sway slowly across the desk. I compared it in screenshots: shade sits on the wood around the polaroids and the top and right of the mat, the middle stays in sunlight, and two frames a few seconds apart differ, so it moves. tsc and eslint pass.
+
+**Light** ([lighting.tsx](src/components/hero/desk/lighting.tsx), [globals.css](src/app/globals.css))
+- The overall light and reflections are lower and the sun is golden. This took out the washed-out white look.
+- The dark edges around the hero are stronger, so it looks like a room rather than a lit box.
+
+**Leaf shadows** (new [foliage.tsx](src/components/hero/desk/foliage.tsx))
+- Three invisible leafy branches sit between the sun and the desk and only cast its soft shadow.
+- They are drawn in code, so there are no image files to load, and each visit draws the same tree.
+- They sway with a slow lean and a quicker flutter. With reduced motion turned on, they hold still.
+- At night the sun is very dim, so the leaves almost vanish and the lamp takes over.
+
+One thing to know if you touch this later: in three r186 the shadow pass takes the leaf cut-out and which side faces up from the mesh's own material, not from a separate shadow material. My first version set them on a separate shadow material, so the leaves cast nothing. The cut-out now lives on the mesh material, with a comment there.
+
+You can tune it in [foliage.tsx](src/components/hero/desk/foliage.tsx):
+- **How much shade:** the `BOUGHS` list (where each branch sits, and its size).
+- **How much leaf:** the leaf odds and sizes inside `branch()`.
+- **Darker or lighter shade:** `hemi` and `env` in `DAY` in [lighting.tsx](src/components/hero/desk/lighting.tsx).
+
+Nothing is committed. The work is on `fix/drop-ponytail-gitlink`, and `foliage.tsx` is a new file that git isn't tracking yet.
+
+---
+
+_**User (2026-10-29 15:12:15Z)**_
+
+add more leaves small leaves, visit https://oryzo.ai/ so tat you will now about the leaves shadows in the home. /caveman
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 15:12:21Z)**_
+
+Visiting oryzo.ai to study its leaf shadows.
+
+_**Agent (claude-opus-5-5 2026-10-29 15:12:51Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Screenshot oryzo.ai twice
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && cat > oryzo.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const b = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] });
+  const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  await p.goto("https://oryzo.ai/", { waitUntil: "load", timeout: 120000 });
+  await p.waitForTimeout(12000);
+  await p.screenshot({ path: "o-0.png" });
+  await p.waitForTimeout(3000);
+  await p.screenshot({ path: "o-1.png" });
+  await p.screenshot({ path: "o-crop.png", clip: { x: 0, y: 300, width: 720, height: 600 } });
+  await b.close();
+})();
+EOF
+node oryzo.js && python -c "
+from PIL import Image, ImageChops
+a=Image.open('o-0.png').convert('L'); b=Image.open('o-1.png').convert('L')
+d=ImageChops.difference(a,b); print('diff', sum(d.get_flattened_data())/(d.width*d.height), d.getbbox())"
+```
+
+```text
+diff 0.7813479938271605 (0, 0, 1440, 900)
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:12:54Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\o-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:12:55Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\o-crop.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:13:01Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Crop oryzo top-right shade area
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && python -c "
+from PIL import Image
+Image.open('o-0.png').crop((720,0,1440,450)).resize((1080,675)).save('o-tr.png')"
+```
+
+```text
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:13:04Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\o-tr.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:13:16Z)**_
+
+<think><details><summary>Thought Process</summary>
+I'll rework the texture to depict Oryzo's shade as clusters of small, soft leaves with low-contrast mottling and sunflecks concentrated toward the top-right, rather than a few large branches.
+
+</details></think>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:13:16Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Portfolio\src\components\hero\desk\foliage.tsx`
+
+```text
+1	"use client";
+2	
+3	import { useFrame } from "@react-three/fiber";
+4	import { useMemo, useRef } from "react";
+5	import * as THREE from "three";
+6	
+7	/*
+8	 * Dappled light: leafy branches outside the window, between the sun and the
+9	 * desk. They never draw (no colour, no depth); they only cast the sun's soft
+10	 * shadow, and sway a little so the shade moves across the desk like a breeze.
+11	 */
+12	
+13	/* the sun sits at (-9, 20, 12) aiming at the origin: a desk point (x, z) is shaded from height h at this offset */
+14	const SUN = new THREE.Vector3(-9, 20, 12).normalize();
+15	const overDesk = (x: number, z: number, h: number) => [x + (SUN.x / SUN.y) * h, h, z + (SUN.z / SUN.y) * h] as const;
+16	
+17	/* a small seeded random, so every visit draws the same tree */
+18	function rng(seed: number) {
+19	  let s = seed;
+20	  return () => {
+21	    s = (s * 16807) % 2147483647;
+22	    return (s - 1) / 2147483646;
+23	  };
+24	}
+25	
+26	function branchTexture(seed: number) {
+27	  const size = 1024;
+28	  const c = document.createElement("canvas");
+29	  c.width = c.height = size;
+30	  const ctx = c.getContext("2d")!;
+31	  const rand = rng(seed);
+32	  /* alpha maps read brightness: white is leaf, black lets the sun through */
+33	  ctx.fillStyle = "#000";
+34	  ctx.fillRect(0, 0, size, size);
+35	  ctx.fillStyle = "#fff";
+36	  ctx.strokeStyle = "#fff";
+37	  ctx.lineCap = "round";
+38	
+39	  const leaf = (x: number, y: number, a: number, l: number) => {
+40	    ctx.save();
+41	    ctx.translate(x, y);
+42	    ctx.rotate(a);
+43	    ctx.beginPath();
+44	    ctx.moveTo(0, 0);
+45	    ctx.quadraticCurveTo(l * 0.5, -l * 0.32, l, 0);
+46	    ctx.quadraticCurveTo(l * 0.5, l * 0.32, 0, 0);
+47	    ctx.fill();
+48	    ctx.restore();
+49	  };
+50	
+51	  const branch = (x: number, y: number, a: number, len: number, w: number, depth: number) => {
+52	    const steps = 9;
+53	    let px = x;
+54	    let py = y;
+55	    let ang = a;
+56	    for (let i = 0; i < steps; i++) {
+57	      ang += (rand() - 0.5) * 0.25;
+58	      const nx = px + Math.cos(ang) * (len / steps);
+59	      const ny = py + Math.sin(ang) * (len / steps);
+60	      ctx.lineWidth = w * (1 - i / steps) + 1;
+61	      ctx.beginPath();
+62	      ctx.moveTo(px, py);
+63	      ctx.lineTo(nx, ny);
+64	      ctx.stroke();
+65	      /* leaves on both sides, denser towards the tip */
+66	      if (i > 1) {
+67	        for (const side of [-1, 1]) {
+68	          if (rand() < 0.8) leaf(nx, ny, ang + side * (0.5 + rand() * 0.7), 44 + rand() * 34);
+69	          if (rand() < 0.25) leaf(nx, ny, ang + side * (1.1 + rand() * 0.5), 36 + rand() * 26);
+70	        }
+71	      }
+72	      if (depth > 0 && i > 2 && rand() < 0.3) branch(nx, ny, ang + (rand() < 0.5 ? -1 : 1) * (0.5 + rand() * 0.4), len * 0.5, w * 0.5, depth - 1);
+73	      px = nx;
+74	      py = ny;
+75	    }
+76	    leaf(px, py, ang, 44);
+77	  };
+78	
+79	  /* boughs reach in from one edge, so the shade falls in from beyond the frame */
+80	  for (let i = 0; i < 3; i++) {
+81	    branch(0, size * (0.15 + i * 0.32 + rand() * 0.08), -0.2 + rand() * 0.4, size * (0.75 + rand() * 0.2), 14, 2);
+82	  }
+83	  const tex = new THREE.CanvasTexture(c);
+84	  tex.colorSpace = THREE.NoColorSpace;
+85	  return tex;
+86	}
+87	
+88	/* where each bough sits: desk point it shades, height, size, turn, sway phase */
+89	const BOUGHS = [
+90	  { at: [-9, 0], h: 8, size: 12, rot: 0.2, phase: 0 },
+91	  { at: [-3, 6], h: 9, size: 10, rot: -0.6, phase: 1.7 },
+92	  { at: [9, -4], h: 8.5, size: 11, rot: 2.8, phase: 3.1 },
+93	] as const;
+94	
+95	export function Foliage({ reduced }: { reduced: boolean }) {
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:13:32Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```python
+p = r"C:\Portfolio\src\components\hero\desk\foliage.tsx"
+s = open(p, encoding="utf8").read()
+a = s.index("  const branch = (x: number")
+b = s.index("  const tex = new THREE.CanvasTexture(c);")
+s = s[:a] + '''  /* a twig wanders out, shedding small leaves on both sides and splitting into finer twigs */
+  const twig = (x: number, y: number, a: number, len: number, w: number, depth: number) => {
+    const steps = 12;
+    let px = x;
+    let py = y;
+    let ang = a;
+    for (let i = 0; i < steps; i++) {
+      ang += (rand() - 0.5) * 0.35;
+      const nx = px + Math.cos(ang) * (len / steps);
+      const ny = py + Math.sin(ang) * (len / steps);
+      ctx.lineWidth = w * (1 - i / steps) + 0.6;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(nx, ny);
+      ctx.stroke();
+      for (const side of [-1, 1]) {
+        for (let k = 0; k < 2; k++) {
+          if (rand() < 0.7) leaf(nx + (rand() - 0.5) * 10, ny + (rand() - 0.5) * 10, ang + side * (0.4 + rand() * 0.9), 13 + rand() * 13);
+        }
+      }
+      if (depth > 0 && i > 1 && rand() < 0.42) twig(nx, ny, ang + (rand() < 0.5 ? -1 : 1) * (0.4 + rand() * 0.6), len * (0.35 + rand() * 0.25), w * 0.55, depth - 1);
+      px = nx;
+      py = ny;
+    }
+    leaf(px, py, ang, 18);
+  };
+
+  /*
+   * A canopy, not a branch: many twigs reach in from one edge, so the shade is
+   * thick there and breaks into sunflecks further in, like light through a tree.
+   */
+  for (let i = 0; i < 9; i++) {
+    twig(-20, size * (0.04 + i * 0.11 + rand() * 0.05), -0.35 + rand() * 0.7, size * (0.45 + rand() * 0.5), 7, 3);
+  }
+''' + s[b:]
+s = s.replace('''const BOUGHS = [
+  { at: [-9, 0], h: 8, size: 12, rot: 0.2, phase: 0 },
+  { at: [-3, 6], h: 9, size: 10, rot: -0.6, phase: 1.7 },
+  { at: [9, -4], h: 8.5, size: 11, rot: 2.8, phase: 3.1 },
+] as const;''', '''const BOUGHS = [
+  { at: [8, -5], h: 8.5, size: 13, rot: 2.9, phase: 0 },
+  { at: [11, 1], h: 9, size: 12, rot: 3.4, phase: 1.1 },
+  { at: [-10, -3], h: 8, size: 12, rot: 0.1, phase: 2.3 },
+  { at: [-4, -7], h: 9.5, size: 11, rot: -1.5, phase: 3.4 },
+] as const;''')
+s = s.replace(" * Dappled light: leafy branches outside the window,", " * Dappled light: a tree's small leaves outside the window,")
+open(p, "w", encoding="utf8").write(s)
+print("ok")
+
+```
+
+```text
+File created successfully at: C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\leaves.py (file state is current in your context — no need to Read it back)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:14:02Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Apply canopy texture and reshoot
+
+`python /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/leaves.py && grep -n "rot: 2.9\|tree's small" src/components/hero/desk/foliage.tsx && cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 3 && node leaf.js`
+
+```text
+ok
+8: * Dappled light: a tree's small leaves outside the window, between the sun and the
+92:  { at: [8, -5], h: 8.5, size: 13, rot: 2.9, phase: 0 },
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:14:05Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:14:11Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Crop new shade region
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && python -c "
+from PIL import Image
+Image.open('l-0.png').crop((720,200,1440,650)).resize((1080,675)).save('l-tr.png')"
+```
+
+```text
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:14:14Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-tr.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:14:36Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Typecheck and lint
+
+`npx tsc --noEmit && npx eslint src/components/hero/desk && echo OK`
+
+```text
+OK
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:14:43Z)**_
+
+The leaf shade is now soft dappling from many small leaves, much closer to oryzo.ai.
+
+I loaded oryzo.ai in a browser and screenshotted its home page to study the shade. It isn't separate branch shapes. It's a dense canopy of small leaves, so blurry it reads as low-contrast mottling with sunlit gaps. It's heaviest over the top-right of the mat and breaks up toward the middle.
+
+Changes in [foliage.tsx](src/components/hero/desk/foliage.tsx):
+- **Leaves:** each shadow texture is now 9 twigs that fork up to three levels deep, with many small leaves on each side. The old version was 3 branches with a few big leaves. The soft shadow blur turns them into dapples instead of crisp leaf shapes.
+- **Density:** the leaves crowd one edge and thin out further in. The shade is thick where the tree is and turns into sunflecks across the desk.
+- **Placement:** 4 leaf patches instead of 3. Two sit over the top-right of the mat and the right side, like Oryzo, and two over the left wood and the top-left.
+- The sway is unchanged: a slow lean plus a quicker flutter, and it holds still when reduced motion is on.
+
+In the new screenshot the mat, the iPad edge and the wood show the mottled shade, and the middle stays in sunlight. tsc and eslint pass.
+
+To tune:
+- **Denser or sparser:** change the twig count (`i < 9`) or the leaf odds (`rand() < 0.7`).
+- **Darker shade:** lower `hemi` and `env` in `DAY` in [lighting.tsx](src/components/hero/desk/lighting.tsx).
+
+Nothing is committed. The work is on `fix/drop-ponytail-gitlink`, and `foliage.tsx` is still a new file that git isn't tracking.
+
+---
+
+_**User (2026-10-29 15:15:59Z)**_
+
+make the movemebt of the shadow faster
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 15:16:02Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ path `C:\Portfolio\src\components\hero\desk\foliage.tsx` pattern `Math.sin\(t`
+
+```text
+115:      const gust = Math.sin(t * 0.35 + p.phase) * 0.5 + 0.5;
+116:      g.rotation.y = p.rot + Math.sin(t * 0.6 + p.phase) * 0.035 + Math.sin(t * 1.9 + p.phase * 2) * 0.012 * gust;
+117:      g.position.x = p.pos[0] + Math.sin(t * 0.45 + p.phase) * 0.18;
+118:      g.position.z = p.pos[2] + Math.sin(t * 0.7 + p.phase * 1.3) * 0.12 * (0.4 + gust);
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:16:04Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Portfolio\src\components\hero\desk\foliage.tsx`
+
+```text
+108	  useFrame(({ clock }) => {
+109	    if (reduced) return;
+110	    const t = clock.elapsedTime;
+111	    parts.forEach((p, i) => {
+112	      const g = groups.current[i];
+113	      if (!g) return;
+114	      /* a slow lean with a quicker flutter on top, never quite repeating */
+115	      const gust = Math.sin(t * 0.35 + p.phase) * 0.5 + 0.5;
+116	      g.rotation.y = p.rot + Math.sin(t * 0.6 + p.phase) * 0.035 + Math.sin(t * 1.9 + p.phase * 2) * 0.012 * gust;
+117	      g.position.x = p.pos[0] + Math.sin(t * 0.45 + p.phase) * 0.18;
+118	      g.position.z = p.pos[2] + Math.sin(t * 0.7 + p.phase * 1.3) * 0.12 * (0.4 + gust);
+119	    });
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:16:12Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\hero\desk\foliage.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:16:28Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Typecheck and lint
+
+`npx tsc --noEmit && npx eslint src/components/hero/desk/foliage.tsx && echo OK`
+
+```text
+OK
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:16:31Z)**_
+
+The leaf shadows now sway 2.2× faster, and the quick flutter is a little bigger (0.012 → 0.018), so it reads more like a breeze. I didn't screenshot this change; tsc and eslint pass.
+
+The speed is the `2.2` multiplier on `clock.elapsedTime` in [foliage.tsx](src/components/hero/desk/foliage.tsx). Raise it for faster, lower it to calm it down. Reduced-motion users still get still shade.
+
+---
+
+_**User (2026-10-29 15:18:12Z)**_
+
+make the bottom left of the screen tint a bit darker and lighter towards the top right, diagonal. simila rot orzyo
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 15:18:20Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\app\globals.css has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:18:44Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Screenshot the new tint
+
+`cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sleep 2 && node leaf.js`
+
+```text
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:18:47Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\l-0.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:18:52Z)**_
+
+The hero now shades darker toward the bottom left and lifts toward the top right, like window light falling across the desk. In the screenshot, the polaroid and card corner sit in deeper shade and the books and iPad side reads brighter.
+
+It's a diagonal gradient added to the day vignette in [globals.css](src/app/globals.css). The bottom-left starts at 50% dark brown, fades out by about 60% of the way across, and ends in a faint warm glow at the top right. I also eased the existing radial vignette (0.55 → 0.5) and the top band (0.22 → 0.18) so the total darkening doesn't stack too heavily. Night mode keeps its own vignette, unchanged.
+
+To tune it, change the first two alpha values (`0.5`, `0.18`) for more or less shade, and the last one (`0.1`) for more or less highlight.
+
+---
+
+_**User (2026-10-29 15:21:01Z)**_
+
+follow the nav menu placement of orzyo, is closer to the dge of the screen no margin on the side.
+
+remove the horizontal and vertical scrollbards on the screen also i dont know why they are there /caveman
+
+---
+
+_**Agent (claude-opus-5-5 2026-10-29 15:21:23Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Find overflow culprits and layout tokens
+
+```bash
+grep -n "section-pad\|--max\|--page-pad\|scrollbar\|overflow-x\|^html\|^body" src/app/globals.css | head -30; cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && cat > over.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const b = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe" });
+  const p = await b.newPage({ viewport: { width: 1910, height: 940 } });
+  await p.goto("http://localhost:3000", { waitUntil: "load", timeout: 240000 });
+  await p.waitForTimeout(8000);
+  console.log(await p.evaluate(() => {
+    const W = document.documentElement.clientWidth;
+    const out = [];
+    document.querySelectorAll("body *").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (r.right > W + 1 && r.width > 0) out.push(`${el.tagName}.${(el.className && el.className.baseVal === undefined ? el.className : "").toString().slice(0, 60)} right=${Math.round(r.right)}`);
+    });
+    return { W, sw: document.documentElement.scrollWidth, bodyOverflow: getComputedStyle(document.body).overflowX, htmlOverflow: getComputedStyle(document.documentElement).overflowX, out: out.slice(0, 15) };
+  }));
+  await b.close();
+})();
+EOF
+node over.js
+```
+
+```text
+23:  --page-pad: clamp(1.25rem, 4vw, 2.75rem);
+24:  --max: 1400px;
+52:html {
+55:  scrollbar-width: thin;
+56:  scrollbar-color: var(--mat) var(--desk);
+59:html.lenis,
+60:html.lenis body {
+68:body {
+325:.section-pad {
+326:  padding-inline: var(--page-pad);
+330:  width: min(100%, var(--max));
+351:html.desk-loading,
+352:html.desk-loading body {
+363:  padding: var(--page-pad);
+457:  left: var(--page-pad);
+491:  right: calc(var(--page-pad) + 3rem);
+526:  left: var(--page-pad);
+583:  right: calc(var(--page-pad) + 3rem);
+626:  left: var(--page-pad);
+639: * The list scrolls with its scrollbar hidden. Each edge fades out only while
+647:  scrollbar-width: none;
+653:.scroll-fade::-webkit-scrollbar {
+1485:    left: var(--page-pad);
+1486:    right: var(--page-pad);
+1510:    left: var(--page-pad);
+1511:    right: var(--page-pad);
+1640:  padding: 1.1rem var(--page-pad) 1.5rem;
+{
+  W: 1910,
+  sw: 1910,
+  bodyOverflow: 'hidden',
+  htmlOverflow: 'hidden',
+  out: []
+}
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:21:49Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read html/body CSS and recheck after load
+
+`sed -n 50,72p src/app/globals.css; sed -n 348,358p src/app/globals.css; cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && sed -i 's|await p.waitForTimeout(8000);|await p.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 }); await p.waitForTimeout(2000);|; s|chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe" })|chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] })|' over.js && node over.js`
+
+```text
+}
+
+html {
+  background: var(--desk);
+  color: var(--ink);
+  scrollbar-width: thin;
+  scrollbar-color: var(--mat) var(--desk);
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--desk);
+  color: var(--ink);
+
+/* ── Desk hero: cream print over a 3D studio desk (Oryzo-style) ── */
+
+html.desk-loading,
+html.desk-loading body {
+  overflow: hidden;
+}
+
+.desk-loader {
+  position: fixed;
+  inset: 0;
+{
+  W: 1910,
+  sw: 1910,
+  bodyOverflow: 'visible',
+  htmlOverflow: 'visible',
+  out: []
+}
+Shell cwd was reset to c:\Portfolio
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:21:58Z)**_
+
+<think><details><summary>Thought Process</summary>
+Found the issue: Windows Chrome's classic scrollbar takes up width, so it shows up alongside the styled scrollbar plus any `100vw` elements, while headless hides it since its scrollbars overlay the page. I'll hide the scrollbars (keeping scroll functional) and clip horizontal overflow, then move on to the nav.
+
+</details></think>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:21:59Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read side tab CSS and nav container
+
+`grep -n "\.desk-side-tab {" -A16 src/app/globals.css | head -20; grep -n "max-w-\[var(--max)\]\|section-pad mx-auto" src/components/layout/*.tsx`
+
+```text
+1246:.desk-side-tab {
+1247-  position: absolute;
+1248-  right: 0;
+1249-  top: calc(var(--nav-h) - 0.5rem);
+1250-  display: flex;
+1251-  align-items: center;
+1252-  gap: 0.6rem;
+1253-  writing-mode: vertical-rl;
+1254-  padding: 1rem 0.55rem;
+1255-  background: var(--desk-cream);
+1256-  color: var(--ink);
+1257-  font-family: var(--font-mono);
+1258-  font-size: 0.66rem;
+1259-  font-weight: 500;
+1260-  letter-spacing: 0.14em;
+1261-  text-transform: uppercase;
+1262-  text-shadow: none;
+src/components/layout/Nav.tsx:21:      <div className="section-pad mx-auto flex h-full max-w-[var(--max)] items-center justify-between gap-6">
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:22:09Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\components\layout\Nav.tsx has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:22:09Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\app\globals.css has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:22:10Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Read body rule
+
+`sed -n 74,84p src/app/globals.css`
+
+```text
+  scroll-behavior: auto !important;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--desk);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:22:19Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file C:\Portfolio\src\app\globals.css has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:22:54Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Headed Chrome check for scrollbars and nav
+
+```bash
+cd /c/Users/Jeanne/AppData/Local/Temp/claude/c--Portfolio/3b40f1f7-73a5-4fc0-a67b-665c898aa8f7/scratchpad/shot && cat > nav.js <<'EOF'
+const { chromium } = require("playwright-core");
+(async () => {
+  const b = await chromium.launch({ headless: false, executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", args: ["--use-angle=d3d11", "--window-size=1920,1080"] });
+  const p = await b.newPage({ viewport: null });
+  await p.goto("http://localhost:3000", { waitUntil: "load", timeout: 240000 });
+  await p.waitForSelector(".desk-loader", { state: "detached", timeout: 240000 });
+  await p.waitForTimeout(2000);
+  console.log(await p.evaluate(() => ({ inner: innerWidth, client: document.documentElement.clientWidth, sw: document.documentElement.scrollWidth, sh: document.documentElement.scrollHeight })));
+  await p.screenshot({ path: "nav.png" });
+  await p.evaluate(() => scrollTo(0, 3000)); await p.waitForTimeout(800);
+  console.log("scrolled to", await p.evaluate(() => scrollY));
+  await b.close();
+})();
+EOF
+node nav.js; cd /c/Portfolio && npx tsc --noEmit && npx eslint src/components/layout && echo OK
+```
+
+```text
+{ inner: 1904, client: 1904, sw: 1904, sh: 7470 }
+scrolled to 3000
+OK
+```
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:22:57Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `C:\Users\Jeanne\AppData\Local\Temp\claude\c--Portfolio\3b40f1f7-73a5-4fc0-a67b-665c898aa8f7\scratchpad\shot\nav.png`
+</details></tool-use>
+
+_**Agent (claude-opus-5-5 2026-10-29 15:23:03Z)**_
+
+The nav now runs edge to edge and both scrollbars are gone. I checked it in a real 1920px Chrome window: the page width matches the window, so no scrollbar is taking space and nothing overflows sideways, and the page still scrolls normally. tsc and eslint pass.
+
+- **Nav placement:** it was locked to the centred 1400px content column, which is why "JD PALOMA" sat around 365px in from the left on your wide screen. It now spans the full width. The logo lines up with the "JEANNE" wordmark on the left and the links end near the right edge, like Oryzo ([Nav.tsx](src/components/layout/Nav.tsx)).
+- **Why the scrollbars appeared:**
+  - The vertical bar was the page's own scrollbar, styled thin and green.
+  - On Windows that scrollbar takes up screen width. Anything sized to the full window (`100vw`) then ended up wider than the visible area, which produced the horizontal bar.
+  - Headless browsers draw scrollbars on top of the page instead of beside it, so my earlier checks never showed either bar.
+- **Scrollbar fix** ([globals.css](src/app/globals.css)):
+  - The page scrollbar is hidden in all browsers. The wheel, keyboard, touch and nav links still scroll.
+  - Sideways overflow is clipped on `html` and `body`, so a horizontal bar can't appear.
+
+One trade-off: with no scrollbar, the nav's active link is the only sign of where you are on the page.

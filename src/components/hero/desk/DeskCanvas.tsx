@@ -9,6 +9,7 @@ import { DeskWorld, type ViewName } from "./world";
 import { CAMERA_HIDE, FitModel, MODEL_URLS } from "./FitModel";
 import { ProjectShelf, Room } from "./room";
 import { Lighting } from "./lighting";
+import { Foliage } from "./foliage";
 import { Wall } from "./wall";
 import { Flashlight, SceneLink } from "./flashlight";
 import { Aquarium } from "./aquarium";
@@ -410,6 +411,7 @@ export function DeskCanvas({ active, ...props }: Props) {
       </Environment>
 
       <WindowShadow />
+      <Foliage reduced={props.reduced} />
 
       <Desk {...props} />
     </Canvas>

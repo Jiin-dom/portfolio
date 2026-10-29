@@ -1,5 +1,5 @@
 export const chapters = [
-  { id: "intro", href: "#intro", label: "Intro" },
+  { id: "intro", href: "#intro", label: "Home" },
   { id: "features", href: "#features", label: "Features" },
   { id: "product", href: "#product", label: "Product" },
   { id: "contact", href: "#contact", label: "Contact" },
@@ -7,6 +7,11 @@ export const chapters = [
 
 /* not a page section: it flies the desk camera to the aquarium on the L return */
 export const skillsLink = { href: "#skills", label: "Skills" } as const;
+
+/* home: the link scrolls to the top, and the desk puts away whatever is open */
+export const goHome = () => {
+  window.dispatchEvent(new Event("desk:home"));
+};
 
 export const openSkills = (e: { preventDefault(): void }) => {
   e.preventDefault();

@@ -244,6 +244,20 @@ export function DeskHero() {
     return () => window.removeEventListener("desk:skills", go);
   }, [openTank, reduce]);
 
+  /* Home (nav or logo) puts everything away and returns to the desk */
+  useEffect(() => {
+    const home = () => {
+      closeExperience();
+      setOpenProject(null);
+      setFocusId(null);
+      setActiveSkill(null);
+      setHoverSkill(null);
+      if (tankOpen) setView(viewBeforeTank);
+    };
+    window.addEventListener("desk:home", home);
+    return () => window.removeEventListener("desk:home", home);
+  }, [closeExperience, tankOpen, viewBeforeTank]);
+
   useEffect(() => {
     if (ready && window.location.hash === "#skills") window.dispatchEvent(new Event("desk:skills"));
   }, [ready]);
