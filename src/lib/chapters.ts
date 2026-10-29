@@ -13,25 +13,37 @@ export const openSkills = (e: { preventDefault(): void }) => {
   window.dispatchEvent(new Event("desk:skills"));
 };
 
+/* whether the desk camera is at the aquarium, so the nav can mark Skills as current */
+let tankOpen = false;
+const tankListeners = new Set<() => void>();
+export const tankView = {
+  get: () => tankOpen,
+  set(open: boolean) {
+    if (open === tankOpen) return;
+    tankOpen = open;
+    tankListeners.forEach((l) => l());
+  },
+  subscribe(listener: () => void) {
+    tankListeners.add(listener);
+    return () => {
+      tankListeners.delete(listener);
+    };
+  },
+};
+
 export type ChapterId = (typeof chapters)[number]["id"];
 
 export const featurePanels = [
   {
-    kicker: "Rise above mediocrity",
     title: "Interfaces that elevate",
     body: "Layout, type, and motion engineered so the product feels considered before a single API call lands.",
-    aside: "Δh ≈ craft",
   },
   {
-    kicker: "Handles extremes with ease",
     title: "Full-stack stability",
     body: "React surfaces wired to Spring Boot services and MySQL — one coherent stack, one owner through ship.",
-    aside: "React · Spring · MySQL",
   },
   {
-    kicker: "Precision grip, zero drama",
     title: "Shipped end to end",
     body: "Auth, payments, OAuth, and admin flows built to stay maintainable after launch — not just demo-ready.",
-    aside: "JWT · PayPal · OAuth",
   },
 ] as const;

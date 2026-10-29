@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { ChapterId } from "@/lib/chapters";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { tankView, type ChapterId } from "@/lib/chapters";
 
 const sectionIds: ChapterId[] = ["intro", "features", "product", "contact"];
+
+/* true while the desk camera is at the aquarium */
+export function useTankOpen() {
+  return useSyncExternalStore(tankView.subscribe, tankView.get, () => false);
+}
 
 export function useActiveChapter() {
   const [active, setActive] = useState<ChapterId>("intro");

@@ -3,29 +3,20 @@
 import Image from "next/image";
 import { useState, startTransition } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { projects, education, experience } from "@/lib/content";
+import { projects } from "@/lib/content";
 
-const tiers = projects.slice(0, 3).map((project, i) => ({
-  ...project,
-  tier: i === 0 ? "JD" : i === 1 ? "JD Pro" : "JD Pro Max",
-  stackLabel: i === 0 ? "Single surface" : i === 1 ? "Double depth" : "Full system",
-}));
+const featured = projects.slice(0, 3);
 
 export function ProductChapter() {
   const [active, setActive] = useState(0);
-  const current = tiers[active] ?? tiers[0];
+  const current = featured[active] ?? featured[0];
 
   return (
     <section id="product" className="relative overflow-hidden bg-cream-soft text-ink">
       <div className="section-pad section-inner py-24 md:py-28">
-        <div className="grid gap-6 md:grid-cols-2 md:items-end">
-          <h2 className="display max-w-[14ch] text-[clamp(2.2rem,5.5vw,4rem)] uppercase">
-            People hire for craft like this
-          </h2>
-          <p className="max-w-[40ch] justify-self-end text-sm leading-relaxed text-ink-soft md:text-right md:text-base">
-            Do not take my word for it — open the source, watch the demo, and see what ships.
-          </p>
-        </div>
+        <h2 className="display max-w-[14ch] text-[clamp(2.2rem,5.5vw,4rem)] uppercase">
+          People hire for craft like this
+        </h2>
 
         <div className="relative mx-auto mt-16 flex max-w-3xl flex-col items-center">
           <div className="relative aspect-square w-full max-w-md overflow-hidden rounded-full border-[14px] border-cork bg-cork shadow-[0_40px_100px_var(--shadow)]">
@@ -39,17 +30,13 @@ export function ProductChapter() {
               />
             </div>
           </div>
-          <p className="mt-8 text-center font-mono text-xs tracking-[0.16em] uppercase text-ink-soft">
-            {current.tier} · {current.stackLabel}
-          </p>
         </div>
 
         <div className="mt-14">
-          <p className="mono-label text-ink-soft">Choose your own</p>
-          <div className="mt-4 flex flex-wrap gap-2 border-b border-line pb-4">
-            {tiers.map((tier, i) => (
+          <div className="flex flex-wrap gap-2 border-b border-line pb-4">
+            {featured.map((project, i) => (
               <button
-                key={tier.slug}
+                key={project.slug}
                 type="button"
                 className={`btn !min-h-10 !px-4 !text-[0.65rem] ${
                   active === i ? "btn-ink" : "btn-ghost-ink"
@@ -57,69 +44,35 @@ export function ProductChapter() {
                 onClick={() => startTransition(() => setActive(i))}
                 aria-pressed={active === i}
               >
-                {tier.tier}
+                {project.title}
               </button>
             ))}
           </div>
 
-          <div className="mt-8 grid gap-8 lg:grid-cols-12">
-            <div className="lg:col-span-7">
-              <p className="mono-label text-signal">New</p>
-              <h3 className="mt-2 text-3xl font-semibold tracking-tight">{current.title}</h3>
-              <p className="mt-4 max-w-[52ch] text-base leading-relaxed text-ink-soft">
-                {current.description}
-              </p>
-              <ul className="mt-5 flex flex-wrap gap-2">
-                {current.tools.map((tool) => (
-                  <li
-                    key={tool}
-                    className="rounded-full border border-line bg-cream px-3 py-1 text-xs font-medium"
-                  >
-                    {tool}
-                  </li>
-                ))}
-              </ul>
-              <a
-                href={current.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-ink mt-8 w-fit"
-              >
-                Source code
-                <ArrowUpRight className="h-4 w-4" aria-hidden />
-              </a>
-            </div>
-
-            <div className="grid gap-8 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-1">
-              <div>
-                <p className="mono-label text-ink-soft">Experience</p>
-                <ul className="mt-3 space-y-3">
-                  {experience.map((row) => (
-                    <li key={row.title}>
-                      <p className="font-mono text-[0.65rem] uppercase tracking-wider text-ink-soft">
-                        {row.year}
-                      </p>
-                      <p className="font-semibold">{row.title}</p>
-                      <p className="text-sm text-ink-soft">{row.place}</p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <p className="mono-label text-ink-soft">Education</p>
-                <ul className="mt-3 space-y-3">
-                  {education.slice(0, 2).map((row) => (
-                    <li key={`${row.title}-${row.place}`}>
-                      <p className="font-mono text-[0.65rem] uppercase tracking-wider text-ink-soft">
-                        {row.year}
-                      </p>
-                      <p className="font-semibold">{row.title}</p>
-                      <p className="text-sm text-ink-soft">{row.place}</p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+          <div className="mt-8">
+            <h3 className="text-3xl font-semibold tracking-tight">{current.title}</h3>
+            <p className="mt-4 max-w-[52ch] text-base leading-relaxed text-ink-soft">
+              {current.description}
+            </p>
+            <ul className="mt-5 flex flex-wrap gap-2">
+              {current.tools.map((tool) => (
+                <li
+                  key={tool}
+                  className="rounded-full border border-line bg-cream px-3 py-1 text-xs font-medium"
+                >
+                  {tool}
+                </li>
+              ))}
+            </ul>
+            <a
+              href={current.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-ink mt-8 w-fit"
+            >
+              Source code
+              <ArrowUpRight className="h-4 w-4" aria-hidden />
+            </a>
           </div>
         </div>
 

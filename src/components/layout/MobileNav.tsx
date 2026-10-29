@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { site } from "@/lib/content";
 import { chapters, openSkills, skillsLink, type ChapterId } from "@/lib/chapters";
 import { ease } from "@/lib/easings";
+import { useTankOpen } from "@/hooks/useActiveChapter";
 
 type Props = {
   active: ChapterId;
@@ -14,6 +15,7 @@ type Props = {
 export function MobileNav({ active, dark }: Props) {
   const [open, setOpen] = useState(false);
   const reduce = useReducedMotion();
+  const tank = useTankOpen();
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -52,7 +54,7 @@ export function MobileNav({ active, dark }: Props) {
                   key={link.id}
                   href={link.href}
                   className="chapter-link text-sm tracking-[0.12em]"
-                  aria-current={active === link.id ? "page" : undefined}
+                  aria-current={active === link.id && !(tank && link.id === "intro") ? "page" : undefined}
                   onClick={() => setOpen(false)}
                   initial={reduce ? false : { opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -64,6 +66,7 @@ export function MobileNav({ active, dark }: Props) {
               <a
                 href={skillsLink.href}
                 className="chapter-link text-sm tracking-[0.12em]"
+                aria-current={tank ? "page" : undefined}
                 onClick={(e) => {
                   setOpen(false);
                   openSkills(e);

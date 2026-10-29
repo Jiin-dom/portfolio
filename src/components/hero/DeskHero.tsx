@@ -11,6 +11,7 @@ import { speciesOf } from "@/components/hero/desk/species";
 import { PAPER, type SheetOrigin } from "@/components/hero/desk/experience";
 import { WorkRecord } from "@/components/hero/WorkRecord";
 import { useScrollFade } from "@/hooks/useScrollFade";
+import { tankView } from "@/lib/chapters";
 import { deskItemMap } from "@/components/hero/desk/items";
 import type { DeskCommand, PaperBridge } from "@/components/hero/desk/DeskCanvas";
 import type { ViewName } from "@/components/hero/desk/world";
@@ -197,6 +198,24 @@ export function DeskHero() {
     setView("tank");
   }, [closeExperience, view]);
 
+  useEffect(() => {
+    tankView.set(tankOpen);
+    return () => tankView.set(false);
+  }, [tankOpen]);
+
+  /* the zoom hint has done its job once the visitor has zoomed */
+  const [zoomed, setZoomed] = useState(false);
+  useEffect(() => {
+    const el = root.current;
+    if (!el || zoomed || !ready) return;
+    /* on window, in capture, beside the canvas's own zoom listener (it stops propagation) */
+    const onWheel = (e: WheelEvent) => {
+      if (window.scrollY <= 4 && el.contains(e.target as Node)) setZoomed(true);
+    };
+    window.addEventListener("wheel", onWheel, { capture: true, passive: true });
+    return () => window.removeEventListener("wheel", onWheel, { capture: true });
+  }, [zoomed, ready]);
+
   const closeTank = useCallback(() => {
     setActiveSkill(null);
     setHoverSkill(null);
@@ -254,7 +273,7 @@ export function DeskHero() {
   const send = (type: DeskCommand["type"]) => setCommand((c) => ({ type, n: (c?.n ?? 0) + 1 }));
   const focus =
     hoverProject !== null
-      ? { label: projects[hoverProject].title, note: "From the project shelf — click to open the case file.", href: undefined }
+      ? { label: projects[hoverProject].title, href: undefined }
       : focusId
         ? deskItemMap[focusId]
         : null;
@@ -284,7 +303,7 @@ export function DeskHero() {
           skills={skills}
           activeSkill={activeSkill}
           featuredSkills={featuredSkills}
-          labelledSkill={hoverSkill ?? activeSkill}
+          labelledSkill={reading ? null : (hoverSkill ?? activeSkill)}
           onSelectSkill={setActiveSkill}
           onHoverSkill={setHoverSkill}
           onFocusItem={setFocusId}
@@ -309,7 +328,6 @@ export function DeskHero() {
       {/* ── Type + UI, layered over the desk like print on a photo ── */}
       <div className="desk-ui pointer-events-none absolute inset-0 z-20" data-reading={reading || experienceActive || tankOpen ? "" : undefined}>
         <header className="desk-title">
-          <p className="desk-kicker">Designs interfaces. Ships systems.</p>
           <h1 className="desk-wordmark">
             Jeanne
             <span className="desk-wordmark__script">Dominique Paloma</span>
@@ -317,7 +335,7 @@ export function DeskHero() {
           </h1>
         </header>
 
-        <div className="desk-lede">
+        <div className="desk-lede desk-glass">
           <p>
             <mark>I design</mark> and ship interfaces that feel as solid as the systems behind them.
           </p>
@@ -331,9 +349,7 @@ export function DeskHero() {
           <div className="desk-glass desk-caption" aria-live="polite" data-show={focus ? "" : undefined}>
             {focus && (
               <>
-                <p className="desk-caption__eyebrow">On the desk</p>
                 <p className="desk-caption__title">{focus.label}</p>
-                <p className="desk-caption__note">{focus.note}</p>
                 {focus.href && (
                   <a className="pointer-events-auto desk-caption__link" href={focus.href}>
                     Write to me <ArrowUpRight aria-hidden />
@@ -363,10 +379,6 @@ export function DeskHero() {
             <p className="desk-card__head">
               Full-stack developer <br /> with a strong focus <br /> on UI and UX.
             </p>
-            <hr className="dot-rule" />
-            <p className="desk-card__body">
-              Everything on this desk moves. Drag it, hold + scroll to rotate, double-click to turn.
-            </p>
             <div className="desk-card__actions pointer-events-auto mt-4 flex flex-wrap justify-end gap-2">
               <a href="#features" className="desk-chip desk-chip--explore">
                 <ArrowDown aria-hidden /> Explore
@@ -391,7 +403,7 @@ export function DeskHero() {
           <span aria-hidden>●</span> Résumé ↗
         </a>
 
-        <p className="desk-scroll">
+        <p className="desk-scroll" data-done={zoomed ? "" : undefined}>
           <span className="desk-scroll__icon">
             <MousePointer2 aria-hidden />
           </span>
@@ -480,13 +492,11 @@ function FieldGuide({
   return (
     <section className="desk-tank desk-glass" data-hidden={hidden ? "" : undefined} aria-labelledby="desk-tank-title">
       <div className="desk-tank__head">
-        <p className="desk-tank__kicker">Field guide · {String(skills.length).padStart(2, "0")} species</p>
+        <h2 id="desk-tank-title" className="desk-tank__title">Skills</h2>
         <button type="button" className="desk-chip" onClick={onClose}>
           <ArrowLeft aria-hidden /> Desk
         </button>
       </div>
-      <h2 id="desk-tank-title" className="desk-tank__title">The stack, alive</h2>
-      <p className="desk-tank__lede">Each fish is a tool I build with. Pick one to see the projects it swims through.</p>
 
       <div
         ref={listRef}
@@ -509,7 +519,7 @@ function FieldGuide({
                     <button
                       type="button"
                       className="desk-tank__row"
-                      aria-expanded={open}
+                      aria-expanded={n > 0 ? open : undefined}
                       data-hover={hovered === i ? "" : undefined}
                       onClick={() => onSelect(open ? null : i)}
                       onPointerEnter={() => onHover(i)}
@@ -519,37 +529,23 @@ function FieldGuide({
                     >
                       <span className="desk-tank__swatch" style={{ "--fish": sp.side, "--fin": sp.fin } as CSSProperties} aria-hidden />
                       <Image src={s.icon} alt="" width={22} height={22} className="desk-tank__icon" />
-                      <span className="desk-tank__name">
-                        {s.name}
-                        <span className="desk-tank__species">{sp.common}</span>
-                      </span>
+                      <span className="desk-tank__name">{s.name}</span>
                       <span className="desk-tank__uses" aria-label={`Used in ${n} of ${projects.length} projects`}>
                         {projects.map((_, k) => (
                           <span key={k} data-on={k < n ? "" : undefined} />
                         ))}
                       </span>
                     </button>
-                    {open && (
-                      <div className="desk-tank__detail">
-                        {n === 0 ? (
-                          <p>No project on the shelf uses it yet.</p>
-                        ) : (
-                          <>
-                            <p>
-                              Swims through {n} of {projects.length} projects:
-                            </p>
-                            <ul>
-                              {s.projects.map((p) => (
-                                <li key={p}>
-                                  <button type="button" className="desk-tank__project" onClick={() => onOpenProject(p)}>
-                                    {projects[p].title} <ArrowUpRight aria-hidden />
-                                  </button>
-                                </li>
-                              ))}
-                            </ul>
-                          </>
-                        )}
-                      </div>
+                    {open && n > 0 && (
+                      <ul className="desk-tank__detail">
+                        {s.projects.map((p) => (
+                          <li key={p}>
+                            <button type="button" className="desk-tank__project" onClick={() => onOpenProject(p)}>
+                              {projects[p].title} <ArrowUpRight aria-hidden />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
                     )}
                   </li>
                 );
