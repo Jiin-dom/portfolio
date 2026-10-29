@@ -637,6 +637,302 @@ html.desk-loading body {
   border-bottom: 1px dotted currentColor;
 }
 
+/* ── Field guide: the skills panel beside the aquarium close-up ── */
+.desk-tank {
+  position: absolute;
+  z-index: 25;
+  top: calc(var(--nav-h) + 0.75rem);
+  bottom: 1.75rem;
+  left: var(--page-pad);
+  width: min(400px, 36vw);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.15rem 1.15rem 1.4rem;
+  border-radius: 1.1rem;
+  color: var(--desk-cream);
+  animation: tank-guide-in 520ms var(--ease-out) 380ms both;
+  transition: opacity 200ms ease;
+  scrollbar-width: thin;
+}
+
+.desk-tank[data-hidden] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes tank-guide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+
+.desk-tank__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.desk-tank__kicker {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.desk-tank__title {
+  margin: 0.9rem 0 0.3rem;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.desk-tank__lede {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: rgb(255 240 220 / 0.8);
+}
+
+.desk-tank__group {
+  margin-top: 1.1rem;
+}
+
+.desk-tank__group-name {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.desk-tank__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-tank__list > li {
+  border-top: 1px solid rgb(255 240 220 / 0.1);
+}
+
+.desk-tank__row {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.desk-tank__row[data-hover],
+.desk-tank__list > li[data-open] .desk-tank__row {
+  background: rgb(255 240 220 / 0.1);
+}
+
+.desk-tank__row:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: -2px;
+}
+
+/* a little fish silhouette in the species' own colors, so rows map to fish at a glance */
+.desk-tank__swatch {
+  position: relative;
+  width: 22px;
+  height: 12px;
+  border-radius: 60% 40% 40% 60% / 50%;
+  background: var(--fish);
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.18);
+}
+
+.desk-tank__swatch::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  right: -7px;
+  border-style: solid;
+  border-width: 5px 0 5px 8px;
+  border-color: transparent transparent transparent var(--fin);
+  transform: scaleX(-1);
+}
+
+.desk-tank__icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.desk-tank__name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.desk-tank__species {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+/* projects using the skill, out of the whole shelf */
+.desk-tank__uses {
+  display: flex;
+  gap: 3px;
+}
+
+.desk-tank__uses > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 240 220 / 0.45);
+}
+
+.desk-tank__uses > span[data-on] {
+  background: var(--desk-cream);
+  border-color: var(--desk-cream);
+}
+
+.desk-tank__detail {
+  padding: 0.15rem 0.5rem 0.8rem 3.6rem;
+  font-size: 0.82rem;
+  color: rgb(255 240 220 / 0.82);
+  animation: tank-detail-in 240ms var(--ease-out) both;
+}
+
+@keyframes tank-detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.desk-tank__detail p {
+  margin: 0 0 0.35rem;
+}
+
+.desk-tank__detail ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-tank__project {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 1.9rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid rgb(255 240 220 / 0.3);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.desk-tank__project svg {
+  width: 11px;
+  height: 11px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .desk-tank__project:hover {
+    background: var(--desk-cream);
+    color: var(--ink);
+  }
+}
+
+/* name tag that rides above a fish in the tank */
+.tank-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  padding: 0.3rem 0.65rem;
+  border-radius: 0.5rem;
+  background: rgb(20 14 10 / 0.72);
+  color: var(--desk-cream);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+
+.tank-label span {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-tank,
+  .desk-tank__detail {
+    animation: none;
+  }
+}
+
+/* phones: the guide becomes a bottom sheet under the tank */
+@media (max-width: 767px) {
+  .desk-tank {
+    top: auto;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    width: auto;
+    max-height: 50svh;
+    padding: 1rem 0.9rem 1.2rem;
+    animation-name: tank-sheet-in;
+  }
+
+  .desk-tank__title {
+    margin-top: 0.6rem;
+    font-size: 1.35rem;
+  }
+
+  .desk-tank__detail {
+    padding-left: 0.5rem;
+  }
+}
+
+@keyframes tank-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
 .desk-side-tab {
   position: absolute;
   right: 0;

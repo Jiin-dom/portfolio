@@ -11,6 +11,8 @@ import { ProjectShelf, Room } from "./room";
 import { Lighting } from "./lighting";
 import { Wall } from "./wall";
 import { Flashlight, SceneLink } from "./flashlight";
+import { Aquarium } from "./aquarium";
+import type { Skill } from "@/lib/skills";
 import type { BookProject } from "./textures";
 import { buildTextures, type DeskTextures } from "./textures";
 import * as Model from "./models";
@@ -40,6 +42,13 @@ type Props = {
   onExperienceReturned: () => void;
   onCloseExperience: () => void;
   onHoverProject: (index: number | null) => void;
+  skills: readonly Skill[];
+  activeSkill: number | null;
+  /* fish that swim to the front glass: the skills of the book in hand */
+  featuredSkills: readonly number[];
+  labelledSkill: number | null;
+  onSelectSkill: (index: number | null) => void;
+  onHoverSkill: (index: number | null) => void;
   onFocusItem: (id: string | null) => void;
   onReady: () => void;
   onProgress?: (p: number) => void;
@@ -145,7 +154,7 @@ function Warmup({ onDone, onProgress }: { onDone: () => void; onProgress?: (p: n
   return null;
 }
 
-function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, experienceActive, experienceExtracting, onOpenExperience, onExperienceExtracted, onExperienceReturned, onCloseExperience, onHoverProject, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active">) {
+function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, experienceActive, experienceExtracting, onOpenExperience, onExperienceExtracted, onExperienceReturned, onCloseExperience, onHoverProject, skills, activeSkill, featuredSkills, labelledSkill, onSelectSkill, onHoverSkill, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active">) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const gl = useThree((s) => s.gl);
   const size = useThree((s) => s.size);
@@ -224,7 +233,7 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
   useEffect(() => {
     const hero = gl.domElement.closest("section");
     const onWheel = (e: WheelEvent) => {
-      if (world.grabbing || openProject !== null || experienceActive) return;
+      if (world.grabbing || openProject !== null || experienceActive || view === "tank") return;
       if (!hero || window.scrollY > 4 || !hero.contains(e.target as Node)) return;
       e.preventDefault();
       e.stopPropagation();
@@ -232,7 +241,7 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
     };
     window.addEventListener("wheel", onWheel, { capture: true, passive: false });
     return () => window.removeEventListener("wheel", onWheel, { capture: true });
-  }, [gl, world, openProject, experienceActive]);
+  }, [gl, world, openProject, experienceActive, view]);
 
   useFrame((_, delta) => {
     world.stepCamera(camera, delta);
@@ -273,6 +282,19 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
         }}
         onHover={onHoverProject}
         onLoaded={onBooksLoaded}
+      />
+      <Aquarium
+        skills={skills}
+        active={activeSkill}
+        featured={featuredSkills}
+        labelled={labelledSkill}
+        reduced={reduced}
+        night={night}
+        onSelect={onSelectSkill}
+        onHover={(i) => {
+          onHoverSkill(i);
+          setCursor(i === null ? "" : "pointer");
+        }}
       />
       <Flashlight
         link={link}

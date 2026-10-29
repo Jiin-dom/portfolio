@@ -5,6 +5,14 @@ export const chapters = [
   { id: "contact", href: "#contact", label: "Contact" },
 ] as const;
 
+/* not a page section: it flies the desk camera to the aquarium on the L return */
+export const skillsLink = { href: "#skills", label: "Skills" } as const;
+
+export const openSkills = (e: { preventDefault(): void }) => {
+  e.preventDefault();
+  window.dispatchEvent(new Event("desk:skills"));
+};
+
 export type ChapterId = (typeof chapters)[number]["id"];
 
 export const featurePanels = [

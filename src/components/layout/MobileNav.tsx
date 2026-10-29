@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { site } from "@/lib/content";
-import { chapters, type ChapterId } from "@/lib/chapters";
+import { chapters, openSkills, skillsLink, type ChapterId } from "@/lib/chapters";
 import { ease } from "@/lib/easings";
 
 type Props = {
@@ -61,6 +61,16 @@ export function MobileNav({ active, dark }: Props) {
                   {link.label}
                 </motion.a>
               ))}
+              <a
+                href={skillsLink.href}
+                className="chapter-link text-sm tracking-[0.12em]"
+                onClick={(e) => {
+                  setOpen(false);
+                  openSkills(e);
+                }}
+              >
+                {skillsLink.label}
+              </a>
               <a
                 href={site.resume}
                 target="_blank"

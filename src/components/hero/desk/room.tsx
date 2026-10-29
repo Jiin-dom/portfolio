@@ -4,7 +4,7 @@ import { Html, useTexture } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
-import { DESK } from "./constants";
+import { DESK, RETURN, SIDE_WALL_X } from "./constants";
 import { FitModel, MODEL_URLS } from "./FitModel";
 import { LAMP } from "./lighting";
 import type { SceneLink } from "./flashlight";
@@ -31,7 +31,8 @@ function useOak() {
       }
       return out as typeof maps;
     };
-    return { top: make(2.4, 0.8), front: make(2.4, 0.4) };
+    /* the return's grain runs along its length, out into the room */
+    return { top: make(2.4, 0.8), front: make(2.4, 0.4), side: make(1.55, 0.55, true) };
   }, [maps]);
 }
 
@@ -64,10 +65,48 @@ function DeskBody() {
           <meshStandardMaterial {...oak.front} color="#8a5a34" roughness={0.7} />
         </mesh>
       ))}
+      <ReturnDesk oak={oak} />
       {/* floor, far below */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -10, 8]} receiveShadow>
         <planeGeometry args={[120, 60]} />
         <meshStandardMaterial color="#3a2a1e" roughness={0.9} />
+      </mesh>
+    </group>
+  );
+}
+
+/* The L return: same oak and drawers as the main desk, turned 90° and butted to its left end. */
+function ReturnDesk({ oak }: { oak: ReturnType<typeof useOak> }) {
+  const w = RETURN.x1 - RETURN.x0;
+  const len = RETURN.z1 - RETURN.z0;
+  const cx = (RETURN.x0 + RETURN.x1) / 2;
+  const cz = (RETURN.z0 + RETURN.z1) / 2;
+  const drawers: [number, number, number][] = [
+    /* z, y-center, height */
+    [10.6, -2.1, 2.9],
+    [10.6, -6.0, 4.6],
+  ];
+  return (
+    <group>
+      <mesh position={[cx, -0.25, cz]} receiveShadow castShadow>
+        <boxGeometry args={[w, 0.5, len]} />
+        <meshStandardMaterial {...oak.side} color="#d39a63" roughness={0.75} normalScale={new THREE.Vector2(0.4, 0.4)} />
+      </mesh>
+      <mesh position={[cx - 0.1, -5.25, cz]} receiveShadow>
+        <boxGeometry args={[w - 0.4, 9.5, len - 0.2]} />
+        <meshStandardMaterial {...oak.front} color="#5a3820" roughness={0.8} />
+      </mesh>
+      {/* drawer fronts face the chair, on the return's inner edge */}
+      {drawers.map(([z, y, h], i) => (
+        <mesh key={i} position={[RETURN.x1 - 0.15, y, z]} castShadow receiveShadow>
+          <boxGeometry args={[0.3, h, 7.2]} />
+          <meshStandardMaterial {...oak.front} color="#8a5a34" roughness={0.7} />
+        </mesh>
+      ))}
+      {/* the side wall the return backs onto */}
+      <mesh position={[SIDE_WALL_X, 20, 9]} receiveShadow>
+        <boxGeometry args={[0.15, 44, 28]} />
+        <meshStandardMaterial color="#d8c8ae" roughness={0.95} />
       </mesh>
     </group>
   );

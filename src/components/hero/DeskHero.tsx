@@ -1,10 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
+import Image from "next/image";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { useReducedMotion } from "motion/react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Briefcase, Flashlight, LayoutGrid, Moon, MousePointer2, Shuffle, Sun, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Briefcase, Fish, Flashlight, LayoutGrid, Moon, MousePointer2, Shuffle, Sun, X } from "lucide-react";
 import { experience, projects, site } from "@/lib/content";
+import { projectSkills, skillGroups, skills } from "@/lib/skills";
+import { speciesOf } from "@/components/hero/desk/species";
 import { deskItemMap } from "@/components/hero/desk/items";
 import type { DeskCommand } from "@/components/hero/desk/DeskCanvas";
 import type { ViewName } from "@/components/hero/desk/world";
@@ -24,6 +27,8 @@ const Photobooth = dynamic(loadBooth, { ssr: false });
 
 /* time for the desk Instax to flash and feed its print before the booth opens */
 const EJECT_MS = 1100;
+
+const NONE: readonly number[] = [];
 
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
@@ -94,6 +99,15 @@ export function DeskHero() {
 
   const [openProject, setOpenProject] = useState<number | null>(null);
   const [hoverProject, setHoverProject] = useState<number | null>(null);
+  const [activeSkill, setActiveSkill] = useState<number | null>(null);
+  const [hoverSkill, setHoverSkill] = useState<number | null>(null);
+  /* the aquarium on the L return has its own close-up view; the field guide lives there */
+  const tankOpen = view === "tank";
+  const [viewBeforeTank, setViewBeforeTank] = useState<ViewName>("top");
+  const tankTrigger = useRef<HTMLButtonElement>(null);
+  /* a book in hand calls its fish to the front glass */
+  const handProject = openProject ?? hoverProject;
+  const featuredSkills = useMemo(() => (handProject === null ? NONE : projectSkills[handProject]), [handProject]);
   const [experienceState, setExperienceState] = useState<"closed" | "extracting" | "open" | "returning">("closed");
   const [experienceOrigin, setExperienceOrigin] = useState({ x: 0, y: 0 });
   const experienceScreen = useRef<HTMLElement>(null);
@@ -159,6 +173,46 @@ export function DeskHero() {
     return () => window.removeEventListener("keydown", onKey);
   }, [openProject]);
 
+  const openTank = useCallback(() => {
+    closeExperience();
+    setOpenProject(null);
+    setFocusId(null);
+    if (view !== "tank") setViewBeforeTank(view);
+    setView("tank");
+  }, [closeExperience, view]);
+
+  const closeTank = useCallback(() => {
+    setActiveSkill(null);
+    setHoverSkill(null);
+    setView(viewBeforeTank);
+    tankTrigger.current?.focus();
+  }, [viewBeforeTank]);
+
+  useEffect(() => {
+    if (!tankOpen || openProject !== null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (activeSkill !== null) setActiveSkill(null);
+      else closeTank();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [tankOpen, openProject, activeSkill, closeTank]);
+
+  /* the Skills nav link, and a #skills deep link, fly straight to the tank */
+  useEffect(() => {
+    const go = () => {
+      root.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+      openTank();
+    };
+    window.addEventListener("desk:skills", go);
+    return () => window.removeEventListener("desk:skills", go);
+  }, [openTank, reduce]);
+
+  useEffect(() => {
+    if (ready && window.location.hash === "#skills") window.dispatchEvent(new Event("desk:skills"));
+  }, [ready]);
+
   useEffect(() => {
     const el = root.current;
     if (!el) return;
@@ -213,6 +267,12 @@ export function DeskHero() {
           onExperienceReturned={experienceReturned}
           onCloseExperience={closeExperience}
           onHoverProject={setHoverProject}
+          skills={skills}
+          activeSkill={activeSkill}
+          featuredSkills={featuredSkills}
+          labelledSkill={hoverSkill ?? activeSkill}
+          onSelectSkill={setActiveSkill}
+          onHoverSkill={setHoverSkill}
           onFocusItem={setFocusId}
           onReady={onReady}
           onProgress={onProgress}
@@ -233,7 +293,7 @@ export function DeskHero() {
       ) : null}
 
       {/* ── Type + UI, layered over the desk like print on a photo ── */}
-      <div className="desk-ui pointer-events-none absolute inset-0 z-20" data-reading={reading || experienceActive ? "" : undefined}>
+      <div className="desk-ui pointer-events-none absolute inset-0 z-20" data-reading={reading || experienceActive || tankOpen ? "" : undefined}>
         <header className="desk-title">
           <p className="desk-kicker">Designs interfaces. Ships systems.</p>
           <h1 className="desk-wordmark">
@@ -302,6 +362,9 @@ export function DeskHero() {
               </button>
               <button ref={experienceTrigger} type="button" className="desk-chip" onClick={(event) => openExperience({ x: event.clientX, y: event.clientY })}>
                 <Briefcase aria-hidden /> Experience
+              </button>
+              <button ref={tankTrigger} type="button" className="desk-chip" onClick={openTank}>
+                <Fish aria-hidden /> Skills
               </button>
               <button type="button" className="desk-chip" onClick={() => send("scatter")}>
                 <Shuffle aria-hidden /> Scatter
@@ -377,7 +440,118 @@ export function DeskHero() {
         </section>
       )}
 
+      {tankOpen && (
+        <FieldGuide
+          active={activeSkill}
+          hovered={hoverSkill}
+          hidden={reading !== null}
+          onSelect={setActiveSkill}
+          onHover={setHoverSkill}
+          onOpenProject={setOpenProject}
+          onClose={closeTank}
+        />
+      )}
+
       {boothOpen && <Photobooth onClose={closeBooth} />}
+    </section>
+  );
+}
+
+/*
+ * The field guide: every skill at a glance, grouped by layer, beside the tank.
+ * Rows and fish point at each other: hovering either tags the fish, picking a
+ * row brings that fish to the front glass and lists the projects it swims through.
+ */
+function FieldGuide({
+  active,
+  hovered,
+  hidden,
+  onSelect,
+  onHover,
+  onOpenProject,
+  onClose,
+}: {
+  active: number | null;
+  hovered: number | null;
+  hidden: boolean;
+  onSelect: (i: number | null) => void;
+  onHover: (i: number | null) => void;
+  onOpenProject: (i: number) => void;
+  onClose: () => void;
+}) {
+  return (
+    <section className="desk-tank desk-glass" data-hidden={hidden ? "" : undefined} aria-labelledby="desk-tank-title" data-lenis-prevent>
+      <div className="desk-tank__head">
+        <p className="desk-tank__kicker">Field guide · {String(skills.length).padStart(2, "0")} species</p>
+        <button type="button" className="desk-chip" onClick={onClose}>
+          <ArrowLeft aria-hidden /> Desk
+        </button>
+      </div>
+      <h2 id="desk-tank-title" className="desk-tank__title">The stack, alive</h2>
+      <p className="desk-tank__lede">Each fish is a tool I build with. Pick one to see the projects it swims through.</p>
+
+      {skillGroups.map((group) => (
+        <div key={group} className="desk-tank__group">
+          <h3 className="desk-tank__group-name">{group}</h3>
+          <ul className="desk-tank__list">
+            {skills.map((s, i) => {
+              if (s.group !== group) return null;
+              const sp = speciesOf(s.name);
+              const open = active === i;
+              const n = s.projects.length;
+              return (
+                <li key={s.name} data-open={open ? "" : undefined}>
+                  <button
+                    type="button"
+                    className="desk-tank__row"
+                    aria-expanded={open}
+                    data-hover={hovered === i ? "" : undefined}
+                    onClick={() => onSelect(open ? null : i)}
+                    onPointerEnter={() => onHover(i)}
+                    onPointerLeave={() => onHover(null)}
+                    onFocus={() => onHover(i)}
+                    onBlur={() => onHover(null)}
+                  >
+                    <span className="desk-tank__swatch" style={{ "--fish": sp.side, "--fin": sp.fin } as CSSProperties} aria-hidden />
+                    <Image src={s.icon} alt="" width={22} height={22} className="desk-tank__icon" />
+                    <span className="desk-tank__name">
+                      {s.name}
+                      <span className="desk-tank__species">{sp.common}</span>
+                    </span>
+                    <span className="desk-tank__uses" aria-label={`Used in ${n} of ${projects.length} projects`}>
+                      {projects.map((_, k) => (
+                        <span key={k} data-on={k < n ? "" : undefined} />
+                      ))}
+                    </span>
+                  </button>
+                  {open && (
+                    <div className="desk-tank__detail">
+                      {n === 0 ? (
+                        <p>No project on the shelf uses it yet.</p>
+                      ) : (
+                        <>
+                          <p>
+                            Swims through {n} of {projects.length} projects:
+                          </p>
+                          <ul>
+                            {s.projects.map((p) => (
+                              <li key={p}>
+                                <button type="button" className="desk-tank__project" onClick={() => onOpenProject(p)}>
+                                  {projects[p].title} <ArrowUpRight aria-hidden />
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
     </section>
   );
 }

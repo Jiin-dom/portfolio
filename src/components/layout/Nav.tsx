@@ -1,7 +1,8 @@
 "use client";
 
+import { Fragment } from "react";
 import { site } from "@/lib/content";
-import { chapters } from "@/lib/chapters";
+import { chapters, openSkills, skillsLink } from "@/lib/chapters";
 import { useActiveChapter } from "@/hooks/useActiveChapter";
 import { MobileNav } from "./MobileNav";
 
@@ -23,15 +24,21 @@ export function Nav() {
         </a>
 
         <nav className="pointer-events-auto hidden items-center gap-9 md:flex" aria-label="Chapters">
-          {chapters.map((chapter) => (
-            <a
-              key={chapter.id}
-              href={chapter.href}
-              className={`chapter-link ${darkText ? "chapter-link-dark" : ""}`}
-              aria-current={active === chapter.id ? "page" : undefined}
-            >
-              {chapter.label}
-            </a>
+          {chapters.map((chapter, i) => (
+            <Fragment key={chapter.id}>
+              <a
+                href={chapter.href}
+                className={`chapter-link ${darkText ? "chapter-link-dark" : ""}`}
+                aria-current={active === chapter.id ? "page" : undefined}
+              >
+                {chapter.label}
+              </a>
+              {i === 0 && (
+                <a href={skillsLink.href} className={`chapter-link ${darkText ? "chapter-link-dark" : ""}`} onClick={openSkills}>
+                  {skillsLink.label}
+                </a>
+              )}
+            </Fragment>
           ))}
         </nav>
 
