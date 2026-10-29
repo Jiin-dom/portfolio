@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { deskItems, flashlightSlot, type DeskItem } from "./items";
-import { DESK } from "./constants";
+import { DESK, TANK } from "./constants";
 
 /*
  * Plain mutable simulation for the desk. Kept outside React state so the
@@ -30,7 +30,8 @@ type Body = {
 
 const NUDGE_MAX = 0.28;
 
-export type ViewName = "top" | "front" | "angle";
+/* "tank" has no button of its own; the Skills chip flies there */
+export type ViewName = "top" | "front" | "angle" | "tank";
 type View = { pos: THREE.Vector3; target: THREE.Vector3; up: THREE.Vector3 };
 
 const DRAG_LIFT = 0.9;
@@ -135,6 +136,14 @@ export class DeskWorld {
         target: new THREE.Vector3(0.5, 0.4, -0.8),
         up: new THREE.Vector3(0, 1, 0),
       },
+      /*
+       * Square onto the tank's front glass, which faces +x. Wide screens shift
+       * the tank right of center to leave the left side for the field guide;
+       * portrait aims low so the tank rides above the bottom sheet.
+       */
+      tank: portrait
+        ? { pos: new THREE.Vector3(TANK.x + 27, 2.4, TANK.z), target: new THREE.Vector3(TANK.x, -1.7, TANK.z), up: new THREE.Vector3(0, 1, 0) }
+        : { pos: new THREE.Vector3(TANK.x + 12.5, 2.3, TANK.z + 1.5), target: new THREE.Vector3(TANK.x, 1.55, TANK.z + 1.5), up: new THREE.Vector3(0, 1, 0) },
     };
 
     /* scratch camera posed at the top view, for screen-to-desk mapping */

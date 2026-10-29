@@ -637,6 +637,675 @@ html.desk-loading body {
   border-bottom: 1px dotted currentColor;
 }
 
+/* ── Field guide: the skills panel beside the aquarium close-up ── */
+.desk-tank {
+  position: absolute;
+  z-index: 25;
+  top: calc(var(--nav-h) + 0.75rem);
+  bottom: 1.75rem;
+  left: var(--page-pad);
+  display: flex;
+  flex-direction: column;
+  width: min(400px, 36vw);
+  overflow: hidden;
+  padding: 1.15rem 1.15rem 0.6rem;
+  border-radius: 1.1rem;
+  color: var(--desk-cream);
+  animation: tank-guide-in 520ms var(--ease-out) 380ms both;
+  transition: opacity 200ms ease;
+}
+
+/*
+ * The list scrolls with its scrollbar hidden. Each edge fades out only while
+ * there is more beyond it, so the fade itself says "keep scrolling".
+ */
+.scroll-fade {
+  --fade-top: 0px;
+  --fade-bottom: 0px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+  transition: --fade-top 220ms ease, --fade-bottom 220ms ease;
+}
+
+.scroll-fade::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-fade[data-fade-top] {
+  --fade-top: 2.75rem;
+}
+
+.scroll-fade[data-fade-bottom] {
+  --fade-bottom: 4rem;
+}
+
+.desk-tank__scroll {
+  flex: 1;
+  min-height: 0;
+  margin-top: 0.4rem;
+  padding-bottom: 0.8rem;
+}
+
+@property --fade-top {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --fade-bottom {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+/* a small nudge under the fade while there is more below */
+.desk-tank__more {
+  align-self: center;
+  width: 16px;
+  height: 16px;
+  margin-top: -1.4rem;
+  opacity: 0.7;
+  pointer-events: none;
+  animation: tank-more 1.6s ease-in-out infinite;
+}
+
+@keyframes tank-more {
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+.desk-tank[data-hidden] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes tank-guide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+
+.desk-tank__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.desk-tank__kicker {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.desk-tank__title {
+  margin: 0.9rem 0 0.3rem;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.desk-tank__lede {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: rgb(255 240 220 / 0.8);
+}
+
+.desk-tank__group {
+  margin-top: 1.1rem;
+}
+
+.desk-tank__group-name {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.desk-tank__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-tank__list > li {
+  border-top: 1px solid rgb(255 240 220 / 0.1);
+}
+
+.desk-tank__row {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.desk-tank__row[data-hover],
+.desk-tank__list > li[data-open] .desk-tank__row {
+  background: rgb(255 240 220 / 0.1);
+}
+
+.desk-tank__row:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: -2px;
+}
+
+/* a little fish silhouette in the species' own colors, so rows map to fish at a glance */
+.desk-tank__swatch {
+  position: relative;
+  width: 22px;
+  height: 12px;
+  border-radius: 60% 40% 40% 60% / 50%;
+  background: var(--fish);
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.18);
+}
+
+.desk-tank__swatch::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  right: -7px;
+  border-style: solid;
+  border-width: 5px 0 5px 8px;
+  border-color: transparent transparent transparent var(--fin);
+  transform: scaleX(-1);
+}
+
+.desk-tank__icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.desk-tank__name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.desk-tank__species {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+/* projects using the skill, out of the whole shelf */
+.desk-tank__uses {
+  display: flex;
+  gap: 3px;
+}
+
+.desk-tank__uses > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 240 220 / 0.45);
+}
+
+.desk-tank__uses > span[data-on] {
+  background: var(--desk-cream);
+  border-color: var(--desk-cream);
+}
+
+.desk-tank__detail {
+  padding: 0.15rem 0.5rem 0.8rem 3.6rem;
+  font-size: 0.82rem;
+  color: rgb(255 240 220 / 0.82);
+  animation: tank-detail-in 240ms var(--ease-out) both;
+}
+
+@keyframes tank-detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.desk-tank__detail p {
+  margin: 0 0 0.35rem;
+}
+
+.desk-tank__detail ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-tank__project {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 1.9rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid rgb(255 240 220 / 0.3);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.desk-tank__project svg {
+  width: 11px;
+  height: 11px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .desk-tank__project:hover {
+    background: var(--desk-cream);
+    color: var(--ink);
+  }
+}
+
+/* ── Work record: the readable page that takes over from the 3D sheet ── */
+.desk-sheet {
+  position: absolute;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(1rem, 2.4vw, 1.6rem) clamp(1.1rem, 2.6vw, 1.9rem) 0.9rem;
+  border-radius: 3px;
+  background:
+    radial-gradient(120% 90% at 50% 40%, transparent 55%, rgb(150 112 58 / 0.14)),
+    repeating-linear-gradient(0deg, transparent 0 6px, rgb(80 58 30 / 0.018) 6px 7px),
+    #f6f0e2;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.6) inset,
+    0 30px 80px rgb(12 6 2 / 0.45);
+  color: var(--ink);
+  transform-origin: center;
+  transition:
+    top 380ms var(--ease-out),
+    left 380ms var(--ease-out),
+    width 380ms var(--ease-out),
+    height 380ms var(--ease-out);
+}
+
+/* dims the desk behind the page; click it to put the page back */
+.desk-sheet-backdrop {
+  position: absolute;
+  z-index: 29;
+  inset: 0;
+  background: rgb(18 10 4 / 0.55);
+  animation: sheet-dim-in 600ms ease both;
+}
+
+.desk-sheet-backdrop[data-closing] {
+  animation: sheet-dim-out 520ms ease both;
+}
+
+@keyframes sheet-dim-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-dim-out {
+  to {
+    opacity: 0;
+  }
+}
+
+.desk-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 2px solid var(--ink);
+}
+
+.desk-sheet__kicker {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.desk-sheet__close {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: -0.4rem -0.5rem -0.4rem 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.desk-sheet__close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.desk-sheet__tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.9rem;
+  border-bottom: 1px solid var(--ink);
+}
+
+.desk-sheet__tabs button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.9rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem 0.55rem 0 0;
+  background: rgb(28 22 18 / 0.04);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.desk-sheet__tabs button span {
+  opacity: 0.6;
+}
+
+.desk-sheet__tabs button[aria-current="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #f6f0e2;
+}
+
+.desk-sheet:focus {
+  outline: none;
+}
+
+.desk-sheet :focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+.desk-sheet__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0 0.5rem;
+}
+
+/* Education continues below Experience on the same page */
+.desk-sheet__section {
+  margin-top: 1.6rem;
+  border-top: 1px solid var(--ink);
+}
+
+.desk-sheet__title-row h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4.2vw, 2.9rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+}
+
+.desk-sheet__stamp {
+  flex: none;
+  padding: 0.35rem 0.55rem;
+  border: 2px solid rgb(232 93 44 / 0.8);
+  border-radius: 0.4rem;
+  color: rgb(232 93 44 / 0.9);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transform: rotate(-6deg);
+}
+
+.desk-sheet__body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin: 0 -0.4rem;
+  padding: 0.2rem 0.4rem 1rem;
+}
+
+.desk-sheet__body:focus-visible {
+  outline-offset: -2px;
+}
+
+.desk-sheet__roles,
+.desk-sheet__schools {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-sheet__roles > li,
+.desk-sheet__schools > li {
+  border-bottom: 1px solid var(--line);
+}
+
+.desk-sheet__roles > li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.9rem;
+  padding: 0.95rem 0.2rem;
+}
+
+.desk-sheet__index,
+.desk-sheet__dates {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.desk-sheet__index {
+  padding-top: 0.15rem;
+}
+
+.desk-sheet__role-main,
+.desk-sheet__schools > li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.desk-sheet__role-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.desk-sheet__place {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+}
+
+.desk-sheet__schools > li {
+  padding: 0.85rem 0.2rem;
+}
+
+.desk-sheet__school-title {
+  font-size: 1.1rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.desk-sheet__more {
+  align-self: center;
+  width: 16px;
+  height: 16px;
+  margin-top: -1.3rem;
+  color: var(--ink-soft);
+  pointer-events: none;
+  animation: tank-more 1.6s ease-in-out infinite;
+}
+
+.desk-sheet__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+}
+
+.desk-sheet__foot a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.desk-sheet__resume {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #f6f0e2 !important;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.desk-sheet__resume svg {
+  width: 12px;
+  height: 12px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .desk-sheet__close:hover {
+    background: rgb(28 22 18 / 0.05);
+  }
+
+  .desk-sheet__tabs button:not([aria-current]):hover {
+    color: var(--ink);
+  }
+}
+
+@media (max-width: 767px) {
+  .desk-sheet__foot > a:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+}
+
+/* name tag that rides above a fish in the tank */
+.tank-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  padding: 0.3rem 0.65rem;
+  border-radius: 0.5rem;
+  background: rgb(20 14 10 / 0.72);
+  color: var(--desk-cream);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+
+.tank-label span {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-tank,
+  .desk-tank__detail,
+  .desk-tank__more,
+  .desk-sheet,
+  .desk-sheet-backdrop,
+  .desk-sheet__more {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* phones: the guide becomes a bottom sheet under the tank */
+@media (max-width: 767px) {
+  .desk-tank {
+    top: auto;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    width: auto;
+    max-height: 50svh;
+    padding: 1rem 0.9rem 1.2rem;
+    animation-name: tank-sheet-in;
+  }
+
+  .desk-tank__title {
+    margin-top: 0.6rem;
+    font-size: 1.35rem;
+  }
+
+  .desk-tank__detail {
+    padding-left: 0.5rem;
+  }
+}
+
+@keyframes tank-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
 .desk-side-tab {
   position: absolute;
   right: 0;

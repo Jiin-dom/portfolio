@@ -23,27 +23,28 @@ export const capabilities = [
   "Optimize",
 ] as const;
 
-export const techStack = [
-  { name: "HTML", icon: "/mini-icons/html (1) (1).png" },
-  { name: "CSS", icon: "/mini-icons/csssmall.png" },
-  { name: "JavaScript", icon: "/mini-icons/js (1) (1).png" },
-  { name: "React", icon: "/mini-icons/react (1) (1).png" },
-  { name: "Bootstrap", icon: "/mini-icons/boostrap (1) (1).png" },
-  { name: "Java", icon: "/mini-icons/java (1) (1).png" },
-  { name: "Spring", icon: "/mini-icons/spring (1) (1).png" },
-  { name: "Spring Boot", icon: "/mini-icons/spring boot (1).png" },
-  { name: "REST API", icon: "/mini-icons/RESTapi (1) (1).png" },
-  { name: "MySQL", icon: "/mini-icons/mysql (2) (2).png" },
-] as const;
+/* `also` lists the names a skill goes by in project tool lists */
+export const techStack: readonly { name: string; icon: string; group: "Frontend" | "Backend" | "Data"; also?: readonly string[] }[] = [
+  { name: "HTML", icon: "/mini-icons/html (1) (1).png", group: "Frontend" },
+  { name: "CSS", icon: "/mini-icons/csssmall.png", group: "Frontend" },
+  { name: "JavaScript", icon: "/mini-icons/js (1) (1).png", group: "Frontend" },
+  { name: "React", icon: "/mini-icons/react (1) (1).png", group: "Frontend", also: ["React JS"] },
+  { name: "Bootstrap", icon: "/mini-icons/boostrap (1) (1).png", group: "Frontend" },
+  { name: "Java", icon: "/mini-icons/java (1) (1).png", group: "Backend", also: ["Spring Boot", "Spring Security"] },
+  { name: "Spring", icon: "/mini-icons/spring (1) (1).png", group: "Backend", also: ["Spring Boot", "Spring Security"] },
+  { name: "Spring Boot", icon: "/mini-icons/spring boot (1).png", group: "Backend" },
+  { name: "REST API", icon: "/mini-icons/RESTapi (1) (1).png", group: "Backend" },
+  { name: "MySQL", icon: "/mini-icons/mysql (2) (2).png", group: "Data" },
+];
 
 export const education = [
   {
-    year: "Now",
+    year: "2022 – 2026",
     title: "Software Engineering",
     place: "Lithan Academy",
   },
   {
-    year: "Now",
+    year: "2022 – 2026",
     title: "Information Technology",
     place: "University of Cebu - Banilad",
   },
@@ -60,6 +61,11 @@ export const education = [
 ] as const;
 
 export const experience = [
+  {
+    year: "January 2025 – Present",
+    title: "Software Engineer",
+    place: "MoveForward Inc. Ventures",
+  },
   {
     year: "2023 - 2024",
     title: "Software Developer",

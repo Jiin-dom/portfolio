@@ -85,31 +85,6 @@ export function Ruler({ map }: { map: THREE.Texture }) {
   );
 }
 
-/* fanned colour chips — a designer object, same seat the cork coaster had */
-const SWATCH_COLORS = ["#1c1612", "#e85d2c", "#fff0dc", "#4a6b52", "#c08a55", "#2f4a6b", "#efc0c8"];
-
-export function SwatchFan() {
-  return (
-    <group>
-      {SWATCH_COLORS.map((color, i) => {
-        const t = SWATCH_COLORS.length === 1 ? 0.5 : i / (SWATCH_COLORS.length - 1);
-        const yaw = -0.52 + t * 1.04;
-        return (
-          <group key={color} rotation={[0, yaw, 0]}>
-            <RoundedBox args={[2.05, 0.016, 0.7]} radius={0.035} smoothness={3} position={[0.52, 0.01 + i * 0.013, 0]}>
-              <meshStandardMaterial color={color} roughness={0.55} />
-            </RoundedBox>
-            <mesh position={[-0.38, 0.019 + i * 0.013, 0]}>
-              <boxGeometry args={[0.28, 0.012, 0.42]} />
-              <meshStandardMaterial color="#f4efe6" roughness={0.8} />
-            </mesh>
-          </group>
-        );
-      })}
-    </group>
-  );
-}
-
 export function Pen() {
   const r = 0.07;
   return (

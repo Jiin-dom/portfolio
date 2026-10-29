@@ -22,7 +22,7 @@ export type DeskItem = {
 /* Order matters: earlier items rest underneath later ones. */
 export const deskItems: DeskItem[] = [
   { id: "mat", label: "Cutting mat", note: "Self-healing, A2. Where every layout gets measured twice and cut once.", w: 7.6, d: 5.2, h: 0.06, heavy: true, fx: 0.4, fz: 0.04, rot: -0.04, m: { fx: 0.15, fz: 0.0 } },
-  { id: "swatches", label: "Swatch fan", note: "Seven colours in hand. The palette ships with three.", w: 2.3, d: 1.7, h: 0.1, fx: 0.0, fz: 0.06, rot: 0.2, m: { fx: 0.05, fz: 0.0 } },
+  { id: "experience", label: "Work folder", note: "Click to pull out my work record.", w: 1.55, d: 2.3, h: 0.12, fx: -0.07, fz: 0.05, rot: -0.12, m: { fx: 0.0, fz: 0.02 } },
   { id: "tablet", label: "iPad", note: "Where the layouts get tested at real size.", w: 3.0, d: 2.2, h: 0.09, fx: 0.72, fz: -0.02, rot: 0.1, m: { fx: 0.5, fz: -0.42 } },
   { id: "note", label: "Sticky note", note: "Everything on this desk moves. Try it.", w: 1.2, d: 1.2, h: 0.013, fx: 0.22, fz: -0.66, rot: 0.06, m: { fx: -0.55, fz: -0.5 } },
   { id: "phone", label: "Nothing Phone", note: "Face down. Glyphs on, notifications off.", w: 0.96, d: 1.98, h: 0.13, fx: 0.5, fz: 0.52, rot: -0.25, m: { fx: 0.6, fz: 0.36 } },
