@@ -35,6 +35,7 @@ export type PrintBridge = { origin: () => SheetOrigin | null; release: () => voi
 
 type Props = {
   active: boolean;
+  reducedEffects: boolean;
   reduced: boolean;
   command: DeskCommand | null;
   view: ViewName;
@@ -157,7 +158,7 @@ function Warmup({ onDone, onProgress }: { onDone: () => void; onProgress?: (p: n
   return null;
 }
 
-function Desk({ balanced, reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, onOpenExperience, experienceOpen, onCloseExperience, onPaperBridge, onPrintBridge, onHoverProject, skills, activeSkill, featuredSkills, labelledSkill, onSelectSkill, onHoverSkill, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active"> & { balanced: boolean }) {
+function Desk({ balanced, reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, onOpenExperience, experienceOpen, onCloseExperience, onPaperBridge, onPrintBridge, onHoverProject, skills, activeSkill, featuredSkills, labelledSkill, onSelectSkill, onHoverSkill, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active" | "reducedEffects"> & { balanced: boolean }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const gl = useThree((s) => s.gl);
   const size = useThree((s) => s.size);
@@ -402,7 +403,7 @@ function WindowShadow() {
 
 const MAX_DPR = 2;
 
-export function DeskCanvas({ active, ...props }: Props) {
+export function DeskCanvas({ active, reducedEffects, ...props }: Props) {
   /* full sharpness by default; only steps down if the device can't hold the frame rate */
   const [ceiling] = useState(() => Math.min(window.devicePixelRatio || 1, MAX_DPR));
   const [dpr, setDpr] = useState(ceiling);
@@ -416,7 +417,7 @@ export function DeskCanvas({ active, ...props }: Props) {
     document.addEventListener("visibilitychange", update);
     return () => document.removeEventListener("visibilitychange", update);
   }, []);
-  const useBalanced = quality === "balanced" || (quality === "auto" && balanced);
+  const useBalanced = quality === "balanced" || (quality === "auto" && (balanced || reducedEffects));
   const renderDpr = quality === "full" ? ceiling : useBalanced ? Math.min(dpr, 1.5) : dpr;
 
   return (
