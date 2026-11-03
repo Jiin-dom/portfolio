@@ -11,6 +11,7 @@ import { speciesOf } from "@/components/hero/desk/species";
 import { PAPER, type SheetOrigin } from "@/components/hero/desk/experience";
 import { WorkRecord } from "@/components/hero/WorkRecord";
 import { useScrollFade } from "@/hooks/useScrollFade";
+import { useReducedEffects } from "@/hooks/useReducedEffects";
 import { deskSpot } from "@/lib/chapters";
 import { deskItemMap } from "@/components/hero/desk/items";
 import type { DeskCommand, PaperBridge, PrintBridge } from "@/components/hero/desk/DeskCanvas";
@@ -72,6 +73,7 @@ function useNight() {
 }
 
 export function DeskHero() {
+  const [reducedEffects, setReducedEffects] = useReducedEffects();
   const reduce = useReducedMotion() ?? false;
   const root = useRef<HTMLElement>(null);
   const [inView, setInView] = useState(true);
@@ -451,6 +453,7 @@ export function DeskHero() {
       {/* ── 3D desk ── */}
       <div className={`absolute inset-0 transition-opacity duration-1000 ${ready ? "opacity-100" : "opacity-0"}`} aria-hidden>
         <DeskCanvas
+          reducedEffects={reducedEffects}
           active={inView && !boothOpen}
           reduced={reduce}
           command={command}
@@ -563,6 +566,15 @@ export function DeskHero() {
               Full-stack developer <br /> with a strong focus <br /> on UI and UX.
             </p>
             <div className="desk-card__actions pointer-events-auto mt-4 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                className="desk-chip"
+                aria-pressed={reducedEffects}
+                onClick={() => setReducedEffects(!reducedEffects)}
+                title="Use lighter shadows and fewer background animation updates. Your choice is remembered."
+              >
+                {reducedEffects ? "Restore effects" : "Reduce effects"}
+              </button>
               <a href="#contact" className="desk-chip desk-chip--explore">
                 <ArrowDown aria-hidden /> Explore
               </a>
