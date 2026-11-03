@@ -247,6 +247,13 @@ class ShelfAnim {
   private aim = new THREE.Vector3();
   private ray = new THREE.Raycaster();
   private plane = new THREE.Plane();
+  private torchScratch = {
+    up: new THREE.Vector3(),
+    right: new THREE.Vector3(),
+    center: new THREE.Vector3(),
+    normal: new THREE.Vector3(),
+    hit: new THREE.Vector3(),
+  };
   hovered = -1;
   active: number | null = null;
   readonly shelfQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
@@ -287,15 +294,15 @@ class ShelfAnim {
     torch.intensity = 1.7 * dist * this.torchLevel;
 
     /* hand position: a little right of and below the eye */
-    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
-    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+    const up = this.torchScratch.up.set(0, 1, 0).applyQuaternion(camera.quaternion);
+    const right = this.torchScratch.right.set(1, 0, 0).applyQuaternion(camera.quaternion);
     torch.position.copy(camera.position).addScaledVector(right, 1.6).addScaledVector(up, -1.1);
 
     /* aim where the cursor meets the page plane */
-    const center = camera.position.clone().addScaledVector(fwd, dist);
-    this.plane.setFromNormalAndCoplanarPoint(fwd.clone().negate(), center);
+    const center = this.torchScratch.center.copy(camera.position).addScaledVector(fwd, dist);
+    this.plane.setFromNormalAndCoplanarPoint(this.torchScratch.normal.copy(fwd).negate(), center);
     this.ray.setFromCamera(pointer, camera);
-    const hit = this.ray.ray.intersectPlane(this.plane, new THREE.Vector3()) ?? center;
+    const hit = this.ray.ray.intersectPlane(this.plane, this.torchScratch.hit) ?? center;
     /* while off, park on the middle of the spread so the beam sweeps out to the cursor */
     if (this.torchLevel === 0) this.aim.copy(center);
     if (reduced) this.aim.copy(hit);
@@ -352,7 +359,9 @@ class ShelfAnim {
 
       const g = this.groups[i];
       if (!g) continue;
-      tmp.pulled.copy(this.slots[i]).add(new THREE.Vector3(0, 0.25, 1.9));
+      tmp.pulled.copy(this.slots[i]);
+      tmp.pulled.y += 0.25;
+      tmp.pulled.z += 1.9;
       tmp.pos.copy(this.slots[i]).lerp(tmp.pulled, s1);
       tmp.pos.z += this.hover[i] * 0.35;
       tmp.present
@@ -367,7 +376,9 @@ class ShelfAnim {
       if (cover) cover.rotation.y = -Math.PI * 0.985 * s3;
     }
 
-    link.setBook(camera.position.clone().addScaledVector(tmp.fwd, dist), tmp.fwd.clone().negate(), openAmount);
+    tmp.present.copy(camera.position).addScaledVector(tmp.fwd, dist);
+    tmp.right.copy(tmp.fwd).negate();
+    link.setBook(tmp.present, tmp.right, openAmount);
     /* a hand-held flashlight takes over from the built-in reading torch */
     this.stepTorch(camera, tmp.fwd, dist, dt, reduced, night && !link.flashHeld && openAmount > 0.6 && this.active !== null, pointer);
 

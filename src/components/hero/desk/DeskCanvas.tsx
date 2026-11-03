@@ -18,6 +18,7 @@ import type { Skill } from "@/lib/skills";
 import type { BookProject } from "./textures";
 import { buildTextures, type DeskTextures } from "./textures";
 import * as Model from "./models";
+import { ComparisonProbe, ShadowBudget, useComparisonControls } from "./Performance";
 
 const OAK_MAPS = ["/textures/oak_veneer_01/diffuse.jpg", "/textures/oak_veneer_01/rough.jpg", "/textures/oak_veneer_01/nor_gl.jpg"] as const;
 Object.values(MODEL_URLS).forEach((url) => useGLTF.preload(url));
@@ -156,7 +157,7 @@ function Warmup({ onDone, onProgress }: { onDone: () => void; onProgress?: (p: n
   return null;
 }
 
-function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, experienceOpen, onOpenExperience, onCloseExperience, onPaperBridge, onPrintBridge, onHoverProject, skills, activeSkill, featuredSkills, labelledSkill, onSelectSkill, onHoverSkill, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active">) {
+function Desk({ balanced, reduced, command, view, night, onToggleNight, flashOn, onToggleFlash, projects, openProject, onOpenProject, onOpenExperience, experienceOpen, onCloseExperience, onPaperBridge, onPrintBridge, onHoverProject, skills, activeSkill, featuredSkills, labelledSkill, onSelectSkill, onHoverSkill, onFocusItem, onReady, onProgress, printing, onOpenBooth }: Omit<Props, "active"> & { balanced: boolean }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const gl = useThree((s) => s.gl);
   const size = useThree((s) => s.size);
@@ -308,6 +309,7 @@ function Desk({ reduced, command, view, night, onToggleNight, flashOn, onToggleF
         onLoaded={onBooksLoaded}
       />
       <Aquarium
+        balanced={balanced}
         skills={skills}
         active={activeSkill}
         featured={featuredSkills}
@@ -404,22 +406,45 @@ export function DeskCanvas({ active, ...props }: Props) {
   /* full sharpness by default; only steps down if the device can't hold the frame rate */
   const [ceiling] = useState(() => Math.min(window.devicePixelRatio || 1, MAX_DPR));
   const [dpr, setDpr] = useState(ceiling);
+  const [balanced, setBalanced] = useState(false);
+  const adaptation = useRef({ balanced: false, recovered: false });
+  const { paused, quality } = useComparisonControls();
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    const update = () => setVisible(!document.hidden);
+    update();
+    document.addEventListener("visibilitychange", update);
+    return () => document.removeEventListener("visibilitychange", update);
+  }, []);
+  const useBalanced = quality === "balanced" || (quality === "auto" && balanced);
+  const renderDpr = quality === "full" ? ceiling : useBalanced ? Math.min(dpr, 1.5) : dpr;
 
   return (
     <Canvas
       shadows="percentage"
-      dpr={dpr}
-      frameloop={active ? "always" : "never"}
+      dpr={renderDpr}
+      frameloop={active && visible && !paused ? "always" : "never"}
       camera={{ fov: 28, near: 0.5, far: 120, position: [0, 20, 9] }}
       gl={{ antialias: true, alpha: true }}
       style={{ touchAction: "none" }}
     >
-      <PerformanceMonitor
+      {quality === "auto" ? <PerformanceMonitor
         factor={1}
-        flipflops={3}
-        onChange={({ factor }) => setDpr(Math.max(1, Math.round((1 + (ceiling - 1) * factor) * 4) / 4))}
-        onFallback={() => setDpr(1)}
-      />
+        iterations={5}
+        step={0.2}
+        flipflops={Infinity}
+        bounds={() => [45, 58]}
+        onChange={({ factor }) => {
+          setDpr(Math.max(1, Math.round((1 + (ceiling - 1) * factor) * 4) / 4));
+          // Allow one recovery, then keep the lighter budget if it struggles again.
+          const state = adaptation.current;
+          const next = factor < 0.5 || (state.balanced && (factor < 0.75 || state.recovered));
+          if (state.balanced && !next) state.recovered = true;
+          state.balanced = next;
+          setBalanced(next);
+        }}
+      /> : null}
+      <ComparisonProbe paused={paused} />
       <Lighting night={props.night} reduced={props.reduced} />
       <Environment resolution={256} frames={1}>
         <Lightformer form="rect" intensity={2.2} position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[12, 6, 1]} />
@@ -430,7 +455,8 @@ export function DeskCanvas({ active, ...props }: Props) {
       <WindowShadow />
       <Foliage reduced={props.reduced} />
 
-      <Desk {...props} />
+      <Desk {...props} balanced={useBalanced} />
+      <ShadowBudget balanced={useBalanced} />
     </Canvas>
   );
 }

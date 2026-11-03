@@ -155,6 +155,22 @@ class FlashRig {
     this.clock += dt;
     const { tmp } = this;
 
+    // The parked torch follows the desk layout, but needs no camera rays or aim math.
+    if (!held && this.pick === 0 && this.light < 0.0001) {
+      this.light = 0;
+      this.onAt = -1;
+      link.setFlashHeld(false);
+      g.position.copy(home).setY(R);
+      g.quaternion.copy(this.homeQ);
+      if (this.lens) this.lens.emissiveIntensity = 0;
+      if (this.spot) {
+        this.spot.intensity = 0;
+        this.spot.shadow.autoUpdate = this.spot.shadow.map === null;
+      }
+      if (this.fill) this.fill.intensity = 0;
+      return;
+    }
+
     /* pick up, then click on; switch off, then put down */
     const lit = held && this.pick > 0.98;
     if (lit && this.onAt < 0) this.onAt = this.clock;

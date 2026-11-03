@@ -399,6 +399,7 @@ transformed.z += uAmp * bendS * bendS * sin(uPhase - transformed.x * uK);`,
 
 type Swimmer = {
   sp: Species;
+  bounds: { x: number; z: number; y1: number };
   pos: THREE.Vector3;
   vel: THREE.Vector3;
   goal: THREE.Vector3;
@@ -426,6 +427,7 @@ class School {
     this.fish = species.map((sp, i) => {
       const f: Swimmer = {
         sp,
+        bounds: this.bounds(sp.len),
         pos: new THREE.Vector3(),
         vel: new THREE.Vector3(),
         goal: new THREE.Vector3(),
@@ -484,7 +486,7 @@ class School {
   }
 
   private pickGoal(f: Swimmer, i: number) {
-    const b = this.bounds(f.sp.len);
+    const b = f.bounds;
     const zone = this.zoneOf(i);
     f.zone = zone;
     f.regoalAt = this.reduced ? Infinity : this.clock + 3 + this.rand() * 4;
@@ -503,10 +505,11 @@ class School {
   }
 
   step(delta: number) {
-    const dt = Math.min(delta, 1 / 30);
+    const dt = Math.min(delta, 0.1);
     this.clock += dt;
 
-    this.fish.forEach((f, i) => {
+    for (let i = 0; i < this.fish.length; i++) {
+      const f = this.fish[i];
       if (f.zone !== this.zoneOf(i) || this.clock > f.regoalAt) this.pickGoal(f, i);
 
       const showing = f.zone === "show";
@@ -525,7 +528,7 @@ class School {
         f.pos.addScaledVector(f.vel, dt);
         if (dist < 0.12 && !showing) f.regoalAt = this.clock;
       }
-      const b = this.bounds(f.sp.len);
+      const b = f.bounds;
       f.pos.x = clamp(f.pos.x, -b.x, b.x);
       f.pos.z = clamp(f.pos.z, -b.z, b.z);
       f.pos.y = clamp(f.pos.y, this.floor(f), b.y1);
@@ -546,12 +549,12 @@ class School {
       f.bend.uAmp.value = this.reduced ? 0 : f.sp.len * (0.05 + pace * 0.09) + Math.abs(turn) * f.sp.len * 0.08;
 
       const g = f.group;
-      if (!g) return;
+      if (!g) continue;
       g.position.copy(f.pos);
       g.rotation.set(0, f.heading, f.pitch);
       /* the fish on show gets a little larger than a hovered one, so it reads across the room */
       g.scale.setScalar(1 + f.grow * (showing ? 0.35 : 0.15));
-    });
+    }
   }
 }
 
@@ -930,31 +933,83 @@ function Pane({ size, at, thin }: { size: [number, number, number]; at: [number,
   );
 }
 
-function Bubbles() {
+/* Shared by both frame callbacks; sample once regardless of subscription order. */
+class AquariumAnimation {
+  private readonly localSphere = new THREE.Sphere(
+    new THREE.Vector3(0, (TANK.h + 0.3) / 2, 0),
+    Math.hypot(TANK.w + 0.06, TANK.h + 0.3, TANK.d + 0.06) / 2,
+  );
+  private readonly sphere = new THREE.Sphere();
+  private readonly frustum = new THREE.Frustum();
+  private readonly projection = new THREE.Matrix4();
+  private readonly cameraPosition = new THREE.Vector3();
+  private frame = -1;
+  private pending = 0;
+  private cadence = 0;
+  private dt = 0;
+
+  sample(camera: THREE.Camera, tank: THREE.Group | null, frame: number, delta: number, balanced: boolean) {
+    if (this.frame === frame) return this.dt;
+    this.frame = frame;
+    this.dt = 0;
+    if (!tank) return 0;
+    tank.updateWorldMatrix(true, false);
+    camera.updateWorldMatrix(true, false);
+    this.sphere.copy(this.localSphere).applyMatrix4(tank.matrixWorld);
+    this.projection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    this.frustum.setFromProjectionMatrix(this.projection, camera.coordinateSystem, camera.reversedDepth);
+    if (!this.frustum.intersectsSphere(this.sphere)) {
+      /* Pause hidden time instead of catching up when the tank returns. */
+      this.pending = this.cadence = 0;
+      return 0;
+    }
+
+    /* Keep skipped visible time, but bound work/motion after a long frame. */
+    const elapsed = Math.min(delta, 0.1);
+    this.pending = Math.min(this.pending + elapsed, 0.1);
+    camera.getWorldPosition(this.cameraPosition);
+    if (balanced && this.cameraPosition.distanceToSquared(this.sphere.center) > 30 * 30) {
+      this.cadence += elapsed;
+      if (this.cadence + 1e-8 < 1 / 30) return 0;
+      this.cadence = Math.max(0, this.cadence - Math.floor((this.cadence + 1e-8) * 30) / 30);
+    } else {
+      this.cadence = 0;
+    }
+    this.dt = this.pending;
+    this.pending = 0;
+    return this.dt;
+  }
+}
+
+function Bubbles({ animation, tank, balanced }: { animation: AquariumAnimation; tank: React.RefObject<THREE.Group | null>; balanced: boolean }) {
   const count = 18;
   const ref = useRef<THREE.InstancedMesh>(null);
-  const [state] = useState(() => {
+  const bubbles = useRef<{ y: number; speed: number; phase: number; size: number }[] | null>(null);
+  if (bubbles.current === null) {
     const r = rng(17);
-    return Array.from({ length: count }, () => ({ y: r(), speed: 0.4 + r() * 0.35, phase: r() * 6, size: 0.018 + r() * 0.03 }));
-  });
+    bubbles.current = Array.from({ length: count }, () => ({ y: r(), speed: 0.4 + r() * 0.35, phase: r() * 6, size: 0.018 + r() * 0.03 }));
+  }
   const m = useMemo(() => new THREE.Matrix4(), []);
   const x = IN_W / 2 - 0.35;
   const z = -IN_D / 2 + 0.25;
   const base = groundY(x, z);
   const span = WATER_TOP - base;
 
-  useFrame((_, delta) => {
+  useFrame(({ camera, clock }, delta) => {
     const mesh = ref.current;
-    if (!mesh) return;
-    const dt = Math.min(delta, 1 / 30);
-    state.forEach((b, i) => {
+    const state = bubbles.current;
+    if (!mesh || !state) return;
+    const dt = animation.sample(camera, tank.current, clock.elapsedTime, delta, balanced);
+    if (dt === 0) return;
+    for (let i = 0; i < state.length; i++) {
+      const b = state[i];
       b.y += (b.speed * dt) / span;
       if (b.y > 1) b.y = 0;
       b.phase += dt * 3;
       const s = b.size * (0.7 + b.y * 0.6);
       m.makeScale(s, s, s).setPosition(x + Math.sin(b.phase) * 0.03, base + b.y * span, z + Math.cos(b.phase * 0.7) * 0.03);
       mesh.setMatrixAt(i, m);
-    });
+    }
     mesh.instanceMatrix.needsUpdate = true;
   });
 
@@ -986,6 +1041,7 @@ class Water {
 }
 
 type AquariumProps = {
+  balanced: boolean;
   skills: readonly Skill[];
   active: number | null;
   featured: readonly number[];
@@ -997,10 +1053,12 @@ type AquariumProps = {
   onHover: (index: number | null) => void;
 };
 
-export function Aquarium({ skills, active, featured, labelled, reduced, night, onSelect, onHover }: AquariumProps) {
+export function Aquarium({ balanced, skills, active, featured, labelled, reduced, night, onSelect, onHover }: AquariumProps) {
   const species = useMemo(() => skills.map((s) => speciesOf(s.name)), [skills]);
   const [school] = useState(() => new School(species, reduced));
   const [water] = useState(() => new Water());
+  const [animation] = useState(() => new AquariumAnimation());
+  const tank = useRef<THREE.Group>(null);
   const groundMat = useRef<THREE.MeshStandardMaterial>(null);
   const light = useRef<THREE.SpotLight>(null);
   const label = useRef<THREE.Group>(null);
@@ -1063,14 +1121,16 @@ export function Aquarium({ skills, active, featured, labelled, reduced, night, o
     l.target.updateMatrixWorld();
   }, []);
 
-  useFrame((_, delta) => {
-    const dt = Math.min(delta, 1 / 30);
-    school.step(delta);
+  useFrame(({ camera, clock }, delta) => {
+    /* Lighting also illuminates the room, so keep its existing cadence. */
+    const lightDt = Math.min(delta, 1 / 30);
+    if (groundMat.current) groundMat.current.emissiveIntensity = damp(groundMat.current.emissiveIntensity, night ? 0.55 : 0.22, 3, lightDt);
+    if (light.current) light.current.intensity = damp(light.current.intensity, night ? 26 : 12, 3, lightDt);
+    const dt = animation.sample(camera, tank.current, clock.elapsedTime, delta, balanced);
+    if (dt === 0) return;
+    school.step(dt);
     /* plants sway and caustics drift across the gravel */
     if (!reduced) water.step(dt, tex.caustic);
-    /* the tank light reads brighter once the room goes dark */
-    if (groundMat.current) groundMat.current.emissiveIntensity = damp(groundMat.current.emissiveIntensity, night ? 0.55 : 0.22, 3, dt);
-    if (light.current) light.current.intensity = damp(light.current.intensity, night ? 26 : 12, 3, dt);
     if (label.current && labelled !== null) {
       const f = school.fish[labelled];
       label.current.position.set(f.pos.x, f.pos.y + f.sp.depth * f.sp.len * 0.5 + 0.16, f.pos.z);
@@ -1085,7 +1145,7 @@ export function Aquarium({ skills, active, featured, labelled, reduced, night, o
       {/* the light bar's spot, in world space so its target is easy to aim */}
       <spotLight ref={light} position={[TANK.x, TANK.h + 0.2, TANK.z]} color="#eef7ff" intensity={12} angle={1.05} penumbra={0.7} decay={1.4} distance={7} />
 
-      <group position={[TANK.x, 0, TANK.z]} rotation={[0, Math.PI / 2, 0]}>
+      <group ref={tank} position={[TANK.x, 0, TANK.z]} rotation={[0, Math.PI / 2, 0]}>
         {/* leveling mat */}
         <mesh position={[0, 0.01, 0]} receiveShadow raycast={noHit}>
           <boxGeometry args={[TANK.w + 0.06, 0.02, TANK.d + 0.06]} />
@@ -1149,7 +1209,7 @@ export function Aquarium({ skills, active, featured, labelled, reduced, night, o
         ))}
 
         <mesh geometry={geo.plants} material={plantMat} raycast={noHit} />
-        {!reduced && <Bubbles />}
+        {!reduced && <Bubbles animation={animation} tank={tank} balanced={balanced} />}
 
         {/* one fish per skill */}
         {skills.map((s, i) => (

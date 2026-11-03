@@ -82,11 +82,11 @@ export const CAMERA_HIDE = ["Camera_01_strap"] as const;
 export const GAMEPAD_CROP = { min: [-0.075, -0.01, 0.145], max: [0.13, 0.03, 0.23] } as const;
 
 export const MODEL_URLS = {
-  camera: "/models/Camera_01/Camera_01.gltf",
-  lamp: "/models/desk_lamp_arm_01/desk_lamp_arm_01.gltf",
-  plant: "/models/potted_plant_02/potted_plant_02.gltf",
-  gamepad: "/models/gamepad/gamepad.gltf",
-  duck: "/models/rubber_duck_toy/rubber_duck_toy.gltf",
-  elephant: "/models/carved_wooden_elephant/carved_wooden_elephant.gltf",
-  succulent: "/models/potted_plant_04/potted_plant_04.gltf",
+  camera: "/models-optimized/camera.glb",
+  lamp: "/models-optimized/lamp.glb",
+  plant: "/models-optimized/plant.glb",
+  gamepad: "/models-optimized/gamepad.glb",
+  duck: "/models-optimized/duck.glb",
+  elephant: "/models-optimized/elephant.glb",
+  succulent: "/models-optimized/succulent.glb",
 } as const;
