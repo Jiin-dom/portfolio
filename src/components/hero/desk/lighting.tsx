@@ -93,6 +93,8 @@ class LightRig {
       lampGoal = reduced ? 1 : (FLICKER[step] ?? 1);
     }
     this.lamp = reduced || lampGoal > this.lamp ? lampGoal : THREE.MathUtils.damp(this.lamp, lampGoal, 6, dt);
+    // Damping approaches zero forever; stop the invisible lamp's shadow pass.
+    if (lampGoal === 0 && this.lamp < 0.0001) this.lamp = 0;
 
     const m = this.mix;
     if (this.hemi) {
@@ -132,6 +134,7 @@ export function Lighting({ night, reduced }: { night: boolean; reduced: boolean 
     <>
       <hemisphereLight ref={(l) => rig.attach("hemi", l)} args={[DAY.hemiSky, DAY.hemiGround, DAY.hemi]} />
       <directionalLight
+        name="desk-sun"
         ref={(l) => rig.attach("sun", l)}
         castShadow
         position={[-9, 20, 12]}

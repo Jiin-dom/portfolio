@@ -1,0 +1,499 @@
+[
+  {
+    "name": "camera",
+    "source": "/models/Camera_01/Camera_01.gltf",
+    "url": "/models-optimized/camera.glb",
+    "beforeBytes": 2440404,
+    "afterBytes": 2436080,
+    "savedBytes": 4324,
+    "selected": true,
+    "sha256": "61463befe856993b29e7a95577e121f9668ae7efda2629a86c8257c2da9681df",
+    "validation": {
+      "numErrors": 0,
+      "numWarnings": 4,
+      "numInfos": 1,
+      "numHints": 0,
+      "messages": [
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/0/primitives/0/material"
+        },
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/1/primitives/0/material"
+        },
+        {
+          "code": "UNUSED_OBJECT",
+          "message": "This object may be unused.",
+          "severity": 2,
+          "pointer": "/meshes/1/primitives/1/attributes/TEXCOORD_0"
+        },
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/1/primitives/2/material"
+        },
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/1/primitives/3/material"
+        }
+      ],
+      "truncated": false
+    },
+    "originalValidation": {
+      "numErrors": 0,
+      "numWarnings": 4
+    },
+    "sourceFiles": [
+      {
+        "uri": "Camera_01.gltf",
+        "bytes": 10408,
+        "sha256": "ca995f2623d8befab4ddd3e9e16aa124dca102ffd6110ff15569cd7637f75835"
+      },
+      {
+        "uri": "Camera_01.bin",
+        "bytes": 845028,
+        "sha256": "d3d2c78458a4823bc9821c2ba3994c95d15b044c7a1444ba089b163f74c3fcf2"
+      },
+      {
+        "uri": "textures/Camera_01_strap_nor_gl_1k.jpg",
+        "bytes": 199844,
+        "sha256": "5d4d99d5b1640d5a4d3c2227c264c232279773b5c92e4a6c50d2f34217880202"
+      },
+      {
+        "uri": "textures/Camera_01_strap_diff_1k.jpg",
+        "bytes": 132449,
+        "sha256": "3d4c9cb463b330b7ea4fc713f6dc90a0c5e6d9d3ba707b6921fe0a2d1f9ab146"
+      },
+      {
+        "uri": "textures/Camera_01_strap_arm_1k.jpg",
+        "bytes": 159433,
+        "sha256": "17beca6e0542a1a28146b52cff06aad2e404541359e452deca83b74d01505c50"
+      },
+      {
+        "uri": "textures/Camera_01_lens_body_nor_gl_1k.jpg",
+        "bytes": 147816,
+        "sha256": "3d5e695a57ce38f0e35558f43f30497fff2f8cc844c903c95462d105b58cb333"
+      },
+      {
+        "uri": "textures/Camera_01_lens_body_diff_1k.jpg",
+        "bytes": 106198,
+        "sha256": "aafa05c5b106b960b21547ef9d4662083dfc7138261cbab1f10e143afe046b68"
+      },
+      {
+        "uri": "textures/Camera_01_lens_body_arm_1k.jpg",
+        "bytes": 163109,
+        "sha256": "6fef8a44334428a8f095315fa8043678994abcc671473cf43f7ca63ec10eb98f"
+      },
+      {
+        "uri": "textures/Camera_01_body_nor_gl_1k.jpg",
+        "bytes": 271892,
+        "sha256": "c7ec0d96ae9b5f16559069f1a4c9a006f3ec1d49a7707269a280fe23786db144"
+      },
+      {
+        "uri": "textures/Camera_01_body_diff_1k.jpg",
+        "bytes": 175778,
+        "sha256": "89b77ec525e933f9f2702e2ccb0c8ba32ecef31dac241bc034e3eddc9481f4f7"
+      },
+      {
+        "uri": "textures/Camera_01_body_arm_1k.jpg",
+        "bytes": 228449,
+        "sha256": "a3b1928d258fdb23687fb005a3d764b008475abb13b47a2bb87ed81200274635"
+      }
+    ]
+  },
+  {
+    "name": "lamp",
+    "source": "/models/desk_lamp_arm_01/desk_lamp_arm_01.gltf",
+    "url": "/models-optimized/lamp.glb",
+    "beforeBytes": 1323297,
+    "afterBytes": 1321240,
+    "savedBytes": 2057,
+    "selected": true,
+    "sha256": "9a7ea4b280571356ce56ca5a2bb7de6bf35e5d9cc432b74f4017b6d7808dbdc0",
+    "validation": {
+      "numErrors": 0,
+      "numWarnings": 2,
+      "numInfos": 0,
+      "numHints": 0,
+      "messages": [
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/0/primitives/0/material"
+        },
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/0/primitives/1/material"
+        }
+      ],
+      "truncated": false
+    },
+    "originalValidation": {
+      "numErrors": 0,
+      "numWarnings": 2
+    },
+    "sourceFiles": [
+      {
+        "uri": "desk_lamp_arm_01.gltf",
+        "bytes": 4702,
+        "sha256": "7ef2a107f0bfdc129db5e65cf09af4de24a4e3317aeb5dd3e5cc7a31403b60c9"
+      },
+      {
+        "uri": "desk_lamp_arm_01.bin",
+        "bytes": 736804,
+        "sha256": "07f34e32abecbaa63d28b9d12d6a0eb82b775a0f50c92327655909d72ff8489b"
+      },
+      {
+        "uri": "textures/desk_lamp_arm_01_nor_gl_1k.jpg",
+        "bytes": 182529,
+        "sha256": "de52f59857231729336a9ff632f6391d6a4b329b15daf4eb5b5860a611f71c21"
+      },
+      {
+        "uri": "textures/desk_lamp_arm_01_diff_1k.jpg",
+        "bytes": 197021,
+        "sha256": "461347cd8569ad4f46d2d0ff336f5321e02914fd4ccd75d2e7cda1863e640b14"
+      },
+      {
+        "uri": "textures/desk_lamp_arm_01_arm_1k.jpg",
+        "bytes": 202241,
+        "sha256": "1946db0480a74cf13a51598a6734884898862cbe9ef4317532cdfa410b301880"
+      }
+    ]
+  },
+  {
+    "name": "plant",
+    "source": "/models/potted_plant_02/potted_plant_02.gltf",
+    "url": "/models-optimized/plant.glb",
+    "beforeBytes": 2635054,
+    "afterBytes": 2632148,
+    "savedBytes": 2906,
+    "selected": true,
+    "sha256": "06c958bc5a60763ed56a06297db533fba379fb25d14dc52a78d57faa7dd5daab",
+    "validation": {
+      "numErrors": 0,
+      "numWarnings": 3,
+      "numInfos": 0,
+      "numHints": 0,
+      "messages": [
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/0/primitives/0/material"
+        },
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/1/primitives/0/material"
+        },
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/2/primitives/0/material"
+        }
+      ],
+      "truncated": false
+    },
+    "originalValidation": {
+      "numErrors": 0,
+      "numWarnings": 3
+    },
+    "sourceFiles": [
+      {
+        "uri": "potted_plant_02.gltf",
+        "bytes": 7009,
+        "sha256": "90ece353c1471898b0cdc180beb33056fb94ced2739d42d71c214d916c28c62e"
+      },
+      {
+        "uri": "potted_plant_02.bin",
+        "bytes": 1852244,
+        "sha256": "9c9812482c78a59789ed32fa842b4cbd9365e09c900c31ebb998e5efe627fe97"
+      },
+      {
+        "uri": "textures/potted_plant_02_pot_nor_gl_1k.jpg",
+        "bytes": 108343,
+        "sha256": "981a68721c8b7b9ac26b96d0210334599d5e8f529362f505082c071a0a58e86c"
+      },
+      {
+        "uri": "textures/potted_plant_02_pot_diff_1k.jpg",
+        "bytes": 155244,
+        "sha256": "684949bf24821d7e951d46915366b5a388d2e4ccaaa9d5284e718c83604705e9"
+      },
+      {
+        "uri": "textures/potted_plant_02_pot_rough_1k.jpg",
+        "bytes": 114886,
+        "sha256": "4e92ad8ee0f098050785d9a025e2c5a7d55bc7a7f7e1916cc7627fc7824a938f"
+      },
+      {
+        "uri": "textures/potted_plant_02_leaves_nor_gl_1k.jpg",
+        "bytes": 127232,
+        "sha256": "e0fe090ff7a511729c9bbe59df7288b400430fdab178529443dec75e0f06007d"
+      },
+      {
+        "uri": "textures/potted_plant_02_leaves_diff_1k.jpg",
+        "bytes": 167700,
+        "sha256": "3643dce6e6c0a9f40129bd837ec1a11802e8f43ea43cb29e58219d82e0ac632b"
+      },
+      {
+        "uri": "textures/potted_plant_02_leaves_rough_1k.jpg",
+        "bytes": 102396,
+        "sha256": "ac8959f70c0e91e77f3cd6fd3f73578b8aed64ac6c33fc34ac027a4e88276960"
+      }
+    ]
+  },
+  {
+    "name": "gamepad",
+    "source": "/models/gamepad/gamepad.gltf",
+    "url": "/models-optimized/gamepad.glb",
+    "beforeBytes": 491401,
+    "afterBytes": 490404,
+    "savedBytes": 997,
+    "selected": true,
+    "sha256": "4a9c398eede26f84c9383163f3bb2dbd3f9d08a14af974fa3d597d3a1f4d0e4a",
+    "validation": {
+      "numErrors": 0,
+      "numWarnings": 1,
+      "numInfos": 0,
+      "numHints": 0,
+      "messages": [
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/0/primitives/0/material"
+        }
+      ],
+      "truncated": false
+    },
+    "originalValidation": {
+      "numErrors": 0,
+      "numWarnings": 1
+    },
+    "sourceFiles": [
+      {
+        "uri": "gamepad.gltf",
+        "bytes": 2728,
+        "sha256": "30eabe08b4c76013efb27322ef8834ba915dd0ff46950ebf69390e7fbeef3dea"
+      },
+      {
+        "uri": "gamepad.bin",
+        "bytes": 256796,
+        "sha256": "f1bf4c355880932ae321d0ee7221767d0f9b9a0f3d00522424847ce21462b701"
+      },
+      {
+        "uri": "textures/gamepad_nor_gl_1k.jpg",
+        "bytes": 54584,
+        "sha256": "7b4180a27c002e2144dcfe89374376e833505b4183326b29766442dc7b7066f8"
+      },
+      {
+        "uri": "textures/gamepad_diff_1k.jpg",
+        "bytes": 61642,
+        "sha256": "b958fa1203d4d1db672193b250014a8e075bd6308b01a42ba5631bf64bdb5652"
+      },
+      {
+        "uri": "textures/gamepad_arm_1k.jpg",
+        "bytes": 115651,
+        "sha256": "e39f7fc582355c8db26f86140c9419463c9615a8cb01ab6b93cc3610320bf992"
+      }
+    ]
+  },
+  {
+    "name": "duck",
+    "source": "/models/rubber_duck_toy/rubber_duck_toy.gltf",
+    "url": "/models-optimized/duck.glb",
+    "beforeBytes": 249218,
+    "afterBytes": 248040,
+    "savedBytes": 1178,
+    "selected": true,
+    "sha256": "51baf0902413e73853935fec7c91c16a72b3021997f4d3967eb279fd1216ed43",
+    "validation": {
+      "numErrors": 0,
+      "numWarnings": 1,
+      "numInfos": 0,
+      "numHints": 0,
+      "messages": [
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/0/primitives/0/material"
+        }
+      ],
+      "truncated": false
+    },
+    "originalValidation": {
+      "numErrors": 0,
+      "numWarnings": 1
+    },
+    "sourceFiles": [
+      {
+        "uri": "rubber_duck_toy.gltf",
+        "bytes": 3180,
+        "sha256": "dcf036297843dad2775841fc41208fae8c776066848d3f6e26efa42eb98d5016"
+      },
+      {
+        "uri": "rubber_duck_toy.bin",
+        "bytes": 105376,
+        "sha256": "381e1373b99a4ff23d5ee02cb66bfb5e7d897eaa280581f19b652c38ffd83314"
+      },
+      {
+        "uri": "textures/rubber_duck_toy_nor_gl_1k.jpg",
+        "bytes": 10652,
+        "sha256": "c4a9b1a261906898dd936aa059d44d29d6424547162d1db85fa91d1d061a1585"
+      },
+      {
+        "uri": "textures/rubber_duck_toy_diff_1k.jpg",
+        "bytes": 44373,
+        "sha256": "3906ccb25a63cb18228046b965b7384ea684421ef48428321411d484d0e72281"
+      },
+      {
+        "uri": "textures/rubber_duck_toy_arm_1k.jpg",
+        "bytes": 85637,
+        "sha256": "63917cbacb2cc33c2a4f621a9afce55067b60e0f121abd64c01ccb05b4c4ea90"
+      }
+    ]
+  },
+  {
+    "name": "elephant",
+    "source": "/models/carved_wooden_elephant/carved_wooden_elephant.gltf",
+    "url": "/models-optimized/elephant.glb",
+    "beforeBytes": 537126,
+    "afterBytes": 536148,
+    "savedBytes": 978,
+    "selected": true,
+    "sha256": "2b3fac4994eea2aa1da10aefaccc6193361c721212b596de7b97d754adb7255b",
+    "validation": {
+      "numErrors": 0,
+      "numWarnings": 1,
+      "numInfos": 0,
+      "numHints": 0,
+      "messages": [
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/0/primitives/0/material"
+        }
+      ],
+      "truncated": false
+    },
+    "originalValidation": {
+      "numErrors": 0,
+      "numWarnings": 1
+    },
+    "sourceFiles": [
+      {
+        "uri": "carved_wooden_elephant.gltf",
+        "bytes": 2791,
+        "sha256": "c2378354ecd283c5c8d9459b6829ef7e61bdefd6d0f7a6b2d628362bd9bbef25"
+      },
+      {
+        "uri": "carved_wooden_elephant.bin",
+        "bytes": 69760,
+        "sha256": "b732bc38c4e57c8630acfe8c9f1bd7623e1ba49b0c488863e13546171f283618"
+      },
+      {
+        "uri": "textures/carved_wooden_elephant_nor_gl_1k.jpg",
+        "bytes": 136416,
+        "sha256": "5e150fe7e0d820abacb845a84c367661a9d964a94eb57de58915a2f79c97e56c"
+      },
+      {
+        "uri": "textures/carved_wooden_elephant_diff_1k.jpg",
+        "bytes": 124873,
+        "sha256": "995db7ca97d73138058f5ad895001f8d9f97104df7cab52e8e459a2c979afc76"
+      },
+      {
+        "uri": "textures/carved_wooden_elephant_rough_1k.jpg",
+        "bytes": 203286,
+        "sha256": "366da3616f1812146ea350ba969b891ef69b8cf530fb48ae826ffc08243f33c9"
+      }
+    ]
+  },
+  {
+    "name": "succulent",
+    "source": "/models/potted_plant_04/potted_plant_04.gltf",
+    "url": "/models-optimized/succulent.glb",
+    "beforeBytes": 779893,
+    "afterBytes": 776744,
+    "savedBytes": 3149,
+    "selected": true,
+    "sha256": "24684fb7aa555ec0e26504aab0894ed61804455831db21388c19121fcf924c6f",
+    "validation": {
+      "numErrors": 0,
+      "numWarnings": 4,
+      "numInfos": 0,
+      "numHints": 0,
+      "messages": [
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/0/primitives/0/material"
+        },
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/1/primitives/0/material"
+        },
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/2/primitives/0/material"
+        },
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/3/primitives/0/material"
+        }
+      ],
+      "truncated": false
+    },
+    "originalValidation": {
+      "numErrors": 0,
+      "numWarnings": 4
+    },
+    "sourceFiles": [
+      {
+        "uri": "potted_plant_04.gltf",
+        "bytes": 7081,
+        "sha256": "b3a3bc3e97da75844999c4da07b7104b6c023f729a7c045979929b9504184339"
+      },
+      {
+        "uri": "potted_plant_04.bin",
+        "bytes": 241800,
+        "sha256": "158c1d27503d4845eb3573f00c01ae3f4f77f1d6ca8754c67bf1762745946f7f"
+      },
+      {
+        "uri": "textures/potted_plant_04_nor_gl_1k.jpg",
+        "bytes": 249596,
+        "sha256": "9525672328feb20eb74564d7127fa5d672dce74eeda12f01e539980f6bf9fde9"
+      },
+      {
+        "uri": "textures/potted_plant_04_diff_1k.jpg",
+        "bytes": 162507,
+        "sha256": "84fbb096f3d436d7998f7af9fb3761ab19a6fbb5512462de2f77a4bd706cdbe2"
+      },
+      {
+        "uri": "textures/potted_plant_04_arm_1k.jpg",
+        "bytes": 118909,
+        "sha256": "b43c35369df41a16fb9ce6bb8c438d1aa6897bd3502073ebcd1a61aa0aa2e1fc"
+      }
+    ]
+  }
+]

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portfolio · Before & after</title>
+  <style>
+    :root { color-scheme: light; font-family: "Segoe UI", Arial, sans-serif; color: #24272a; background: #f5f6f7; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: clamp(16px, 3vw, 40px); }
+    main { max-width: 1800px; margin: auto; }
+    header { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+    h1 { font-size: clamp(24px, 3vw, 36px); letter-spacing: -.035em; font-weight: 600; margin: 0 0 8px; }
+    p { margin: 0; color: #59616a; font-size: 14px; line-height: 1.6; max-width: 85ch; }
+    a { color: #334d69; text-underline-offset: 3px; }
+    .controls { background: white; border: 1px solid #dce0e4; border-radius: 12px; padding: 18px; margin-bottom: 20px; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: end; }
+    .row + .row { margin-top: 16px; padding-top: 16px; border-top: 1px solid #e7e9ec; }
+    label { display: grid; gap: 6px; font-size: 12px; color: #59616a; }
+    select, button { font: inherit; font-size: 14px; border: 1px solid #cbd1d7; border-radius: 6px; background: white; color: #24272a; min-height: 38px; padding: 8px 12px; }
+    button { cursor: pointer; }
+    button:hover { background: #f0f3f5; }
+    button[aria-pressed="true"] { color: white; background: #344453; border-color: #344453; }
+    :focus-visible { outline: 3px solid #647f9a; outline-offset: 3px; }
+    .playback { display: flex; flex-wrap: wrap; gap: 8px; }
+    #status { font-size: 13px; color: #59616a; }
+    .panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+    .pane { min-width: 0; border: 1px solid #dce0e4; border-radius: 12px; overflow: hidden; background: white; }
+    .pane-head { padding: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+    h2 { font-size: 18px; margin: 0 0 4px; font-weight: 600; }
+    .links { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+    .links button { font-size: 12px; min-height: 32px; padding: 5px 8px; }
+    .stage { width: 100%; position: relative; overflow: hidden; background: #e9edf0; }
+    iframe { position: absolute; left: 50%; top: 0; border: 0; transform-origin: top left; }
+    .metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; padding: 16px; gap: 8px; border-top: 1px solid #e7e9ec; }
+    dt { color: #59616a; font-size: 11px; margin-bottom: 5px; }
+    dd { margin: 0; font-size: clamp(13px, 1.5vw, 20px); font-variant-numeric: tabular-nums; }
+    .sample { padding: 0 16px 16px; font-size: 12px; color: #59616a; }
+    footer { display: grid; gap: 8px; margin-top: 20px; }
+    .pane:fullscreen { overflow: auto; border-radius: 0; padding: 16px; }
+    @media (max-width: 850px) { .panes { grid-template-columns: 1fr; } dd { font-size: 18px; } }
+    @media (max-width: 420px) { .metrics { gap: 4px; padding: 12px; } dd { font-size: 14px; } }
+  </style>
+</head>
+<body>
+<main>
+  <header><div><h1>Before & after</h1><p>Same scene, same viewport. Review visual fidelity, then run one version at a time for timing.</p></div><p id="viewport-label">Logical viewport: 1280 × 800</p></header>
+  <section class="controls" aria-label="Comparison controls">
+    <div class="row">
+      <label>Viewport<select id="viewport"><option value="desktop">Desktop · 1280 × 800</option><option value="mobile">Mobile · 390 × 844</option></select></label>
+      <label>Camera<select id="view"><option>Top</option><option>Front</option><option>Angle</option></select></label>
+      <label>Spot<select id="spot"><option value="home">Home</option><option value="about">About</option><option value="skills">Skills</option><option value="projects">Projects</option><option value="contact">Contact</option></select></label>
+      <label>Lighting<select id="night"><option value="false">Day</option><option value="true">Night</option></select></label>
+      <label>Optimized quality<select id="quality"><option value="full" selected>Full · visual fidelity</option><option value="auto">Auto · device adaptive</option><option value="balanced">Balanced</option></select></label>
+    </div>
+    <div class="row"><div class="playback" role="group" aria-label="Playback">
+      <button type="button" data-play="freeze" aria-pressed="true">Freeze both</button>
+      <button type="button" data-play="before" aria-pressed="false">Live before only</button>
+      <button type="button" data-play="after" aria-pressed="false">Live after only</button>
+      <button type="button" data-play="both" aria-pressed="false">Live both</button>
+    </div><span id="status" role="status">Waiting for both scenes to report ready…</span></div>
+  </section>
+  <div class="panes">
+    <section class="pane" id="before-pane" aria-labelledby="before-title">
+      <div class="pane-head"><div><h2 id="before-title">Before</h2><p id="baseline-quality">Saved baseline · Full · port 3001</p></div><div class="links"><a id="before-link" target="_blank" rel="noopener">Open standalone</a><button type="button" data-fullscreen="before-pane">Full screen</button></div></div>
+      <div class="stage"><iframe id="before" title="Before: saved portfolio baseline" allow="fullscreen"></iframe></div>
+      <dl class="metrics"><div><dt>FPS</dt><dd data-metric="fps">—</dd></div><div><dt>Frame interval</dt><dd data-metric="frameMs">—</dd></div><div><dt>Draw calls</dt><dd data-metric="calls">—</dd></div><div><dt>Triangles</dt><dd data-metric="triangles">—</dd></div><div><dt>DPR</dt><dd data-metric="dpr">—</dd></div></dl>
+      <div class="sample">Waiting for instrumentation…</div>
+    </section>
+    <section class="pane" id="after-pane" aria-labelledby="after-title">
+      <div class="pane-head"><div><h2 id="after-title">After</h2><p>Optimized · port 3002</p></div><div class="links"><a id="after-link" target="_blank" rel="noopener">Open standalone</a><button type="button" data-fullscreen="after-pane">Full screen</button></div></div>
+      <div class="stage"><iframe id="after" title="After: optimized portfolio" allow="fullscreen"></iframe></div>
+      <dl class="metrics"><div><dt>FPS</dt><dd data-metric="fps">—</dd></div><div><dt>Frame interval</dt><dd data-metric="frameMs">—</dd></div><div><dt>Draw calls</dt><dd data-metric="calls">—</dd></div><div><dt>Triangles</dt><dd data-metric="triangles">—</dd></div><div><dt>DPR</dt><dd data-metric="dpr">—</dd></div></dl>
+      <div class="sample">Waiting for instrumentation…</div>
+    </section>
+  </div>
+  <footer><p>Click or tab into either portfolio to interact; that version resumes automatically. Shared controls above update both views. Both-live shares GPU resources, so use a single live version for fair timing.</p><p>Renderer draw calls / triangles are reported counters; GPU time is unmeasured. Frame interval is the reported render-loop interval. Paused or stale values remain labeled as last received.</p></footer>
+</main>
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const status = $('status');
+  let playback = 'freeze', warming = true, warmTimer = null, settleTimer = null, settling = false;
+  const frames = ['before', 'after'].map((name, index) => {
+    const url = new URL(location.href);
+    url.hostname = location.hostname;
+    url.port = String(3001 + index);
+    url.pathname = '/'; url.search = ''; url.hash = '';
+    $(name + '-link').href = url.href;
+    url.searchParams.set('comparison', name);
+    return { name, frame: $(name), pane: $(name + '-pane'), url, ready: false, paused: false, received: 0 };
+  });
+  function send(entry, command, value) {
+    entry.frame.contentWindow?.postMessage({ type: 'portfolio:compare', command, value }, entry.url.origin);
+  }
+  function quality() {
+    const selected = $('quality').value;
+    send(frames[1], 'quality', selected);
+    send(frames[0], 'quality', selected === 'auto' ? 'auto' : 'full');
+    $('baseline-quality').textContent = `Saved baseline · ${selected === 'auto' ? 'Adaptive' : 'Full'} · port 3001`;
+  }
+  function scene(entry) {
+    send(entry, 'view', $('view').value);
+    send(entry, 'spot', $('spot').value);
+    send(entry, 'night', $('night').value === 'true');
+  }
+  function applyPlayback() {
+    for (const entry of frames) {
+      entry.paused = !(warming || settling || playback === 'both' || playback === entry.name);
+      send(entry, 'pause', entry.paused);
+    }
+    status.textContent = warming ? (warmTimer ? 'Both ready · warming up for 5 seconds…' : 'Waiting for both scenes to report ready…')
+      : settling ? 'Both live for 3 seconds to settle controls…'
+      : ({ freeze: 'Both scenes frozen', before: 'Before live · after paused', after: 'After live · before paused', both: 'Both scenes live · shared GPU' })[playback];
+    updateLabels();
+  }
+  function settle() {
+    clearTimeout(settleTimer); settling = true; applyPlayback();
+    settleTimer = setTimeout(() => { settling = false; applyPlayback(); }, 3000);
+  }
+  function resize() {
+    const [width, height] = $('viewport').value === 'mobile' ? [390, 844] : [1280, 800];
+    $('viewport-label').textContent = `Logical viewport: ${width} × ${height}`;
+    for (const entry of frames) {
+      const stage = entry.frame.parentElement;
+      const scale = Math.min(1, stage.clientWidth / width);
+      entry.frame.style.width = width + 'px'; entry.frame.style.height = height + 'px';
+      entry.frame.style.transform = `translateX(${-width * scale / 2}px) scale(${scale})`;
+      stage.style.height = height * scale + 'px';
+    }
+  }
+  function updateLabels() {
+    const now = performance.now();
+    for (const entry of frames) {
+      const age = entry.received ? Math.floor((now - entry.received) / 1000) : null;
+      entry.pane.querySelector('.sample').textContent = age === null
+        ? `${entry.paused ? 'Paused · ' : ''}Waiting for instrumentation…`
+        : `${entry.paused ? 'Paused · last received' : age > 3 ? 'Stale · last received' : 'Live · received'} ${age}s ago${entry.ready ? '' : ' · scene loading'}`;
+    }
+  }
+  window.addEventListener('message', (event) => {
+    const entry = frames.find((item) => event.source === item.frame.contentWindow && event.origin === item.url.origin);
+    if (!entry || !event.data || event.data.type !== 'portfolio:stats') return;
+    const data = event.data;
+    entry.received = performance.now();
+    for (const key of ['fps', 'frameMs', 'calls', 'triangles', 'dpr']) {
+      const value = data[key];
+      entry.pane.querySelector(`[data-metric="${key}"]`).textContent = typeof value === 'number' && Number.isFinite(value) && value >= 0
+        ? value.toLocaleString(undefined, { maximumFractionDigits: 2 }) + (key === 'frameMs' ? ' ms' : '') : '—';
+    }
+    if (data.ready === true && !entry.ready) { entry.ready = true; scene(entry); quality(); }
+    if (warming && !warmTimer && frames.every((item) => item.ready)) {
+      warmTimer = setTimeout(() => { warming = false; applyPlayback(); }, 5000);
+      applyPlayback();
+    }
+    updateLabels();
+  });
+  for (const entry of frames) {
+    entry.frame.addEventListener('load', () => {
+      entry.ready = false; entry.received = 0;
+      entry.pane.querySelectorAll('[data-metric]').forEach((el) => { el.textContent = '—'; });
+      if (warming) { clearTimeout(warmTimer); warmTimer = null; }
+      quality(); scene(entry); applyPlayback();
+    });
+    entry.frame.src = entry.url.href;
+  }
+  for (const id of ['view', 'spot', 'night', 'quality', 'viewport']) {
+    $(id).addEventListener('change', () => {
+      settle();
+      if (id === 'viewport') resize();
+      else if (id === 'quality') quality();
+      else frames.forEach((entry) => send(entry, id, id === 'night' ? $('night').value === 'true' : $(id).value));
+    });
+  }
+  function selectPlayback(mode) {
+    playback = mode; warming = false; clearTimeout(warmTimer);
+    clearTimeout(settleTimer); settling = false;
+    document.querySelectorAll('[data-play]').forEach((item) => item.setAttribute('aria-pressed', String(item.dataset.play === mode)));
+    applyPlayback();
+  }
+  document.querySelectorAll('[data-play]').forEach((button) => button.addEventListener('click', () => selectPlayback(button.dataset.play)));
+  // Pointer events inside a cross-origin iframe do not bubble to its parent.
+  // Focus identifies the selected preview without reading its document.
+  frames.forEach((entry) => entry.frame.addEventListener('focus', () => selectPlayback(entry.name)));
+  window.addEventListener('blur', () => {
+    setTimeout(() => {
+      const entry = frames.find((item) => document.activeElement === item.frame);
+      if (entry) selectPlayback(entry.name);
+    }, 0);
+  });
+  document.querySelectorAll('[data-fullscreen]').forEach((button) => {
+    if (!document.fullscreenEnabled) { button.hidden = true; return; }
+    button.addEventListener('click', async () => {
+      try {
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else await $(button.dataset.fullscreen).requestFullscreen();
+      } catch { status.textContent = 'Full screen unavailable. Use Open standalone.'; }
+    });
+  });
+  const observer = new ResizeObserver(resize);
+  frames.forEach((entry) => observer.observe(entry.frame.parentElement));
+  setInterval(() => { if (frames.some((entry) => !entry.ready)) quality(); updateLabels(); }, 500);
+  resize(); applyPlayback();
+})();
+</script>
+</body>
+</html>
